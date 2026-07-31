@@ -1,0 +1,19 @@
+*{box-sizing:border-box;font-family:Segoe UI,Roboto,Arial,sans-serif}
+body{margin:0;padding:16px;background:#0f1722;color:#e6eef6}
+header{display:flex;align-items:baseline;gap:16px}
+header h1{margin:0;font-size:20px}
+.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:12px 0}
+.controls label{display:flex;align-items:center;gap:8px}
+.kbd{font-size:12px;color:#9fb2c8}
+.file input{display:inline-block}
+.bandoneon{display:grid;grid-template-columns:repeat(12, 1fr);gap:6px;margin-top:18px}
+.button-cell{padding:8px;border-radius:6px;background:rgba(255,255,255,0.03);text-align:center;cursor:pointer;user-select:none;border:1px solid rgba(255,255,255,0.03)}
+.button-cell .label{font-size:11px;color:#e6eef6}
+.button-cell .note{font-size:13px;font-weight:700}
+.button-cell.active{outline:3px solid #fff;transform:scale(1.04)}
+.info{margin-top:12px;color:#cfe6ff}
+.legend{margin-top:18px;color:#9fb2c8}
+button{background:#1f2937;color:#e6eef6;border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:6px;cursor:pointer}
+button:active{transform:translateY(1px)}
+.midi-status{margin-left:8px;color:#9fb2c8}
+@media (max-width:800px){.bandoneon{grid-template-columns:repeat(6,1fr)}}
