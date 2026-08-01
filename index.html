@@ -11,7 +11,7 @@
 <body>
   <header>
     <h1>Bandoneon MIDI Visualizer</h1>
-    <p>AI assistant using Copilot CLI runtime in VS Code</p>
+    <p>Static client-side app for MIDI keyboard input and MIDI upload with separate 142/144 bandoneon layouts.</p>
   </header>
 
   <main>
@@ -27,7 +27,7 @@
       <label class="kbd">(Space to toggle)</label>
 
       <label class="file">Upload mapping JSON: <input type="file" id="mappingFile" accept="application/json"></label>
-      <small class="mapping-hint">Mapping JSON: array of objects like {"id":1,"push":60,"pull":62,"side":"left","label":"A"}. If side missing, layout default is used.</small>
+      <small class="mapping-hint">Mapping JSON: array of objects like {"id":3,"side":"left","label":"B3","push":{"note":60,"x":0.3,"y":0.7},"pull":{"note":62,"x":0.3,"y":0.7}}</small>
 
       <label class="file">Upload MIDI file: <input type="file" id="midiFile" accept=".mid,.midi"></label>
       <button id="playMidi">Play MIDI</button>
@@ -60,11 +60,13 @@
     <section id="bandoneonContainer" class="bandoneon"></section>
 
     <section class="legend">
-      <p>Colors are by octave. Click any visual button to simulate press. Upload a mapping.json to use an exact bandoneon layout. Default mapping is a simple sequential assignment for practice.</p>
+      <p>Colors are by octave. Click any visual button to simulate press. Upload a mapping.json to use an exact bandoneon layout, or edit <code>mappings.js</code> for separate 142 and 144 layouts.</p>
       <p>To deploy: push this folder to a GitHub repo and enable GitHub Pages (branch: main or gh-pages), it'll serve as a static site.</p>
     </section>
   </main>
 
+  <script src="bandoneon-utils.js"></script>
+  <script src="mappings.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
