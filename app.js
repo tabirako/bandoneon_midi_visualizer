@@ -217,6 +217,9 @@ async function initMIDI() {
   }
 }
 
+/** 
+ Instead of sending a NOTEOFF, some midi devices sent a NOTEON and VEL=0 
+*/
 function onMIDIMessage(ev) {
   const [status, data1, data2] = ev.data;
   const cmd = status & 0xf0;
