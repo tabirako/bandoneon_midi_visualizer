@@ -1,0 +1,7 @@
+first half
+x's max and min 0.85,0.08
+y's max and min 0.88,0.08
+second half
+x's max and min 0.85,0.08
+y's max and min 0.88,0.08
+{'hsl(272 70% 75%)', 'hsl(122 70% 75%)', 'hsl(314 70% 75%)', 'hsl(146 70% 75%)', 'hsl(188 70% 75%)', 'hsl(104 70% 75%)', 'hsl(164 70% 75%)', 'hsl(38 70% 75%)', 'hsl(230 70% 75%)', 'hsl(80 70% 75%)', 'hsl(356 70% 75%)'}
