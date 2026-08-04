@@ -4,8 +4,8 @@ window.defaultMappings = {
       "id": 1,
       "side": "left",
       "label": "B1",
-      "x": 0.26,
-      "y": 0.71,
+      "x": 0.2606541434,
+      "y": 0.4403626963,
       "push": {
         "note": 33,
         "color": "hsl(104 70% 75%)"
@@ -19,8 +19,8 @@ window.defaultMappings = {
       "id": 2,
       "side": "left",
       "label": "B2",
-      "x": 0.54,
-      "y": 0.75,
+      "x": 0.4012390134,
+      "y": 0.4089733857,
       "push": {
         "note": 34,
         "color": "hsl(104 70% 75%)"
@@ -34,8 +34,8 @@ window.defaultMappings = {
       "id": 3,
       "side": "left",
       "label": "B3",
-      "x": 0.54,
-      "y": 0.75,
+      "x": 0.5369034182,
+      "y": 0.4000050144,
       "push": {
         "note": 35,
         "color": "hsl(104 70% 75%)"
@@ -49,8 +49,8 @@ window.defaultMappings = {
       "id": 4,
       "side": "left",
       "label": "B4",
-      "x": 0.26,
-      "y": 0.71,
+      "x": 0.6029783106,
+      "y": 0.4683888427,
       "push": {
         "note": 35,
         "color": "hsl(104 70% 75%)"
@@ -64,8 +64,8 @@ window.defaultMappings = {
       "id": 5,
       "side": "left",
       "label": "B5",
-      "x": 0.52,
-      "y": 0.08,
+      "x": 0.6810029096,
+      "y": 0.4201838442,
       "push": {
         "note": 37,
         "color": "hsl(146 70% 75%)"
@@ -79,8 +79,8 @@ window.defaultMappings = {
       "id": 6,
       "side": "left",
       "label": "B6",
-      "x": 0.63,
-      "y": 0.08,
+      "x": 0.1285043586,
+      "y": 0.494172924,
       "push": {
         "note": 37,
         "color": "hsl(146 70% 75%)"
