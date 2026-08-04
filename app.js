@@ -29,8 +29,52 @@ let midiPlayback = null;
 let currentLayout = '142';
 const persistedMappingKey = 'bandoneon-mapping-v1';
 
+// Default fallback button color scheme by button id.
+// Mapping colors in mappings.js still take precedence.
+const defaultButtonColors = [
+  // [buttonId, color]
+  // Example: [24, 'hsl(230 70% 75%)'],
+  // Example: [36, 'hsl(110 70% 75%)'],
+];
+
 function normalizeMapping(rawMapping, layout) {
   return window.bandoneonUtils.normalizeMapping(rawMapping, layout);
+}
+
+function getColorFromRange(note) {
+  if (!Array.isArray(window.buttonColorRanges)) {
+    return null;
+  }
+
+  let lastMatch = null;
+  for (const [threshold, color] of window.buttonColorRanges) {
+    if (typeof threshold !== 'number' || typeof color !== 'string') {
+      continue;
+    }
+    if (note < threshold) {
+      return color;
+    }
+    lastMatch = color;
+  }
+  return lastMatch;
+}
+
+function findButtonColor(button, activeDef, note) {
+  if (activeDef && activeDef.color) {
+    return activeDef.color;
+  }
+  if (button.color) {
+    return button.color;
+  }
+  const rangeColor = getColorFromRange(note);
+  if (rangeColor) {
+    return rangeColor;
+  }
+  const override = defaultButtonColors.find(([id]) => Number(id) === Number(button.id));
+  if (override) {
+    return override[1];
+  }
+  return colorForMidi(note);
 }
 
 function findMatchingButtons(note) {
@@ -130,13 +174,13 @@ function renderMapping() {
     const noteLabel = document.createElement('span');
     noteLabel.className = 'note-text';
     noteLabel.textContent = midiToLabel(note);
-    btn.style.background = activeDef?.color || button.color || colorForMidi(note);
+    btn.style.background = findButtonColor(button, activeDef, note);
     btn.style.borderColor = activeDef?.borderColor || button.borderColor || colorForAccent(note);
 
     const wrapper = document.createElement('div');
     wrapper.className = 'button-wrapper';
-    const x = typeof activeDef?.x === 'number' ? activeDef.x : button.x;
-    const y = typeof activeDef?.y === 'number' ? activeDef.y : button.y;
+    const x = typeof button.x === 'number' ? button.x : undefined;
+    const y = typeof button.y === 'number' ? button.y : undefined;
     if (typeof x === 'number' && typeof y === 'number') {
       wrapper.style.position = 'absolute';
       wrapper.style.left = (x * 100) + '%';
