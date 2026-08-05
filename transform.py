@@ -4,7 +4,6 @@ import json
 
 CSV_FILE = "data142.csv"
 JS_FILE = "mappings.js"
-JS_FILE2 = "mappings2.js"
 
 # Load CSV: id, x, y
 new_positions = {}
@@ -20,7 +19,7 @@ with open(JS_FILE, "r", encoding="utf8") as f:
     js = f.read()
 
 # Extract the "142": [[ ... ]] block
-pattern = r'"142"\s*:\s*\[\s*\[(.*?)\]\s*\]'
+pattern = r'"142"\s*:\s*\[\s*\{(.*?)\}\s*\]'
 match = re.search(pattern, js, flags=re.S)
 if not match:
     raise Exception("Could not find the '142' block in mappings.js")

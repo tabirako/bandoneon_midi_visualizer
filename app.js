@@ -412,7 +412,7 @@ playMidiBtn.addEventListener('click', () => {
       const offTime = Math.max(0, (note.time + note.duration) * 1000);
       const onTimer = setTimeout(() => handleNoteOn(note.midi, Math.round(note.velocity * 127)), onTime);
       const offTimer = setTimeout(() => handleNoteOff(note.midi), offTime);
-      scheduledTimers.close(onTimer, offTimer);
+      scheduledTimers.push(onTimer, offTimer);
     });
   });
   midiStatus.textContent = 'Playing MIDI...';

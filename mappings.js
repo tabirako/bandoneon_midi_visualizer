@@ -3,14 +3,16 @@ window.defaultMappings = {
   {
     "id": 1,
     "side": "left",
-    "label": "TEST1",
+    "label": "B1",
     "x": 0.9199972096,
     "y": 0.5499933931,
     "open": {
-      "note": 44,
+      "note": 33,
+      "color": "hsl(104 70% 75%)"
     },
     "close": {
-      "note": 44,
+      "note": 34,
+      "color": "hsl(104 70% 75%)"
     }
   },
   {
@@ -20,11 +22,11 @@ window.defaultMappings = {
     "x": 0.0800025802,
     "y": 0.5383345127,
     "open": {
-      "note": 46,
+      "note": 34,
       "color": "hsl(104 70% 75%)"
     },
     "close": {
-      "note": 46,
+      "note": 36,
       "color": "hsl(146 70% 75%)"
     }
   },
@@ -496,7 +498,7 @@ window.defaultMappings = {
   {
     "id": 34,
     "side": "right",
-    "label": "TEST2",
+    "label": "B34",
     "x": 0.3205184862,
     "y": 0.09740379545,
     "open": {
