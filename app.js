@@ -3,12 +3,12 @@
 // - MIDI file upload (parsed with @tonejs/midi)
 // - Two-sided 142 / 144 button layout
 // - Per-octave coloring
-// - Push/Pull toggle (click or Spacebar)
+// - Open/Close toggle (click or Spacebar)
 // - Audio playback with volume and instrument selection
 
 const container = document.getElementById('bandoneonContainer');
 const layoutSelect = document.getElementById('layoutSelect');
-const toggleBtn = document.getElementById('togglePushPull');
+const toggleBtn = document.getElementById('toggleOpenClose');
 const mappingFileInput = document.getElementById('mappingFile');
 const midiFileInput = document.getElementById('midiFile');
 const playMidiBtn = document.getElementById('playMidi');
@@ -20,7 +20,7 @@ const activeButtonsSpan = document.getElementById('activeButtons');
 const instrumentSelect = document.getElementById('instrumentSelect');
 const volumeInput = document.getElementById('volume');
 
-let isPull = true;
+let isOpen = true;
 let mapping = [];
 let scheduledTimers = [];
 let audioContext = null;
@@ -78,7 +78,7 @@ function findButtonColor(button, activeDef, note) {
 }
 
 function findMatchingButtons(note) {
-  return window.bandoneonUtils.findMatchingButtons(mapping, note, isPull);
+  return window.bandoneonUtils.findMatchingButtons(mapping, note, isOpen);
 }
 
 function mappingStorageKey(layout){
@@ -160,13 +160,13 @@ function renderMapping() {
     btn.className = 'button-circle';
     btn.type = 'button';
     btn.dataset.id = button.id;
-    btn.dataset.push = button.push?.note ?? button.push;
-    btn.dataset.pull = button.pull?.note ?? button.pull;
+    btn.dataset.close = button.close?.note ?? button.close;
+    btn.dataset.open = button.open?.note ?? button.open;
     btn.dataset.side = button.side;
     btn.dataset.label = button.label;
-    btn.setAttribute('title', `${button.side} • ${button.label} • push ${button.push?.note ?? button.push} / pull ${button.pull?.note ?? button.pull}`);
+    btn.setAttribute('title', `${button.side} • ${button.label} • close ${button.close?.note ?? button.close} / open ${button.open?.note ?? button.open}`);
 
-    const activeDef = isPull ? button.pull : button.push;
+    const activeDef = isOpen ? button.open : button.close;
     const note = activeDef?.note ?? activeDef;
     const label = document.createElement('span');
     label.className = 'label-text';
@@ -296,9 +296,9 @@ function handleNoteOff(note) {
   stopTone(note);
 }
 
-function setPullState(pull) {
-  isPull = !!pull;
-  toggleBtn.textContent = 'Mode: ' + (isPull ? 'Pull' : 'Push');
+function setOpenState(open) {
+  isOpen = !!open;
+  toggleBtn.textContent = 'Mode: ' + (isOpen ? 'Open' : 'Close');
   renderMapping();
 }
 
@@ -347,11 +347,11 @@ function stopTone(note) {
   }
 }
 
-toggleBtn.addEventListener('click', () => setPullState(!isPull));
+toggleBtn.addEventListener('click', () => setOpenState(!isOpen));
 window.addEventListener('keydown', (event) => {
   if (event.code === 'Space') {
     event.preventDefault();
-    setPullState(!isPull);
+    setOpenState(!isOpen);
   }
 });
 
@@ -412,7 +412,7 @@ playMidiBtn.addEventListener('click', () => {
       const offTime = Math.max(0, (note.time + note.duration) * 1000);
       const onTimer = setTimeout(() => handleNoteOn(note.midi, Math.round(note.velocity * 127)), onTime);
       const offTimer = setTimeout(() => handleNoteOff(note.midi), offTime);
-      scheduledTimers.push(onTimer, offTimer);
+      scheduledTimers.close(onTimer, offTimer);
     });
   });
   midiStatus.textContent = 'Playing MIDI...';
@@ -430,7 +430,7 @@ loadMappingForLayout(layoutSelect.value);
 initMIDI();
 
 window._bandoneon = {
-  setPullState,
+  setOpenState,
   mapping,
   loadMappingForLayout
 };

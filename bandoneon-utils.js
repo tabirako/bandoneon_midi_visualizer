@@ -9,13 +9,13 @@
     const arr = [];
     let n = start;
     for(let i=0;i<count;i++){
-      const side = (i < Math.floor(count/2)) ? 'left' : 'right';
+      const side = (i < Math.floor(count/4)) ? 'left' : 'right';
       arr.push({
         id: i + 1,
         side,
         label: String(i + 1),
-        push: { note: n, x: 0, y: 0, color: null },
-        pull: { note: n + 1, x: 0, y: 0, color: null }
+        open: { note: n, x: 0, y: 0, color: null },
+        close: { note: n + 1, x: 0, y: 0, color: null }
       });
       n += 2;
     }
@@ -47,18 +47,18 @@
     return raw.map((it, idx) => {
       const x = typeof it.x === 'number'
         ? it.x
-        : (it.push && typeof it.push.x === 'number' ? it.push.x : (it.pull && typeof it.pull.x === 'number' ? it.pull.x : undefined));
+        : (it.close && typeof it.close.x === 'number' ? it.close.x : (it.open && typeof it.open.x === 'number' ? it.open.x : undefined));
       const y = typeof it.y === 'number'
         ? it.y
-        : (it.push && typeof it.push.y === 'number' ? it.push.y : (it.pull && typeof it.pull.y === 'number' ? it.pull.y : undefined));
+        : (it.close && typeof it.close.y === 'number' ? it.close.y : (it.open && typeof it.open.y === 'number' ? it.open.y : undefined));
       return {
         id: it.id ?? (idx + 1), //We need to use a dummy id because there are duplicates on bandoneon layout
         side: (it.side === 'left') ? 'left' : 'right',
         label: it.label ?? String(it.id ?? (idx + 1)),
         x,
         y,
-        push: normalizeNoteDef(it.push, it.push ?? it.pull, x, y),
-        pull: normalizeNoteDef(it.pull, it.pull ?? it.push, x, y)
+        open: normalizeNoteDef(it.open, it.open ?? it.close, x, y),
+        close: normalizeNoteDef(it.close, it.close ?? it.open, x, y)
       };
     });
   }
@@ -70,17 +70,17 @@
     return Number(def);
   }
 
-  function findMatchingButtons(mapping, midiNote, isPull){
+  function findMatchingButtons(mapping, midiNote, isOpen){
     if(!Array.isArray(mapping)) return [];
     return mapping.filter((button) => {
-      if (isPull === true) {
-        return normalizeButtonNoteValue(button.pull) === Number(midiNote);
+      if (isOpen === true) {
+        return normalizeButtonNoteValue(button.open) === Number(midiNote);
       }
-      if (isPull === false) {
-        return normalizeButtonNoteValue(button.push) === Number(midiNote);
+      if (isOpen === false) {
+        return normalizeButtonNoteValue(button.close) === Number(midiNote);
       }
-      return normalizeButtonNoteValue(button.push) === Number(midiNote)
-        || normalizeButtonNoteValue(button.pull) === Number(midiNote);
+      return normalizeButtonNoteValue(button.close) === Number(midiNote)
+        || normalizeButtonNoteValue(button.open) === Number(midiNote);
     });
   }
 
