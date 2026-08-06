@@ -25,6 +25,7 @@ let mapping = [];
 let scheduledTimers = [];
 let audioContext = null;
 let activeOscillators = new Map();
+const activeNotes = new Map();
 let midiPlayback = null;
 let currentLayout = '142';
 const persistedMappingKey = 'bandoneon-mapping-v1';
@@ -221,20 +222,43 @@ function renderMapping() {
 
   container.appendChild(leftPanel);
   container.appendChild(rightPanel);
+  updateButtonHighlights();
+}
+
+function updateButtonHighlights() {
+  const activeButtonIds = new Set();
+  const activeButtonLabels = new Set();
+  let maxVel = 0;
+
+  activeNotes.forEach((vel, note) => {
+    const matches = findMatchingButtons(note);
+    matches.forEach((button) => {
+      activeButtonIds.add(String(button.id));
+      activeButtonLabels.add(button.side + ': ' + button.label);
+    });
+    maxVel = Math.max(maxVel, vel || 127);
+  });
+
+  activeButtonsSpan.textContent = Array.from(activeButtonLabels).join(', ') || '—';
+
+  document.querySelectorAll('.button-circle').forEach((button) => {
+    const isActive = activeButtonIds.has(button.dataset.id);
+    button.classList.toggle('active', isActive);
+    button.style.opacity = isActive ? '1' : '0.95';
+    button.style.boxShadow = isActive ? '0 0 0 2px rgba(255,255,255,' + Math.min(0.6, maxVel / 160) + '), 0 10px 24px rgba(255,255,255,0.15)' : '';
+  });
 }
 
 function highlightButtonsForNote(note, on = true, vel = 127) {
   if (!mapping.length) return;
 
-  const matches = findMatchingButtons(note);
-  activeButtonsSpan.textContent = matches.map((button) => button.side + ': ' + button.label).join(', ') || '—';
+  if (on) {
+    activeNotes.set(note, vel);
+  } else {
+    activeNotes.delete(note);
+  }
 
-  document.querySelectorAll('.button-circle').forEach((button) => {
-    const isMatch = matches.some((match) => String(match.id) === button.dataset.id);
-    button.classList.toggle('active', on && isMatch);
-    button.style.opacity = on && isMatch ? '1' : '0.95';
-    button.style.boxShadow = on && isMatch ? '0 0 0 2px rgba(255,255,255,' + Math.min(0.6, vel / 160) + '), 0 10px 24px rgba(255,255,255,0.15)' : '';
-  });
+  updateButtonHighlights();
 }
 
 async function initMIDI() {
@@ -279,29 +303,19 @@ function handleNoteOn(note, vel) {
   playTone(note, vel);
 }
 
-function stopHighlighting(note, openState = isOpen) {
+function stopHighlighting(note) {
   if (note != null) {
-    const matches = findMatchingButtons(note, openState);
-    matches.forEach((button) => {
-      const element = document.querySelector('.button-circle[data-id="' + button.id + '"]');
-      if (element) {
-        element.classList.remove('active');
-        element.style.opacity = '1';
-        element.style.boxShadow = '';
-      }
-    });
+    activeNotes.delete(note);
+    updateButtonHighlights();
     return;
   }
 
-  document.querySelectorAll('.button-circle').forEach((button) => {
-    button.classList.remove('active');
-    button.style.opacity = '1';
-    button.style.boxShadow = '';
-  });
+  activeNotes.clear();
+  updateButtonHighlights();
 }
 
-function handleNoteOff(note, openState = isOpen) {
-  stopHighlighting(note, openState);
+function handleNoteOff(note) {
+  stopHighlighting(note);
   stopTone(note);
 }
 
@@ -330,7 +344,7 @@ function playTone(note, velocity) {
   const gainValue = Math.max(0, Math.min(1, (velocity / 127) * volume));
 
   oscillator.type = instrument;
-  oscillator.frequency.setValueAtTime(440 * Math.pow(2, (note - 69) / 12 - 1 ), ctx.currentTime);
+  oscillator.frequency.setValueAtTime(880 * Math.pow(2, (note - 69) / 12  ), ctx.currentTime);
   gain.gain.setValueAtTime(0.001, ctx.currentTime);
   gain.gain.exponentialRampToValueAtTime(gainValue, ctx.currentTime + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.35);
