@@ -923,7 +923,7 @@ window.defaultMappings = {
       "close": {
         "note": 75
       }
-    },
+    }
   ],
   "144": [
     {
