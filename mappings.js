@@ -1,3 +1,4 @@
+// Mapping JSON: array of objects like {"id":3,"side":"left","label":"B3","push":{"note":60,"x":0.3,"y":0.7},"pull":{"note":62,"x":0.3,"y":0.7}}
 window.defaultMappings = {
   "142":   [
     {
@@ -7,12 +8,10 @@ window.defaultMappings = {
       "x": 0.3189970904,
       "y": 0.1350279668,
       "open": {
-        "note": 32,
-        "color": "hsl(104 70% 75%)"
+        "note": 44
       },
       "close": {
-        "note": 32,
-        "color": "hsl(104 70% 75%)"
+        "note": 44
       }
     },
     {
@@ -22,12 +21,10 @@ window.defaultMappings = {
       "x": 0.4630965818,
       "y": 0.1100062178,
       "open": {
-        "note": 34,
-        "color": "hsl(104 70% 75%)"
+        "note": 46
       },
       "close": {
-        "note": 34,
-        "color": "hsl(146 70% 75%)"
+        "note": 46
       }
     },
     {
@@ -37,12 +34,10 @@ window.defaultMappings = {
       "x": 0.5987609866,
       "y": 0.1211269982,
       "open": {
-        "note": 37,
-        "color": "hsl(104 70% 75%)"
+        "note": 49
       },
       "close": {
-        "note": 39,
-        "color": "hsl(146 70% 75%)"
+        "note": 51
       }
     },
     {
@@ -52,12 +47,10 @@ window.defaultMappings = {
       "x": 0.7393458566,
       "y": 0.1600497434,
       "open": {
-        "note": 41,
-        "color": "hsl(104 70% 75%)"
+        "note": 53
       },
       "close": {
-        "note": 51,
-        "color": "hsl(146 70% 75%)"
+        "note": 63
       }
     },
     {
@@ -67,12 +60,10 @@ window.defaultMappings = {
       "x": 0.8714956414,
       "y": 0.2267744258,
       "open": {
-        "note": 56,
-        "color": "hsl(146 70% 75%)"
+        "note": 68
       },
       "close": {
-        "note": 55,
-        "color": "hsl(146 70% 75%)"
+        "note": 67
       }
     },
     {
@@ -82,12 +73,10 @@ window.defaultMappings = {
       "x": 0.1414167454,
       "y": 0.2841023664,
       "open": {
-        "note": 37,
-        "color": "hsl(146 70% 75%)"
+        "note": 40
       },
       "close": {
-        "note": 40,
-        "color": "hsl(146 70% 75%)"
+        "note": 38
       }
     },
     {
@@ -97,12 +86,10 @@ window.defaultMappings = {
       "x": 0.2613572832,
       "y": 0.2392852865,
       "open": {
-        "note": 39,
-        "color": "hsl(146 70% 75%)"
+        "note": 45
       },
       "close": {
-        "note": 40,
-        "color": "hsl(146 70% 75%)"
+        "note": 50
       }
     },
     {
@@ -112,12 +99,10 @@ window.defaultMappings = {
       "x": 0.3970216894,
       "y": 0.1948021649,
       "open": {
-        "note": 38,
-        "color": "hsl(146 70% 75%)"
+        "note": 55
       },
       "close": {
-        "note": 40,
-        "color": "hsl(146 70% 75%)"
+        "note": 58
       }
     },
     {
@@ -127,12 +112,10 @@ window.defaultMappings = {
       "x": 0.527765615,
       "y": 0.2003625689,
       "open": {
-        "note": 39,
-        "color": "hsl(146 70% 75%)"
+        "note": 51
       },
       "close": {
-        "note": 42,
-        "color": "hsl(188 70% 75%)"
+        "note": 60
       }
     },
     {
@@ -142,12 +125,10 @@ window.defaultMappings = {
       "x": 0.6585095546,
       "y": 0.22399421,
       "open": {
-        "note": 40,
-        "color": "hsl(146 70% 75%)"
+        "note": 65
       },
       "close": {
-        "note": 42,
-        "color": "hsl(188 70% 75%)"
+        "note": 49
       }
     },
     {
@@ -157,12 +138,10 @@ window.defaultMappings = {
       "x": 0.7899564237,
       "y": 0.2809882199,
       "open": {
-        "note": 41,
-        "color": "hsl(146 70% 75%)"
+        "note": 58
       },
       "close": {
-        "note": 44,
-        "color": "hsl(188 70% 75%)"
+        "note": 48
       }
     },
     {
@@ -172,12 +151,10 @@ window.defaultMappings = {
       "x": 0.9185915746,
       "y": 0.3588336826,
       "open": {
-        "note": 41,
-        "color": "hsl(146 70% 75%)"
+        "note": 41
       },
       "close": {
-        "note": 43,
-        "color": "hsl(188 70% 75%)"
+        "note": 42
       }
     },
     {
@@ -187,12 +164,10 @@ window.defaultMappings = {
       "x": 0.2121525752,
       "y": 0.3574436023,
       "open": {
-        "note": 42,
-        "color": "hsl(188 70% 75%)"
+        "note": 50
       },
       "close": {
-        "note": 44,
-        "color": "hsl(188 70% 75%)"
+        "note": 43
       }
     },
     {
@@ -202,12 +177,10 @@ window.defaultMappings = {
       "x": 0.3365701918,
       "y": 0.310180265,
       "open": {
-        "note": 42,
-        "color": "hsl(188 70% 75%)"
+        "note": 57
       },
       "close": {
-        "note": 45,
-        "color": "hsl(188 70% 75%)"
+        "note": 55
       }
     },
     {
@@ -217,12 +190,10 @@ window.defaultMappings = {
       "x": 0.4630965818,
       "y": 0.3004495924,
       "open": {
-        "note": 44,
-        "color": "hsl(188 70% 75%)"
+        "note": 60
       },
       "close": {
-        "note": 47,
-        "color": "hsl(188 70% 75%)"
+        "note": 59
       }
     },
     {
@@ -232,12 +203,10 @@ window.defaultMappings = {
       "x": 0.5882171126,
       "y": 0.3115703728,
       "open": {
-        "note": 44,
-        "color": "hsl(188 70% 75%)"
+        "note": 64
       },
       "close": {
-        "note": 46,
-        "color": "hsl(188 70% 75%)"
+        "note": 62
       }
     },
     {
@@ -247,12 +216,10 @@ window.defaultMappings = {
       "x": 0.7119318122,
       "y": 0.344932714,
       "open": {
-        "note": 45,
-        "color": "hsl(188 70% 75%)"
+        "note": 48
       },
       "close": {
-        "note": 48,
-        "color": "hsl(188 70% 75%)"
+        "note": 65
       }
     },
     {
@@ -262,12 +229,10 @@ window.defaultMappings = {
       "x": 0.8349435682,
       "y": 0.4144375846,
       "open": {
-        "note": 46,
-        "color": "hsl(188 70% 75%)"
+        "note": 43
       },
       "close": {
-        "note": 48,
-        "color": "hsl(188 70% 75%)"
+        "note": 54
       }
     },
     {
@@ -277,12 +242,10 @@ window.defaultMappings = {
       "x": 0.1341279637,
       "y": 0.552057273,
       "open": {
-        "note": 47,
-        "color": "hsl(188 70% 75%)"
+        "note": 52
       },
       "close": {
-        "note": 50,
-        "color": "hsl(230 70% 75%)"
+        "note": 45
       }
     },
     {
@@ -292,12 +255,10 @@ window.defaultMappings = {
       "x": 0.2536250997,
       "y": 0.4895028867,
       "open": {
-        "note": 47,
-        "color": "hsl(188 70% 75%)"
+        "note": 56
       },
       "close": {
-        "note": 49,
-        "color": "hsl(230 70% 75%)"
+        "note": 52
       }
     },
     {
@@ -307,12 +268,10 @@ window.defaultMappings = {
       "x": 0.3794485754,
       "y": 0.4547504377,
       "open": {
-        "note": 49,
-        "color": "hsl(230 70% 75%)"
+        "note": 59
       },
       "close": {
-        "note": 51,
-        "color": "hsl(230 70% 75%)"
+        "note": 57
       }
     },
     {
@@ -322,12 +281,10 @@ window.defaultMappings = {
       "x": 0.5087866698,
       "y": 0.4394593612,
       "open": {
-        "note": 49,
-        "color": "hsl(230 70% 75%)"
+        "note": 62
       },
       "close": {
-        "note": 52,
-        "color": "hsl(230 70% 75%)"
+        "note": 61
       }
     },
     {
@@ -337,12 +294,10 @@ window.defaultMappings = {
       "x": 0.6268779606,
       "y": 0.465871218,
       "open": {
-        "note": 50,
-        "color": "hsl(230 70% 75%)"
+        "note": 66
       },
       "close": {
-        "note": 52,
-        "color": "hsl(230 70% 75%)"
+        "note": 64
       }
     },
     {
@@ -352,12 +307,10 @@ window.defaultMappings = {
       "x": 0.7484838853,
       "y": 0.4895028592,
       "open": {
-        "note": 50,
-        "color": "hsl(230 70% 75%)"
+        "note": 61
       },
       "close": {
-        "note": 51,
-        "color": "hsl(230 70% 75%)"
+        "note": 56
       }
     },
     {
@@ -367,12 +320,10 @@ window.defaultMappings = {
       "x": 0.8778219657,
       "y": 0.5659582416,
       "open": {
-        "note": 51,
-        "color": "hsl(230 70% 75%)"
+        "note": 42
       },
       "close": {
-        "note": 54,
-        "color": "hsl(230 70% 75%)"
+        "note": 47
       }
     },
     {
@@ -382,12 +333,10 @@ window.defaultMappings = {
       "x": 0.08000279044,
       "y": 0.7299897594,
       "open": {
-        "note": 52,
-        "color": "hsl(230 70% 75%)"
+        "note": 38
       },
       "close": {
-        "note": 54,
-        "color": "hsl(230 70% 75%)"
+        "note": 40
       }
     },
     {
@@ -397,12 +346,10 @@ window.defaultMappings = {
       "x": 0.1748975867,
       "y": 0.6799462338,
       "open": {
-        "note": 53,
-        "color": "hsl(230 70% 75%)"
+        "note": 47
       },
       "close": {
-        "note": 56,
-        "color": "hsl(230 70% 75%)"
+        "note": 52
       }
     },
     {
@@ -412,12 +359,10 @@ window.defaultMappings = {
       "x": 0.2965034972,
       "y": 0.6160017396,
       "open": {
-        "note": 53,
-        "color": "hsl(230 70% 75%)"
+        "note": 67
       },
       "close": {
-        "note": 55,
-        "color": "hsl(230 70% 75%)"
+        "note": 66
       }
     },
     {
@@ -427,12 +372,10 @@ window.defaultMappings = {
       "x": 0.4209211138,
       "y": 0.5895898828,
       "open": {
-        "note": 55,
-        "color": "hsl(230 70% 75%)"
+        "note": 69
       },
       "close": {
-        "note": 57,
-        "color": "hsl(272 70% 75%)"
+        "note": 68
       }
     },
     {
@@ -442,12 +385,10 @@ window.defaultMappings = {
       "x": 0.5495562786,
       "y": 0.5895898828,
       "open": {
-        "note": 55,
-        "color": "hsl(230 70% 75%)"
+        "note": 63
       },
       "close": {
-        "note": 58,
-        "color": "hsl(272 70% 75%)"
+        "note": 70
       }
     },
     {
@@ -457,12 +398,10 @@ window.defaultMappings = {
       "x": 0.6711622033,
       "y": 0.607661175,
       "open": {
-        "note": 56,
-        "color": "hsl(272 70% 75%)"
+        "note": 54
       },
       "close": {
-        "note": 58,
-        "color": "hsl(272 70% 75%)"
+        "note": 53
       }
     },
     {
@@ -472,12 +411,10 @@ window.defaultMappings = {
       "x": 0.7934710437,
       "y": 0.6465838926,
       "open": {
-        "note": 56,
-        "color": "hsl(272 70% 75%)"
+        "note": 39
       },
       "close": {
-        "note": 57,
-        "color": "hsl(272 70% 75%)"
+        "note": 37
       }
     },
     {
@@ -487,12 +424,10 @@ window.defaultMappings = {
       "x": 0.9199974198,
       "y": 0.7119184947,
       "open": {
-        "note": 57,
-        "color": "hsl(272 70% 75%)"
+        "note": 36
       },
       "close": {
-        "note": 60,
-        "color": "hsl(272 70% 75%)"
+        "note": 41
       }
     },
     {
@@ -502,12 +437,10 @@ window.defaultMappings = {
       "x": 0.3205184862,
       "y": 0.09740379545,
       "open": {
-        "note": 58,
-        "color": "hsl(272 70% 75%)"
+        "note": 95
       },
       "close": {
-        "note": 60,
-        "color": "hsl(272 70% 75%)"
+        "note": 94
       }
     },
     {
@@ -517,12 +450,10 @@ window.defaultMappings = {
       "x": 0.4582473792,
       "y": 0.08592481818,
       "open": {
-        "note": 59,
-        "color": "hsl(272 70% 75%)"
+        "note": 93
       },
       "close": {
-        "note": 62,
-        "color": "hsl(272 70% 75%)"
+        "note": 93
       }
     },
     {
@@ -532,12 +463,10 @@ window.defaultMappings = {
       "x": 0.5940043841,
       "y": 0.09166431818,
       "open": {
-        "note": 59,
-        "color": "hsl(272 70% 75%)"
+        "note": 91
       },
       "close": {
-        "note": 61,
-        "color": "hsl(272 70% 75%)"
+        "note": 90
       }
     },
     {
@@ -547,12 +476,10 @@ window.defaultMappings = {
       "x": 0.7231282314,
       "y": 0.1192139091,
       "open": {
-        "note": 61,
-        "color": "hsl(272 70% 75%)"
+        "note": 89
       },
       "close": {
-        "note": 63,
-        "color": "hsl(272 70% 75%)"
+        "note": 89
       }
     },
     {
@@ -562,12 +489,10 @@ window.defaultMappings = {
       "x": 0.2595655932,
       "y": 0.1903837727,
       "open": {
-        "note": 61,
-        "color": "hsl(272 70% 75%)"
+        "note": 61
       },
       "close": {
-        "note": 62,
-        "color": "hsl(272 70% 75%)"
+        "note": 60
       }
     },
     {
@@ -577,12 +502,10 @@ window.defaultMappings = {
       "x": 0.3910954926,
       "y": 0.1708694318,
       "open": {
-        "note": 62,
-        "color": "hsl(272 70% 75%)"
+        "note": 93
       },
       "close": {
-        "note": 64,
-        "color": "hsl(314 70% 75%)"
+        "note": 91
       }
     },
     {
@@ -592,12 +515,10 @@ window.defaultMappings = {
       "x": 0.5178133036,
       "y": 0.1628341364,
       "open": {
-        "note": 62,
-        "color": "hsl(272 70% 75%)"
+        "note": 90
       },
       "close": {
-        "note": 63,
-        "color": "hsl(314 70% 75%)"
+        "note": 82
       }
     },
     {
@@ -607,12 +528,10 @@ window.defaultMappings = {
       "x": 0.6477391682,
       "y": 0.1766089545,
       "open": {
-        "note": 63,
-        "color": "hsl(314 70% 75%)"
+        "note": 88
       },
       "close": {
-        "note": 66,
-        "color": "hsl(314 70% 75%)"
+        "note": 84
       }
     },
     {
@@ -622,12 +541,10 @@ window.defaultMappings = {
       "x": 0.7688428892,
       "y": 0.2179333636,
       "open": {
-        "note": 64,
-        "color": "hsl(314 70% 75%)"
+        "note": 87
       },
       "close": {
-        "note": 66,
-        "color": "hsl(314 70% 75%)"
+        "note": 87
       }
     },
     {
@@ -637,12 +554,10 @@ window.defaultMappings = {
       "x": 0.2058308408,
       "y": 0.2833637045,
       "open": {
-        "note": 65,
-        "color": "hsl(314 70% 75%)"
+        "note": 60
       },
       "close": {
-        "note": 68,
-        "color": "hsl(314 70% 75%)"
+        "note": 62
       }
     },
     {
@@ -652,12 +567,10 @@ window.defaultMappings = {
       "x": 0.3253305429,
       "y": 0.2592577955,
       "open": {
-        "note": 65,
-        "color": "hsl(314 70% 75%)"
+        "note": 62
       },
       "close": {
-        "note": 67,
-        "color": "hsl(314 70% 75%)"
+        "note": 85
       }
     },
     {
@@ -667,12 +580,10 @@ window.defaultMappings = {
       "x": 0.4520483698,
       "y": 0.2500745909,
       "open": {
-        "note": 67,
-        "color": "hsl(314 70% 75%)"
+        "note": 67
       },
       "close": {
-        "note": 69,
-        "color": "hsl(356 70% 75%)"
+        "note": 68
       }
     },
     {
@@ -682,12 +593,10 @@ window.defaultMappings = {
       "x": 0.5763601444,
       "y": 0.2592577955,
       "open": {
-        "note": 67,
-        "color": "hsl(314 70% 75%)"
+        "note": 82
       },
       "close": {
-        "note": 70,
-        "color": "hsl(356 70% 75%)"
+        "note": 70
       }
     },
     {
@@ -697,12 +606,10 @@ window.defaultMappings = {
       "x": 0.6942558276,
       "y": 0.2856595227,
       "open": {
-        "note": 69,
-        "color": "hsl(356 70% 75%)"
+        "note": 84
       },
       "close": {
-        "note": 71,
-        "color": "hsl(356 70% 75%)"
+        "note": 72
       }
     },
     {
@@ -712,12 +619,10 @@ window.defaultMappings = {
       "x": 0.8105474919,
       "y": 0.3189486364,
       "open": {
-        "note": 69,
-        "color": "hsl(356 70% 75%)"
+        "note": 86
       },
       "close": {
-        "note": 70,
-        "color": "hsl(356 70% 75%)"
+        "note": 86
       }
     },
     {
@@ -727,12 +632,10 @@ window.defaultMappings = {
       "x": 0.1569081452,
       "y": 0.3924142727,
       "open": {
-        "note": 70,
-        "color": "hsl(356 70% 75%)"
+        "note": 59
       },
       "close": {
-        "note": 73,
-        "color": "hsl(356 70% 75%)"
+        "note": 59
       }
     },
     {
@@ -742,12 +645,10 @@ window.defaultMappings = {
       "x": 0.2723977921,
       "y": 0.36371675,
       "open": {
-        "note": 71,
-        "color": "hsl(356 70% 75%)"
+        "note": 64
       },
       "close": {
-        "note": 73,
-        "color": "hsl(356 70% 75%)"
+        "note": 66
       }
     },
     {
@@ -757,12 +658,10 @@ window.defaultMappings = {
       "x": 0.38628342,
       "y": 0.3442024545,
       "open": {
-        "note": 72,
-        "color": "hsl(356 70% 75%)"
+        "note": 73
       },
       "close": {
-        "note": 75,
-        "color": "hsl(356 70% 75%)"
+        "note": 78
       }
     },
     {
@@ -772,12 +671,10 @@ window.defaultMappings = {
       "x": 0.507387141,
       "y": 0.34649825,
       "open": {
-        "note": 72,
-        "color": "hsl(356 70% 75%)"
+        "note": 66
       },
       "close": {
-        "note": 74,
-        "color": "hsl(356 70% 75%)"
+        "note": 67
       }
     },
     {
@@ -787,12 +684,10 @@ window.defaultMappings = {
       "x": 0.6236788212,
       "y": 0.35797725,
       "open": {
-        "note": 74,
-        "color": "hsl(356 70% 75%)"
+        "note": 60
       },
       "close": {
-        "note": 76,
-        "color": "hsl(38 70% 75%)"
+        "note": 71
       }
     },
     {
@@ -802,12 +697,10 @@ window.defaultMappings = {
       "x": 0.735158397,
       "y": 0.3958579773,
       "open": {
-        "note": 74,
-        "color": "hsl(356 70% 75%)"
+        "note": 72
       },
       "close": {
-        "note": 75,
-        "color": "hsl(38 70% 75%)"
+        "note": 74
       }
     },
     {
@@ -817,12 +710,10 @@ window.defaultMappings = {
       "x": 0.8514500771,
       "y": 0.4371823864,
       "open": {
-        "note": 75,
-        "color": "hsl(38 70% 75%)"
+        "note": 76
       },
       "close": {
-        "note": 77,
-        "color": "hsl(38 70% 75%)"
+        "note": 79
       }
     },
     {
@@ -832,12 +723,10 @@ window.defaultMappings = {
       "x": 0.08071704877,
       "y": 0.55426825,
       "open": {
-        "note": 75,
-        "color": "hsl(38 70% 75%)"
+        "note": 57
       },
       "close": {
-        "note": 76,
-        "color": "hsl(38 70% 75%)"
+        "note": 57
       }
     },
     {
@@ -847,12 +736,10 @@ window.defaultMappings = {
       "x": 0.1897906042,
       "y": 0.5117959318,
       "open": {
-        "note": 76,
-        "color": "hsl(38 70% 75%)"
+        "note": 65
       },
       "close": {
-        "note": 79,
-        "color": "hsl(38 70% 75%)"
+        "note": 65
       }
     },
     {
@@ -862,12 +749,10 @@ window.defaultMappings = {
       "x": 0.3141023947,
       "y": 0.4872333409,
       "open": {
-        "note": 77,
-        "color": "hsl(38 70% 75%)"
+        "note": 70
       },
       "close": {
-        "note": 79,
-        "color": "hsl(38 70% 75%)"
+        "note": 64
       }
     },
     {
@@ -877,12 +762,10 @@ window.defaultMappings = {
       "x": 0.4239779516,
       "y": 0.4716194091,
       "open": {
-        "note": 78,
-        "color": "hsl(38 70% 75%)"
+        "note": 68
       },
       "close": {
-        "note": 80,
-        "color": "hsl(38 70% 75%)"
+        "note": 69
       }
     },
     {
@@ -892,12 +775,10 @@ window.defaultMappings = {
       "x": 0.5418736507,
       "y": 0.4703261591,
       "open": {
-        "note": 78,
-        "color": "hsl(38 70% 75%)"
+        "note": 71
       },
       "close": {
-        "note": 79,
-        "color": "hsl(38 70% 75%)"
+        "note": 73
       }
     },
     {
@@ -907,12 +788,10 @@ window.defaultMappings = {
       "x": 0.6597693338,
       "y": 0.4796547273,
       "open": {
-        "note": 80,
-        "color": "hsl(38 70% 75%)"
+        "note": 74
       },
       "close": {
-        "note": 82,
-        "color": "hsl(38 70% 75%)"
+        "note": 76
       }
     },
     {
@@ -922,12 +801,10 @@ window.defaultMappings = {
       "x": 0.777665017,
       "y": 0.5106480455,
       "open": {
-        "note": 80,
-        "color": "hsl(38 70% 75%)"
+        "note": 80
       },
       "close": {
-        "note": 81,
-        "color": "hsl(38 70% 75%)"
+        "note": 81
       }
     },
     {
@@ -937,12 +814,10 @@ window.defaultMappings = {
       "x": 0.8891446087,
       "y": 0.5546968409,
       "open": {
-        "note": 81,
-        "color": "hsl(38 70% 75%)"
+        "note": 82
       },
       "close": {
-        "note": 83,
-        "color": "hsl(80 70% 75%)"
+        "note": 85
       }
     },
     {
@@ -952,12 +827,10 @@ window.defaultMappings = {
       "x": 0.1169694321,
       "y": 0.6884062045,
       "open": {
-        "note": 81,
-        "color": "hsl(38 70% 75%)"
+        "note": 58
       },
       "close": {
-        "note": 82,
-        "color": "hsl(80 70% 75%)"
+        "note": 58
       }
     },
     {
@@ -967,12 +840,10 @@ window.defaultMappings = {
       "x": 0.2347032446,
       "y": 0.6314263864,
       "open": {
-        "note": 82,
-        "color": "hsl(80 70% 75%)"
+        "note": 63
       },
       "close": {
-        "note": 85,
-        "color": "hsl(80 70% 75%)"
+        "note": 63
       }
     },
     {
@@ -982,12 +853,10 @@ window.defaultMappings = {
       "x": 0.3461828363,
       "y": 0.6036279773,
       "open": {
-        "note": 83,
-        "color": "hsl(80 70% 75%)"
+        "note": 77
       },
       "close": {
-        "note": 85,
-        "color": "hsl(80 70% 75%)"
+        "note": 77
       }
     },
     {
@@ -997,12 +866,10 @@ window.defaultMappings = {
       "x": 0.4640785195,
       "y": 0.5860843182,
       "open": {
-        "note": 84,
-        "color": "hsl(80 70% 75%)"
+        "note": 75
       },
       "close": {
-        "note": 87,
-        "color": "hsl(80 70% 75%)"
+        "note": 76
       }
     },
     {
@@ -1012,12 +879,10 @@ window.defaultMappings = {
       "x": 0.5803701837,
       "y": 0.5906856818,
       "open": {
-        "note": 84,
-        "color": "hsl(80 70% 75%)"
+        "note": 78
       },
       "close": {
-        "note": 86,
-        "color": "hsl(80 70% 75%)"
+        "note": 80
       }
     },
     {
@@ -1027,12 +892,10 @@ window.defaultMappings = {
       "x": 0.6966618639,
       "y": 0.6064223409,
       "open": {
-        "note": 86,
-        "color": "hsl(80 70% 75%)"
+        "note": 81
       },
       "close": {
-        "note": 88,
-        "color": "hsl(80 70% 75%)"
+        "note": 83
       }
     },
     {
@@ -1042,12 +905,10 @@ window.defaultMappings = {
       "x": 0.8161615819,
       "y": 0.6277339091,
       "open": {
-        "note": 86,
-        "color": "hsl(80 70% 75%)"
+        "note": 85
       },
       "close": {
-        "note": 87,
-        "color": "hsl(80 70% 75%)"
+        "note": 88
       }
     },
     {
@@ -1057,12 +918,10 @@ window.defaultMappings = {
       "x": 0.9202059985,
       "y": 0.6916911818,
       "open": {
-        "note": 87,
-        "color": "hsl(80 70% 75%)"
+        "note": 79
       },
       "close": {
-        "note": 89,
-        "color": "hsl(80 70% 75%)"
+        "note": 75
       }
     },
   ],

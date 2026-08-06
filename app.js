@@ -122,7 +122,7 @@ function colorForAccent(note) {
 
 function midiToLabel(note) {
   if (note == null) return '—';
-  const names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const names = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'];
   const octave = Math.floor(note / 12) - 1;
   return names[note % 12] + octave;
 }
