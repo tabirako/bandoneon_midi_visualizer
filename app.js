@@ -330,7 +330,7 @@ function playTone(note, velocity) {
   const gainValue = Math.max(0, Math.min(1, (velocity / 127) * volume));
 
   oscillator.type = instrument;
-  oscillator.frequency.setValueAtTime(440 * Math.pow(2, (note - 69) / 12), ctx.currentTime);
+  oscillator.frequency.setValueAtTime(440 * Math.pow(2, (note - 69) / 12 - 1 ), ctx.currentTime);
   gain.gain.setValueAtTime(0.001, ctx.currentTime);
   gain.gain.exponentialRampToValueAtTime(gainValue, ctx.currentTime + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.35);

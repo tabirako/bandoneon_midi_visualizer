@@ -388,7 +388,7 @@ window.defaultMappings = {
         "note": 63
       },
       "close": {
-        "note": 70
+        "note": 71
       }
     },
     {
@@ -440,7 +440,7 @@ window.defaultMappings = {
         "note": 95
       },
       "close": {
-        "note": 94
+        "note": 93
       }
     },
     {
@@ -450,10 +450,10 @@ window.defaultMappings = {
       "x": 0.4582473792,
       "y": 0.08592481818,
       "open": {
-        "note": 93
+        "note": 92
       },
       "close": {
-        "note": 93
+        "note": 92
       }
     },
     {
@@ -570,7 +570,7 @@ window.defaultMappings = {
         "note": 62
       },
       "close": {
-        "note": 85
+        "note": 61
       }
     },
     {
@@ -684,7 +684,7 @@ window.defaultMappings = {
       "x": 0.6236788212,
       "y": 0.35797725,
       "open": {
-        "note": 60
+        "note": 69
       },
       "close": {
         "note": 71
@@ -814,7 +814,7 @@ window.defaultMappings = {
       "x": 0.8891446087,
       "y": 0.5546968409,
       "open": {
-        "note": 82
+        "note": 81
       },
       "close": {
         "note": 85
@@ -892,7 +892,7 @@ window.defaultMappings = {
       "x": 0.6966618639,
       "y": 0.6064223409,
       "open": {
-        "note": 81
+        "note": 83
       },
       "close": {
         "note": 83
