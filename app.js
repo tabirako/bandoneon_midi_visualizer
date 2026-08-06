@@ -77,8 +77,8 @@ function findButtonColor(button, activeDef, note) {
   return colorForMidi(note);
 }
 
-function findMatchingButtons(note) {
-  return window.bandoneonUtils.findMatchingButtons(mapping, note, isOpen);
+function findMatchingButtons(note, openState = isOpen) {
+  return window.bandoneonUtils.findMatchingButtons(mapping, note, openState);
 }
 
 function mappingStorageKey(layout){
@@ -104,8 +104,12 @@ function loadMappingForLayout(layout) {
   renderMapping();
 }
 
+/** 
+because we stringify the mapping here, we do not need to worry about
+if we add "" to each&every strings
+*/
 function persistMapping() {
-  localStorage.setItem(mappingStorageKey(currentLayout), JSON.stringify(mapping));
+  localStorage.setItem(mappingStorageKey(currentLayout), JSON.stringify(mapping)); 
 }
 
 function colorForMidi(note) {
@@ -204,9 +208,11 @@ function renderMapping() {
 
     btn.addEventListener('click', () => {
       const activeNote = activeDef?.note ?? activeDef;
-      handleNoteOn(activeNote, 127);
-      setTimeout(() => handleNoteOff(activeNote), 220);
-      playTone(activeNote, 127);
+      const clickState = isOpen;
+      if (activeNote != null) {
+        handleNoteOn(activeNote, 127);
+        setTimeout(() => handleNoteOff(activeNote, clickState), 220);
+      }
     });
 
     const layout = button.side === 'right' ? rightLayout : leftLayout;
@@ -228,14 +234,6 @@ function highlightButtonsForNote(note, on = true, vel = 127) {
     button.classList.toggle('active', on && isMatch);
     button.style.opacity = on && isMatch ? '1' : '0.95';
     button.style.boxShadow = on && isMatch ? '0 0 0 2px rgba(255,255,255,' + Math.min(0.6, vel / 160) + '), 0 10px 24px rgba(255,255,255,0.15)' : '';
-  });
-}
-
-function stopHighlighting() {
-  document.querySelectorAll('.button-circle').forEach((button) => {
-    button.classList.remove('active');
-    button.style.opacity = '1';
-    button.style.boxShadow = '';
   });
 }
 
@@ -281,18 +279,29 @@ function handleNoteOn(note, vel) {
   playTone(note, vel);
 }
 
-function handleNoteOff(note) {
-  stopHighlighting();
+function stopHighlighting(note, openState = isOpen) {
   if (note != null) {
-    const matches = findMatchingButtons(note);
+    const matches = findMatchingButtons(note, openState);
     matches.forEach((button) => {
       const element = document.querySelector('.button-circle[data-id="' + button.id + '"]');
       if (element) {
         element.classList.remove('active');
+        element.style.opacity = '1';
         element.style.boxShadow = '';
       }
     });
+    return;
   }
+
+  document.querySelectorAll('.button-circle').forEach((button) => {
+    button.classList.remove('active');
+    button.style.opacity = '1';
+    button.style.boxShadow = '';
+  });
+}
+
+function handleNoteOff(note, openState = isOpen) {
+  stopHighlighting(note, openState);
   stopTone(note);
 }
 
