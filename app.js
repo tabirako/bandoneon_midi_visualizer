@@ -364,7 +364,7 @@ window.addEventListener('keydown', (event) => {
   }
 });
 
-mappingFileInput.addEventListener('change', (event) => {
+mappingFileInput?.addEventListener('change', (event) => {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
@@ -387,7 +387,7 @@ mappingFileInput.addEventListener('change', (event) => {
 });
 
 
-midiFileInput.addEventListener('change', (event) => {
+midiFileInput?.addEventListener('change', (event) => {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
