@@ -335,6 +335,7 @@ function ensureAudioContext() {
   return audioContext;
 }
 
+
 function playTone(note, velocity) {
   const ctx = ensureAudioContext();
   const gain = ctx.createGain();
