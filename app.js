@@ -30,13 +30,6 @@ let midiPlayback = null;
 let currentLayout = '142';
 const persistedMappingKey = 'bandoneon-mapping-v1';
 
-// Default fallback button color scheme by button id.
-// Mapping colors in mappings.js still take precedence.
-const defaultButtonColors = [
-  // [buttonId, color]
-  // Example: [24, 'hsl(230 70% 75%)'],
-  // Example: [36, 'hsl(110 70% 75%)'],
-];
 
 function normalizeMapping(rawMapping, layout) {
   return window.bandoneonUtils.normalizeMapping(rawMapping, layout);
@@ -121,7 +114,7 @@ function colorForMidi(note) {
 
 function colorForAccent(note) {
   const octave = Math.floor(note / 12);
-  const hue = (octave * 48 + 12) % 360;
+  const hue = (octave * 48 + 30) % 360;
   return 'hsl(' + hue + ' 65% 55%)';
 }
 
@@ -325,6 +318,7 @@ function setOpenState(open) {
   renderMapping();
 }
 
+// TODO: add a custom waveform that is similar to free reed instruments
 function ensureAudioContext() {
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -345,7 +339,7 @@ function playTone(note, velocity) {
   const gainValue = Math.max(0, Math.min(1, (velocity / 127) * volume));
 
   oscillator.type = instrument;
-  oscillator.frequency.setValueAtTime(880 * Math.pow(2, (note - 69) / 12  ), ctx.currentTime);
+  oscillator.frequency.setValueAtTime(440 * Math.pow(2, (note - 57) / 12  ), ctx.currentTime);
   gain.gain.setValueAtTime(0.001, ctx.currentTime);
   gain.gain.exponentialRampToValueAtTime(gainValue, ctx.currentTime + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.35);
