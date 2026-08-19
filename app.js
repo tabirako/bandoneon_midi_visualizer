@@ -338,7 +338,19 @@ function playTone(note, velocity) {
   const instrument = instrumentSelect.value || 'sine';
   const gainValue = Math.max(0, Math.min(1, (velocity / 127) * volume));
 
-  oscillator.type = instrument;
+  if (instrument === 'custom') {
+    const real = new Float32Array(30);
+    const imag = new Float32Array(30);
+
+    for (let harmonic = 1; harmonic < imag.length; harmonic += 1) {
+      imag[harmonic] = Math.sin(harmonic * Math.PI * 0.23) / harmonic;
+      real[harmonic] = harmonic % 3 === 0 ? 0.15 / harmonic : 0;
+    }
+
+    oscillator.setPeriodicWave(ctx.createPeriodicWave(real, imag));
+  } else {
+    oscillator.type = instrument;
+  }
   oscillator.frequency.setValueAtTime(440 * Math.pow(2, (note - 57) / 12  ), ctx.currentTime);
   gain.gain.setValueAtTime(0.001, ctx.currentTime);
   gain.gain.exponentialRampToValueAtTime(gainValue, ctx.currentTime + 0.01);
