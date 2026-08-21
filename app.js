@@ -342,9 +342,11 @@ function playTone(note, velocity) {
     const real = new Float32Array(30);
     const imag = new Float32Array(30);
 
+    real[0] = 0
+    imag[0] = 0
     for (let harmonic = 1; harmonic < imag.length; harmonic += 1) {
       imag[harmonic] = Math.sin(harmonic * Math.PI * 0.23) / harmonic;
-      real[harmonic] = harmonic % 3 === 0 ? 0.15 / harmonic : 0;
+      real[harmonic] = harmonic % 2 === 0 ? 0.15 / harmonic : 0;
     }
 
     oscillator.setPeriodicWave(ctx.createPeriodicWave(real, imag));

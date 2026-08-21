@@ -52,7 +52,7 @@
         ? it.y
         : (it.close && typeof it.close.y === 'number' ? it.close.y : (it.open && typeof it.open.y === 'number' ? it.open.y : undefined));
       return {
-        id: it.id ?? (idx + 1), //We need to use a dummy id because there are duplicates on bandoneon layout
+        id: it.id ?? (idx + 1), //We need to use a dummy id because there are duplicate notes on bandoneon layout
         side: (it.side === 'left') ? 'left' : 'right',
         label: it.label ?? String(it.id ?? (idx + 1)),
         x,
