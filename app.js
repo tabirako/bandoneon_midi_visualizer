@@ -185,6 +185,7 @@ function renderMapping() {
       wrapper.style.top = (y * 100) + '%';
       wrapper.style.transform = 'translate(-50%, -50%)';
     } else {
+      wrapper.style.position = 'relative';
       if (typeof button.row === 'number') {
         wrapper.style.gridRowStart = button.row;
       }
@@ -458,8 +459,12 @@ stopMidiBtn.addEventListener('click', () => {
 
 layoutSelect.addEventListener('change', () => loadMappingForLayout(layoutSelect.value));
 
+const enableMidiBtn = document.getElementById('enableMidi');
+if (enableMidiBtn) {
+  enableMidiBtn.addEventListener('click', initMIDI);
+}
+
 loadMappingForLayout(layoutSelect.value);
-initMIDI();
 
 window._bandoneon = {
   setOpenState,
