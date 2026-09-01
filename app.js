@@ -70,39 +70,7 @@ function normalizeMapping(rawMapping, layout) {
   return window.bandoneonUtils.normalizeMapping(rawMapping, layout);
 }
 
-function getColorFromRange(note) {
-  if (!Array.isArray(window.buttonColorRanges)) {
-    return null;
-  }
-
-  let lastMatch = null;
-  for (const [threshold, color] of window.buttonColorRanges) {
-    if (typeof threshold !== 'number' || typeof color !== 'string') {
-      continue;
-    }
-    if (note < threshold) {
-      return color;
-    }
-    lastMatch = color;
-  }
-  return lastMatch;
-}
-
 function findButtonColor(button, activeDef, note) {
-  if (activeDef && activeDef.color) {
-    return activeDef.color;
-  }
-  if (button.color) {
-    return button.color;
-  }
-  const rangeColor = getColorFromRange(note);
-  if (rangeColor) {
-    return rangeColor;
-  }
-  const override = defaultButtonColors.find(([id]) => Number(id) === Number(button.id));
-  if (override) {
-    return override[1];
-  }
   return colorForMidi(note);
 }
 
