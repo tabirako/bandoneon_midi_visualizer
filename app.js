@@ -291,7 +291,7 @@ function onMIDIMessage(ev) {
 }
 
 function handleNoteOn(note, vel) {
-  incomingNote.textContent = note + ' (' + midiToLabel(note) + ')';
+  incomingNote.textContent = midiToLabel(note) + ' (' + note + ')';
   incomingVel.textContent = vel;
   highlightButtonsForNote(note, true, vel);
   playTone(note, vel);
