@@ -34,15 +34,20 @@
       <button id="playMidi">Play MIDI</button>
       <button id="stopMidi">Stop</button>
 
+      <label class="progress">MIDI position:
+        <input id="midiProgress" type="range" min="0" max="1000" value="0" step="10">
+        <span id="midiTime">00:00&nbsp;/&nbsp;00:00</span>
+      </label>
+
       <label>Instrument:
         <select id="instrumentSelect">
+          <option value="accordion" selected>Accordion (musette)</option>
+          <option value="harmonica">Harmonica</option>
+          <option value="bandoneon">Bandoneon</option>
           <option value="sine">Sine</option>
           <option value="square">Square</option>
           <option value="sawtooth">Sawtooth</option>
           <option value="triangle">Triangle</option>
-          <option value="accordion">Accordion (musette)</option>
-          <option value="harmonica">Harmonica</option>
-          <option value="bandoneon">Bandoneon</option>
         </select>
       </label>
 

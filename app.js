@@ -25,10 +25,15 @@ const reedVibratoInput = document.getElementById('reedVibrato');
 const reedDetuneVal = document.getElementById('reedDetuneVal');
 const reedBreathVal = document.getElementById('reedBreathVal');
 const reedVibratoVal = document.getElementById('reedVibratoVal');
+const midiProgressInput = document.getElementById('midiProgress');
+const midiTimeLabel = document.getElementById('midiTime');
 
 let isOpen = true;
 let mapping = [];
 let scheduledTimers = [];
+let playbackWallStartMs = 0;
+let progressTimer = null;
+let isSeekingProgress = false;
 let audioContext = null;
 let activeOscillators = new Map();
 const activeReedVoices = new Map();
@@ -554,6 +559,9 @@ midiFileInput?.addEventListener('change', (event) => {
       const parsedMidi = new Midi(reader.result);
       midiPlayback = parsedMidi;
       midiStatus.textContent = 'MIDI file loaded. Click Play.';
+      midiProgressInput.max = String(Math.max(1, Math.round(parsedMidi.duration * 1000)));
+      midiProgressInput.value = '0';
+      updateProgressUI(0);
     } catch (err) {
       console.error(err);
       alert('Failed to parse MIDI file.');
@@ -567,28 +575,100 @@ function stopScheduled() {
   scheduledTimers = [];
 }
 
+// Silences any notes that are still actually sounding (reed voices sustain
+// until note-off, so a Stop or a seek needs to explicitly cut them, not just
+// clear the on-screen highlight).
+function stopAllActiveNotes() {
+  Array.from(activeNotes.keys()).forEach((note) => handleNoteOff(note));
+}
+
+function formatTime(seconds) {
+  if (!isFinite(seconds) || seconds < 0) seconds = 0;
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function updateProgressUI(currentSeconds) {
+  const duration = midiPlayback ? midiPlayback.duration : 0;
+  const clamped = Math.max(0, Math.min(currentSeconds, duration));
+  if (!isSeekingProgress) {
+    midiProgressInput.value = String(Math.round(clamped * 1000));
+  }
+  midiTimeLabel.textContent = formatTime(clamped) + '\u00A0/\u00A0' + formatTime(duration);
+}
+
+function startProgressTimer() {
+  stopProgressTimer();
+  progressTimer = setInterval(() => {
+    const elapsed = (Date.now() - playbackWallStartMs) / 1000;
+    updateProgressUI(elapsed);
+    if (midiPlayback && elapsed >= midiPlayback.duration) {
+      stopProgressTimer();
+      midiStatus.textContent = 'Finished.';
+    }
+  }, 100);
+}
+
+function stopProgressTimer() {
+  if (progressTimer) {
+    clearInterval(progressTimer);
+    progressTimer = null;
+  }
+}
+
+// Schedules playback starting at offsetSeconds into the track. Used both by
+// the Play button (offset 0) and by dragging the progress slider (seeking).
+function schedulePlaybackFrom(offsetSeconds) {
+  stopScheduled();
+  stopAllActiveNotes();
+  midiPlayback.tracks.forEach((track) => {
+    track.notes.forEach((note) => {
+      const relOn = note.time - offsetSeconds;
+      const relOff = (note.time + note.duration) - offsetSeconds;
+      if (relOff <= 0) return; // this note is entirely in the past from here
+      const onDelay = Math.max(0, relOn) * 1000;
+      const offDelay = Math.max(0, relOff) * 1000;
+      const onTimer = setTimeout(() => handleNoteOn(note.midi, Math.round(note.velocity * 127)), onDelay);
+      const offTimer = setTimeout(() => handleNoteOff(note.midi), offDelay);
+      scheduledTimers.push(onTimer, offTimer);
+    });
+  });
+  playbackWallStartMs = Date.now() - offsetSeconds * 1000;
+  updateProgressUI(offsetSeconds);
+  startProgressTimer();
+  midiStatus.textContent = 'Playing MIDI...';
+}
+
 playMidiBtn.addEventListener('click', () => {
   if (!midiPlayback) {
     alert('Load a MIDI file first.');
     return;
   }
-  stopScheduled();
-  midiPlayback.tracks.forEach((track) => {
-    track.notes.forEach((note) => {
-      const onTime = Math.max(0, note.time * 1000);
-      const offTime = Math.max(0, (note.time + note.duration) * 1000);
-      const onTimer = setTimeout(() => handleNoteOn(note.midi, Math.round(note.velocity * 127)), onTime);
-      const offTimer = setTimeout(() => handleNoteOff(note.midi), offTime);
-      scheduledTimers.push(onTimer, offTimer);
-    });
-  });
-  midiStatus.textContent = 'Playing MIDI...';
+  schedulePlaybackFrom(0);
 });
 
 stopMidiBtn.addEventListener('click', () => {
   stopScheduled();
-  stopHighlighting();
+  stopAllActiveNotes();
+  stopProgressTimer();
+  updateProgressUI(0);
   midiStatus.textContent = 'Stopped.';
+});
+
+midiProgressInput.addEventListener('input', () => {
+  isSeekingProgress = true;
+  const seconds = Number(midiProgressInput.value) / 1000;
+  const duration = midiPlayback ? midiPlayback.duration : 0;
+  midiTimeLabel.textContent = formatTime(seconds) + '\u00A0/\u00A0' + formatTime(duration);
+});
+
+midiProgressInput.addEventListener('change', () => {
+  isSeekingProgress = false;
+  const seconds = Number(midiProgressInput.value) / 1000;
+  if (midiPlayback) {
+    schedulePlaybackFrom(seconds);
+  }
 });
 
 layoutSelect.addEventListener('change', () => loadMappingForLayout(layoutSelect.value));
