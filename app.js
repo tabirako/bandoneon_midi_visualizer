@@ -19,13 +19,48 @@ const incomingVel = document.getElementById('incomingVel');
 const activeButtonsSpan = document.getElementById('activeButtons');
 const instrumentSelect = document.getElementById('instrumentSelect');
 const volumeInput = document.getElementById('volume');
+const reedDetuneInput = document.getElementById('reedDetune');
+const reedBreathInput = document.getElementById('reedBreath');
+const reedVibratoInput = document.getElementById('reedVibrato');
+const reedDetuneVal = document.getElementById('reedDetuneVal');
+const reedBreathVal = document.getElementById('reedBreathVal');
+const reedVibratoVal = document.getElementById('reedVibratoVal');
 
 let isOpen = true;
 let mapping = [];
 let scheduledTimers = [];
 let audioContext = null;
 let activeOscillators = new Map();
+const activeReedVoices = new Map();
 const activeNotes = new Map();
+let reedNoiseBuffer = null;
+
+// Free-reed instrument character presets: reed-pair detune (beating), bellows
+// breath noise level, vibrato depth, and filter shaping per instrument.
+const REED_PRESETS = {
+  accordion: { detune: 7,  breath: 8,  vibrato: 4, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
+  harmonica: { detune: 3,  breath: 18, vibrato: 6, filterFreq: 3200, filterQ: 3.5, harmMix: 0.8 },
+  bandoneon: { detune: 10, breath: 5,  vibrato: 3, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 }
+};
+
+function isReedInstrument(name) {
+  return Object.prototype.hasOwnProperty.call(REED_PRESETS, name);
+}
+
+function applyReedPreset(name) {
+  const preset = REED_PRESETS[name];
+  if (!preset) return;
+  reedDetuneInput.value = preset.detune;
+  reedBreathInput.value = preset.breath;
+  reedVibratoInput.value = preset.vibrato;
+  updateReedLabels();
+}
+
+function updateReedLabels() {
+  reedDetuneVal.textContent = reedDetuneInput.value;
+  reedBreathVal.textContent = (reedBreathInput.value / 100).toFixed(2);
+  reedVibratoVal.textContent = reedVibratoInput.value;
+}
 let midiPlayback = null;
 let currentLayout = '142';
 const persistedMappingKey = 'bandoneon-mapping-v1';
@@ -319,7 +354,6 @@ function setOpenState(open) {
   renderMapping();
 }
 
-// TODO: add a custom waveform that is similar to free reed instruments
 function ensureAudioContext() {
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -330,30 +364,141 @@ function ensureAudioContext() {
   return audioContext;
 }
 
+// Shared noise buffer used for the bellows/breath texture on reed voices.
+function getReedNoiseBuffer(ctx) {
+  if (reedNoiseBuffer) return reedNoiseBuffer;
+  const len = ctx.sampleRate * 2;
+  const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  reedNoiseBuffer = buffer;
+  return buffer;
+}
+
+// Builds a free-reed voice: two detuned sawtooth "reeds" (the slight offset
+// creates the characteristic beating/chorus), a sub-octave layer for body,
+// a low-pass filter for reed-like timbre, filtered noise for bellows breath,
+// and an LFO for vibrato. The voice sustains until stopReedVoice() is called,
+// matching how a real reed sounds for as long as air keeps moving over it.
+function startReedVoice(note, velocity, instrument) {
+  const ctx = ensureAudioContext();
+  const preset = REED_PRESETS[instrument];
+  const freq = 440 * Math.pow(2, (note - 57) / 12);
+  const volume = Number(volumeInput.value || 0.8);
+  const targetGain = Math.max(0, Math.min(1, (velocity / 127) * volume));
+
+  const detuneCents = Number(reedDetuneInput.value);
+  const breathAmt = Number(reedBreathInput.value) / 100;
+  const vibDepth = Number(reedVibratoInput.value);
+
+  const now = ctx.currentTime;
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(0, now);
+  master.connect(ctx.destination);
+
+  const oscA = ctx.createOscillator();
+  const oscB = ctx.createOscillator();
+  oscA.type = 'sawtooth';
+  oscB.type = 'sawtooth';
+  oscA.frequency.value = freq;
+  oscB.frequency.value = freq;
+  oscA.detune.value = -detuneCents / 2;
+  oscB.detune.value = detuneCents / 2;
+
+  const oscSub = ctx.createOscillator();
+  oscSub.type = 'triangle';
+  oscSub.frequency.value = freq / 2;
+  const subGain = ctx.createGain();
+  subGain.gain.value = preset.harmMix * 0.3;
+
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = 5.2;
+  const lfoGain = ctx.createGain();
+  lfoGain.gain.value = vibDepth;
+  lfo.connect(lfoGain);
+  lfoGain.connect(oscA.detune);
+  lfoGain.connect(oscB.detune);
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = preset.filterFreq;
+  filter.Q.value = preset.filterQ;
+
+  const reedGain = ctx.createGain();
+  reedGain.gain.value = 0.9;
+
+  oscA.connect(filter);
+  oscB.connect(filter);
+  oscSub.connect(subGain);
+  subGain.connect(filter);
+  filter.connect(reedGain);
+  reedGain.connect(master);
+
+  const noiseSrc = ctx.createBufferSource();
+  noiseSrc.buffer = getReedNoiseBuffer(ctx);
+  noiseSrc.loop = true;
+  const noiseFilter = ctx.createBiquadFilter();
+  noiseFilter.type = 'bandpass';
+  noiseFilter.frequency.value = freq * 2;
+  noiseFilter.Q.value = 0.7;
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.value = 0;
+  noiseSrc.connect(noiseFilter);
+  noiseFilter.connect(noiseGain);
+  noiseGain.connect(master);
+
+  master.gain.linearRampToValueAtTime(targetGain, now + 0.09);
+  noiseGain.gain.linearRampToValueAtTime(breathAmt * targetGain, now + 0.03);
+  noiseGain.gain.linearRampToValueAtTime(breathAmt * targetGain * 0.4, now + 0.25);
+
+  oscA.start(now);
+  oscB.start(now);
+  oscSub.start(now);
+  lfo.start(now);
+  noiseSrc.start(now);
+
+  return { oscA, oscB, oscSub, lfo, noiseSrc, master, noiseGain };
+}
+
+function stopReedVoice(voice) {
+  const ctx = ensureAudioContext();
+  const now = ctx.currentTime;
+  const releaseTime = 0.18;
+  voice.master.gain.cancelScheduledValues(now);
+  voice.master.gain.setValueAtTime(voice.master.gain.value, now);
+  voice.master.gain.linearRampToValueAtTime(0, now + releaseTime);
+  voice.noiseGain.gain.cancelScheduledValues(now);
+  voice.noiseGain.gain.setValueAtTime(voice.noiseGain.gain.value, now);
+  voice.noiseGain.gain.linearRampToValueAtTime(0, now + releaseTime);
+  [voice.oscA, voice.oscB, voice.oscSub, voice.lfo, voice.noiseSrc].forEach((n) => {
+    n.stop(now + releaseTime + 0.02);
+  });
+}
+
 
 function playTone(note, velocity) {
+  const instrument = instrumentSelect.value || 'sine';
+
+  if (isReedInstrument(instrument)) {
+    // Retrigger cleanly if this note is already sounding (e.g. a fast repeat
+    // without a note-off in between).
+    const existing = activeReedVoices.get(note);
+    if (existing) {
+      stopReedVoice(existing);
+      activeReedVoices.delete(note);
+    }
+    const voice = startReedVoice(note, velocity, instrument);
+    activeReedVoices.set(note, voice);
+    return;
+  }
+
   const ctx = ensureAudioContext();
   const gain = ctx.createGain();
   const oscillator = ctx.createOscillator();
   const volume = Number(volumeInput.value || 0.8);
-  const instrument = instrumentSelect.value || 'sine';
   const gainValue = Math.max(0, Math.min(1, (velocity / 127) * volume));
 
-  if (instrument === 'custom') {
-    const real = new Float32Array(30);
-    const imag = new Float32Array(30);
-
-    real[0] = 0
-    imag[0] = 0
-    for (let harmonic = 1; harmonic < imag.length; harmonic += 1) {
-      imag[harmonic] = Math.sin(harmonic * Math.PI * 0.23) / harmonic;
-      real[harmonic] = harmonic % 2 === 0 ? 0.15 / harmonic : 0;
-    }
-
-    oscillator.setPeriodicWave(ctx.createPeriodicWave(real, imag));
-  } else {
-    oscillator.type = instrument;
-  }
+  oscillator.type = instrument;
   oscillator.frequency.setValueAtTime(440 * Math.pow(2, (note - 57) / 12  ), ctx.currentTime);
   gain.gain.setValueAtTime(0.001, ctx.currentTime);
   gain.gain.exponentialRampToValueAtTime(gainValue, ctx.currentTime + 0.01);
@@ -369,6 +514,13 @@ function playTone(note, velocity) {
 }
 
 function stopTone(note) {
+  const reedVoice = activeReedVoices.get(note);
+  if (reedVoice) {
+    stopReedVoice(reedVoice);
+    activeReedVoices.delete(note);
+    return;
+  }
+
   const osc = activeOscillators.get(note);
   if (osc) {
     try {
@@ -378,6 +530,20 @@ function stopTone(note) {
     }
     activeOscillators.delete(note);
   }
+}
+
+instrumentSelect.addEventListener('change', () => {
+  if (isReedInstrument(instrumentSelect.value)) {
+    applyReedPreset(instrumentSelect.value);
+  }
+});
+[reedDetuneInput, reedBreathInput, reedVibratoInput].forEach((el) => {
+  el.addEventListener('input', updateReedLabels);
+});
+if (isReedInstrument(instrumentSelect.value)) {
+  applyReedPreset(instrumentSelect.value);
+} else {
+  updateReedLabels();
 }
 
 toggleBtn.addEventListener('click', () => setOpenState(!isOpen));
