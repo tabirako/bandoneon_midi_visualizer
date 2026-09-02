@@ -1848,6 +1848,19 @@ window.defaultMappings = {
       "close": {
         "note": 75
       }
+    },
+    {
+      "id": 72,
+      "side": "right",
+      "label": "B72",
+      "x": 0.9202059985,
+      "y": 0.6916911818,
+      "open": {
+        "note": 79
+      },
+      "close": {
+        "note": 75
+      }
     }
   ]
 };

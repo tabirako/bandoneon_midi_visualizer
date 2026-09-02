@@ -40,6 +40,52 @@ const activeReedVoices = new Map();
 const activeNotes = new Map();
 let reedNoiseBuffer = null;
 
+// Computer-keyboard mapping for the lower 4 rows of the treble (right) side.
+// Button "id" is a row-major counter (bass rows top-to-bottom, then treble
+// rows top-to-bottom, left-to-right within each row), so contiguous id
+// ranges correspond exactly to physical rows. Row lengths [4,5,6,7,8,8] are
+// identical across the 142 and 144 layouts (only the bass side differs
+// between them), so this same row split works for both.
+const TREBLE_ROW_LENGTHS = [4, 5, 6, 7, 8, 8];
+const KEYBOARD_ROWS = [
+  ['4', '5', '6', '7', '8', '9'],
+  ['e', 'r', 't', 'y', 'u', 'i', 'o'],
+  ['s', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+  ['x', 'c', 'v', 'b', 'n', 'm', ',', '.']
+];
+const KEYBOARD_ROW_START_INDEX = 2; // rows 3-6 (0-indexed: skip the top 2 rows)
+
+let keyboardKeyMap = new Map(); // key char -> button
+const heldKeyNotes = new Map(); // key char -> note currently sounding for it
+
+function assignKeyboardKeys() {
+  keyboardKeyMap = new Map();
+  mapping.forEach((button) => { button.keyCap = undefined; });
+
+  const right = mapping
+    .filter((b) => b.side === 'right')
+    .slice()
+    .sort((a, b) => a.id - b.id);
+
+  let cursor = 0;
+  const rows = TREBLE_ROW_LENGTHS.map((len) => {
+    const slice = right.slice(cursor, cursor + len);
+    cursor += len;
+    return slice;
+  });
+
+  for (let i = 0; i < KEYBOARD_ROWS.length; i++) {
+    const rowButtons = rows[KEYBOARD_ROW_START_INDEX + i] || [];
+    const keys = KEYBOARD_ROWS[i];
+    rowButtons.forEach((button, idx) => {
+      const key = keys[idx];
+      if (!key) return;
+      keyboardKeyMap.set(key, button);
+      button.keyCap = key.toUpperCase();
+    });
+  }
+}
+
 // Free-reed instrument character presets: reed-pair detune (beating), bellows
 // breath noise level, vibrato depth, and filter shaping per instrument.
 const REED_PRESETS = {
@@ -103,6 +149,7 @@ function loadMappingForLayout(layout) {
   } else {
     mapping = normalizeMapping([], layout);
   }
+  assignKeyboardKeys();
   renderMapping();
 }
 
@@ -206,6 +253,23 @@ function renderMapping() {
     halo.className = 'halo';
     btn.appendChild(label);
     btn.appendChild(noteLabel);
+    if (button.keyCap) {
+      if (!btn.style.position) {
+        btn.style.position = 'relative';
+      }
+      const keyCapEl = document.createElement('span');
+      keyCapEl.className = 'key-cap';
+      keyCapEl.textContent = button.keyCap;
+      keyCapEl.style.position = 'absolute';
+      keyCapEl.style.top = '2px';
+      keyCapEl.style.right = '4px';
+      keyCapEl.style.fontSize = '10px';
+      keyCapEl.style.fontWeight = 'bold';
+      keyCapEl.style.opacity = '0.85';
+      keyCapEl.style.pointerEvents = 'none';
+      btn.appendChild(keyCapEl);
+      btn.setAttribute('title', btn.getAttribute('title') + ` • key ${button.keyCap}`);
+    }
     btn.appendChild(halo);
     wrapper.appendChild(btn);
 
@@ -520,11 +584,43 @@ if (isReedInstrument(instrumentSelect.value)) {
 }
 
 toggleBtn.addEventListener('click', () => setOpenState(!isOpen));
+
+function isTypingIntoControl() {
+  const tag = document.activeElement && document.activeElement.tagName;
+  return tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
+}
+
 window.addEventListener('keydown', (event) => {
+  if (isTypingIntoControl()) return;
+
   if (event.code === 'Space') {
     event.preventDefault();
     setOpenState(!isOpen);
+    return;
   }
+
+  const key = event.key.toLowerCase();
+  if (heldKeyNotes.has(key)) return; // ignore OS key-repeat while already held
+  const button = keyboardKeyMap.get(key);
+  if (!button) return;
+
+  event.preventDefault();
+  // Bellows direction is committed at the moment of attack, same as a real
+  // reed instrument — flipping Space mid-hold shouldn't change notes already
+  // sounding.
+  const activeDef = isOpen ? button.open : button.close;
+  const note = activeDef?.note ?? activeDef;
+  if (note == null) return;
+  heldKeyNotes.set(key, note);
+  handleNoteOn(note, 100);
+});
+
+window.addEventListener('keyup', (event) => {
+  const key = event.key.toLowerCase();
+  if (!heldKeyNotes.has(key)) return;
+  const note = heldKeyNotes.get(key);
+  heldKeyNotes.delete(key);
+  handleNoteOff(note);
 });
 
 mappingFileInput?.addEventListener('change', (event) => {
