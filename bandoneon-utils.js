@@ -55,6 +55,8 @@
         id: it.id ?? (idx + 1), //We need to use a dummy id because there are duplicate notes on bandoneon layout
         side: (it.side === 'left') ? 'left' : 'right',
         label: it.label ?? String(it.id ?? (idx + 1)),
+        row: typeof it.row === 'number' ? it.row : undefined,
+        order: typeof it.order === 'number' ? it.order : undefined,
         x,
         y,
         open: normalizeNoteDef(it.open, it.open ?? it.close, x, y),

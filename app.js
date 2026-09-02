@@ -41,19 +41,16 @@ const activeNotes = new Map();
 let reedNoiseBuffer = null;
 
 // Computer-keyboard mapping for the lower 4 rows of the treble (right) side.
-// Button "id" is a row-major counter (bass rows top-to-bottom, then treble
-// rows top-to-bottom, left-to-right within each row), so contiguous id
-// ranges correspond exactly to physical rows. Row lengths [4,5,6,7,8,8] are
-// identical across the 142 and 144 layouts (only the bass side differs
-// between them), so this same row split works for both.
-const TREBLE_ROW_LENGTHS = [4, 5, 6, 7, 8, 8];
+// Rows 1-6 (top to bottom) are read from each button's explicit `row` field
+// (added by add_row_order.js and verified against the reference charts),
+// rather than inferred from `id` order. Row 1 is the topmost/narrowest row.
 const KEYBOARD_ROWS = [
   ['4', '5', '6', '7', '8', '9'],
   ['e', 'r', 't', 'y', 'u', 'i', 'o'],
   ['s', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
   ['x', 'c', 'v', 'b', 'n', 'm', ',', '.']
 ];
-const KEYBOARD_ROW_START_INDEX = 2; // rows 3-6 (0-indexed: skip the top 2 rows)
+const KEYBOARD_ROW_START = 3; // 1-indexed row number: rows 3-6 are mapped
 
 let keyboardKeyMap = new Map(); // key char -> button
 const heldKeyNotes = new Map(); // key char -> note currently sounding for it
@@ -62,20 +59,13 @@ function assignKeyboardKeys() {
   keyboardKeyMap = new Map();
   mapping.forEach((button) => { button.keyCap = undefined; });
 
-  const right = mapping
-    .filter((b) => b.side === 'right')
-    .slice()
-    .sort((a, b) => a.id - b.id);
-
-  let cursor = 0;
-  const rows = TREBLE_ROW_LENGTHS.map((len) => {
-    const slice = right.slice(cursor, cursor + len);
-    cursor += len;
-    return slice;
-  });
+  const right = mapping.filter((b) => b.side === 'right');
 
   for (let i = 0; i < KEYBOARD_ROWS.length; i++) {
-    const rowButtons = rows[KEYBOARD_ROW_START_INDEX + i] || [];
+    const rowNumber = KEYBOARD_ROW_START + i;
+    const rowButtons = right
+      .filter((b) => b.row === rowNumber)
+      .sort((a, b) => a.order - b.order);
     const keys = KEYBOARD_ROWS[i];
     rowButtons.forEach((button, idx) => {
       const key = keys[idx];

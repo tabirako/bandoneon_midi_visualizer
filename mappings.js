@@ -1,6 +1,5 @@
-// Mapping JSON: array of objects like {"id":3,"side":"left","label":"B3","push":{"note":60,"x":0.3,"y":0.7},"pull":{"note":62,"x":0.3,"y":0.7}}
 window.defaultMappings = {
-  "142":   [
+  "142": [
     {
       "id": 1,
       "side": "left",
@@ -12,7 +11,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 44
-      }
+      },
+      "row": 1,
+      "order": 1
     },
     {
       "id": 2,
@@ -25,7 +26,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 46
-      }
+      },
+      "row": 1,
+      "order": 2
     },
     {
       "id": 3,
@@ -38,7 +41,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 51
-      }
+      },
+      "row": 1,
+      "order": 3
     },
     {
       "id": 4,
@@ -51,7 +56,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 63
-      }
+      },
+      "row": 1,
+      "order": 4
     },
     {
       "id": 5,
@@ -64,7 +71,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 67
-      }
+      },
+      "row": 1,
+      "order": 5
     },
     {
       "id": 6,
@@ -77,7 +86,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 38
-      }
+      },
+      "row": 2,
+      "order": 1
     },
     {
       "id": 7,
@@ -90,7 +101,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 50
-      }
+      },
+      "row": 2,
+      "order": 2
     },
     {
       "id": 8,
@@ -103,7 +116,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 58
-      }
+      },
+      "row": 2,
+      "order": 3
     },
     {
       "id": 9,
@@ -116,7 +131,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 60
-      }
+      },
+      "row": 2,
+      "order": 4
     },
     {
       "id": 10,
@@ -129,7 +146,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 49
-      }
+      },
+      "row": 2,
+      "order": 5
     },
     {
       "id": 11,
@@ -142,7 +161,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 48
-      }
+      },
+      "row": 2,
+      "order": 6
     },
     {
       "id": 12,
@@ -155,7 +176,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 42
-      }
+      },
+      "row": 2,
+      "order": 7
     },
     {
       "id": 13,
@@ -168,7 +191,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 43
-      }
+      },
+      "row": 3,
+      "order": 1
     },
     {
       "id": 14,
@@ -181,7 +206,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 55
-      }
+      },
+      "row": 3,
+      "order": 2
     },
     {
       "id": 15,
@@ -194,7 +221,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 59
-      }
+      },
+      "row": 3,
+      "order": 3
     },
     {
       "id": 16,
@@ -207,7 +236,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 62
-      }
+      },
+      "row": 3,
+      "order": 4
     },
     {
       "id": 17,
@@ -220,7 +251,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 65
-      }
+      },
+      "row": 3,
+      "order": 5
     },
     {
       "id": 18,
@@ -233,7 +266,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 54
-      }
+      },
+      "row": 3,
+      "order": 6
     },
     {
       "id": 19,
@@ -246,7 +281,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 45
-      }
+      },
+      "row": 4,
+      "order": 1
     },
     {
       "id": 20,
@@ -259,7 +296,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 52
-      }
+      },
+      "row": 4,
+      "order": 2
     },
     {
       "id": 21,
@@ -272,7 +311,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 57
-      }
+      },
+      "row": 4,
+      "order": 3
     },
     {
       "id": 22,
@@ -285,7 +326,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 61
-      }
+      },
+      "row": 4,
+      "order": 4
     },
     {
       "id": 23,
@@ -298,7 +341,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 64
-      }
+      },
+      "row": 4,
+      "order": 5
     },
     {
       "id": 24,
@@ -311,7 +356,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 56
-      }
+      },
+      "row": 4,
+      "order": 6
     },
     {
       "id": 25,
@@ -324,7 +371,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 47
-      }
+      },
+      "row": 4,
+      "order": 7
     },
     {
       "id": 26,
@@ -337,7 +386,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 40
-      }
+      },
+      "row": 5,
+      "order": 1
     },
     {
       "id": 27,
@@ -350,7 +401,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 52
-      }
+      },
+      "row": 5,
+      "order": 2
     },
     {
       "id": 28,
@@ -363,7 +416,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 66
-      }
+      },
+      "row": 5,
+      "order": 3
     },
     {
       "id": 29,
@@ -376,7 +431,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 68
-      }
+      },
+      "row": 5,
+      "order": 4
     },
     {
       "id": 30,
@@ -389,7 +446,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 71
-      }
+      },
+      "row": 5,
+      "order": 5
     },
     {
       "id": 31,
@@ -402,7 +461,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 53
-      }
+      },
+      "row": 5,
+      "order": 6
     },
     {
       "id": 32,
@@ -415,7 +476,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 37
-      }
+      },
+      "row": 5,
+      "order": 7
     },
     {
       "id": 33,
@@ -428,8 +491,10 @@ window.defaultMappings = {
       },
       "close": {
         "note": 41
-      }
-    }, // end of the left hand part
+      },
+      "row": 5,
+      "order": 8
+    },
     {
       "id": 34,
       "side": "right",
@@ -441,7 +506,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 93
-      }
+      },
+      "row": 1,
+      "order": 1
     },
     {
       "id": 35,
@@ -454,7 +521,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 92
-      }
+      },
+      "row": 1,
+      "order": 2
     },
     {
       "id": 36,
@@ -467,7 +536,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 90
-      }
+      },
+      "row": 1,
+      "order": 3
     },
     {
       "id": 37,
@@ -480,7 +551,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 89
-      }
+      },
+      "row": 1,
+      "order": 4
     },
     {
       "id": 38,
@@ -493,7 +566,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 60
-      }
+      },
+      "row": 2,
+      "order": 1
     },
     {
       "id": 39,
@@ -506,7 +581,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 91
-      }
+      },
+      "row": 2,
+      "order": 2
     },
     {
       "id": 40,
@@ -519,7 +596,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 82
-      }
+      },
+      "row": 2,
+      "order": 3
     },
     {
       "id": 41,
@@ -532,7 +611,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 84
-      }
+      },
+      "row": 2,
+      "order": 4
     },
     {
       "id": 42,
@@ -545,7 +626,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 87
-      }
+      },
+      "row": 2,
+      "order": 5
     },
     {
       "id": 43,
@@ -558,7 +641,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 62
-      }
+      },
+      "row": 3,
+      "order": 1
     },
     {
       "id": 44,
@@ -571,7 +656,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 61
-      }
+      },
+      "row": 3,
+      "order": 2
     },
     {
       "id": 45,
@@ -584,7 +671,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 68
-      }
+      },
+      "row": 3,
+      "order": 3
     },
     {
       "id": 46,
@@ -597,7 +686,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 70
-      }
+      },
+      "row": 3,
+      "order": 4
     },
     {
       "id": 47,
@@ -610,7 +701,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 72
-      }
+      },
+      "row": 3,
+      "order": 5
     },
     {
       "id": 48,
@@ -623,7 +716,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 86
-      }
+      },
+      "row": 3,
+      "order": 6
     },
     {
       "id": 49,
@@ -636,7 +731,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 59
-      }
+      },
+      "row": 4,
+      "order": 1
     },
     {
       "id": 50,
@@ -649,7 +746,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 66
-      }
+      },
+      "row": 4,
+      "order": 2
     },
     {
       "id": 51,
@@ -662,7 +761,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 78
-      }
+      },
+      "row": 4,
+      "order": 3
     },
     {
       "id": 52,
@@ -675,7 +776,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 67
-      }
+      },
+      "row": 4,
+      "order": 4
     },
     {
       "id": 53,
@@ -688,7 +791,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 71
-      }
+      },
+      "row": 4,
+      "order": 5
     },
     {
       "id": 54,
@@ -701,7 +806,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 74
-      }
+      },
+      "row": 4,
+      "order": 6
     },
     {
       "id": 55,
@@ -714,7 +821,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 79
-      }
+      },
+      "row": 4,
+      "order": 7
     },
     {
       "id": 56,
@@ -727,7 +836,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 57
-      }
+      },
+      "row": 5,
+      "order": 1
     },
     {
       "id": 57,
@@ -740,7 +851,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 65
-      }
+      },
+      "row": 5,
+      "order": 2
     },
     {
       "id": 58,
@@ -753,7 +866,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 64
-      }
+      },
+      "row": 5,
+      "order": 3
     },
     {
       "id": 59,
@@ -766,7 +881,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 69
-      }
+      },
+      "row": 5,
+      "order": 4
     },
     {
       "id": 60,
@@ -779,7 +896,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 73
-      }
+      },
+      "row": 5,
+      "order": 5
     },
     {
       "id": 61,
@@ -792,7 +911,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 76
-      }
+      },
+      "row": 5,
+      "order": 6
     },
     {
       "id": 62,
@@ -805,7 +926,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 81
-      }
+      },
+      "row": 5,
+      "order": 7
     },
     {
       "id": 63,
@@ -818,7 +941,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 85
-      }
+      },
+      "row": 5,
+      "order": 8
     },
     {
       "id": 64,
@@ -831,7 +956,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 58
-      }
+      },
+      "row": 6,
+      "order": 1
     },
     {
       "id": 65,
@@ -844,7 +971,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 63
-      }
+      },
+      "row": 6,
+      "order": 2
     },
     {
       "id": 66,
@@ -857,7 +986,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 77
-      }
+      },
+      "row": 6,
+      "order": 3
     },
     {
       "id": 67,
@@ -870,7 +1001,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 76
-      }
+      },
+      "row": 6,
+      "order": 4
     },
     {
       "id": 68,
@@ -883,7 +1016,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 80
-      }
+      },
+      "row": 6,
+      "order": 5
     },
     {
       "id": 69,
@@ -896,7 +1031,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 83
-      }
+      },
+      "row": 6,
+      "order": 6
     },
     {
       "id": 70,
@@ -909,7 +1046,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 88
-      }
+      },
+      "row": 6,
+      "order": 7
     },
     {
       "id": 71,
@@ -922,7 +1061,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 75
-      }
+      },
+      "row": 6,
+      "order": 8
     }
   ],
   "144": [
@@ -937,7 +1078,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 44
-      }
+      },
+      "row": 1,
+      "order": 1
     },
     {
       "id": 2,
@@ -950,7 +1093,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 46
-      }
+      },
+      "row": 1,
+      "order": 2
     },
     {
       "id": 3,
@@ -963,7 +1108,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 51
-      }
+      },
+      "row": 1,
+      "order": 3
     },
     {
       "id": 4,
@@ -976,7 +1123,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 63
-      }
+      },
+      "row": 1,
+      "order": 4
     },
     {
       "id": 5,
@@ -989,7 +1138,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 67
-      }
+      },
+      "row": 1,
+      "order": 5
     },
     {
       "id": 6,
@@ -1002,7 +1153,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 38
-      }
+      },
+      "row": 2,
+      "order": 1
     },
     {
       "id": 7,
@@ -1015,7 +1168,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 50
-      }
+      },
+      "row": 2,
+      "order": 2
     },
     {
       "id": 8,
@@ -1028,7 +1183,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 58
-      }
+      },
+      "row": 2,
+      "order": 3
     },
     {
       "id": 9,
@@ -1041,7 +1198,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 60
-      }
+      },
+      "row": 2,
+      "order": 4
     },
     {
       "id": 10,
@@ -1054,7 +1213,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 49
-      }
+      },
+      "row": 2,
+      "order": 5
     },
     {
       "id": 11,
@@ -1067,7 +1228,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 48
-      }
+      },
+      "row": 2,
+      "order": 6
     },
     {
       "id": 12,
@@ -1080,7 +1243,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 42
-      }
+      },
+      "row": 2,
+      "order": 7
     },
     {
       "id": 13,
@@ -1093,7 +1258,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 43
-      }
+      },
+      "row": 3,
+      "order": 1
     },
     {
       "id": 14,
@@ -1106,7 +1273,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 55
-      }
+      },
+      "row": 3,
+      "order": 2
     },
     {
       "id": 15,
@@ -1119,7 +1288,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 59
-      }
+      },
+      "row": 3,
+      "order": 3
     },
     {
       "id": 16,
@@ -1132,7 +1303,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 62
-      }
+      },
+      "row": 3,
+      "order": 4
     },
     {
       "id": 17,
@@ -1145,7 +1318,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 65
-      }
+      },
+      "row": 3,
+      "order": 5
     },
     {
       "id": 18,
@@ -1158,7 +1333,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 54
-      }
+      },
+      "row": 3,
+      "order": 6
     },
     {
       "id": 19,
@@ -1171,7 +1348,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 45
-      }
+      },
+      "row": 4,
+      "order": 1
     },
     {
       "id": 20,
@@ -1184,7 +1363,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 52
-      }
+      },
+      "row": 4,
+      "order": 2
     },
     {
       "id": 21,
@@ -1197,7 +1378,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 57
-      }
+      },
+      "row": 4,
+      "order": 3
     },
     {
       "id": 22,
@@ -1210,7 +1393,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 61
-      }
+      },
+      "row": 4,
+      "order": 4
     },
     {
       "id": 23,
@@ -1223,7 +1408,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 64
-      }
+      },
+      "row": 4,
+      "order": 5
     },
     {
       "id": 24,
@@ -1236,7 +1423,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 56
-      }
+      },
+      "row": 4,
+      "order": 6
     },
     {
       "id": 25,
@@ -1249,7 +1438,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 47
-      }
+      },
+      "row": 4,
+      "order": 7
     },
     {
       "id": 26,
@@ -1262,7 +1453,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 40
-      }
+      },
+      "row": 5,
+      "order": 1
     },
     {
       "id": 27,
@@ -1275,7 +1468,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 52
-      }
+      },
+      "row": 5,
+      "order": 2
     },
     {
       "id": 28,
@@ -1288,7 +1483,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 66
-      }
+      },
+      "row": 5,
+      "order": 3
     },
     {
       "id": 29,
@@ -1301,7 +1498,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 68
-      }
+      },
+      "row": 5,
+      "order": 4
     },
     {
       "id": 30,
@@ -1314,7 +1513,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 71
-      }
+      },
+      "row": 5,
+      "order": 5
     },
     {
       "id": 31,
@@ -1327,7 +1528,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 53
-      }
+      },
+      "row": 5,
+      "order": 6
     },
     {
       "id": 32,
@@ -1340,7 +1543,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 37
-      }
+      },
+      "row": 5,
+      "order": 7
     },
     {
       "id": 33,
@@ -1353,7 +1558,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 41
-      }
+      },
+      "row": 5,
+      "order": 8
     },
     {
       "id": 34,
@@ -1366,7 +1573,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 93
-      }
+      },
+      "row": 1,
+      "order": 1
     },
     {
       "id": 35,
@@ -1379,7 +1588,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 92
-      }
+      },
+      "row": 1,
+      "order": 2
     },
     {
       "id": 36,
@@ -1392,7 +1603,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 90
-      }
+      },
+      "row": 1,
+      "order": 3
     },
     {
       "id": 37,
@@ -1405,7 +1618,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 89
-      }
+      },
+      "row": 1,
+      "order": 4
     },
     {
       "id": 38,
@@ -1418,7 +1633,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 60
-      }
+      },
+      "row": 2,
+      "order": 1
     },
     {
       "id": 39,
@@ -1431,7 +1648,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 91
-      }
+      },
+      "row": 2,
+      "order": 2
     },
     {
       "id": 40,
@@ -1444,7 +1663,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 82
-      }
+      },
+      "row": 2,
+      "order": 3
     },
     {
       "id": 41,
@@ -1457,7 +1678,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 84
-      }
+      },
+      "row": 2,
+      "order": 4
     },
     {
       "id": 42,
@@ -1470,7 +1693,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 87
-      }
+      },
+      "row": 2,
+      "order": 5
     },
     {
       "id": 43,
@@ -1483,7 +1708,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 62
-      }
+      },
+      "row": 3,
+      "order": 1
     },
     {
       "id": 44,
@@ -1496,7 +1723,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 61
-      }
+      },
+      "row": 3,
+      "order": 2
     },
     {
       "id": 45,
@@ -1509,7 +1738,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 68
-      }
+      },
+      "row": 3,
+      "order": 3
     },
     {
       "id": 46,
@@ -1522,7 +1753,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 70
-      }
+      },
+      "row": 3,
+      "order": 4
     },
     {
       "id": 47,
@@ -1535,7 +1768,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 72
-      }
+      },
+      "row": 3,
+      "order": 5
     },
     {
       "id": 48,
@@ -1548,7 +1783,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 86
-      }
+      },
+      "row": 3,
+      "order": 6
     },
     {
       "id": 49,
@@ -1561,7 +1798,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 59
-      }
+      },
+      "row": 4,
+      "order": 1
     },
     {
       "id": 50,
@@ -1574,7 +1813,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 66
-      }
+      },
+      "row": 4,
+      "order": 2
     },
     {
       "id": 51,
@@ -1587,7 +1828,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 78
-      }
+      },
+      "row": 4,
+      "order": 3
     },
     {
       "id": 52,
@@ -1600,7 +1843,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 67
-      }
+      },
+      "row": 4,
+      "order": 4
     },
     {
       "id": 53,
@@ -1613,7 +1858,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 71
-      }
+      },
+      "row": 4,
+      "order": 5
     },
     {
       "id": 54,
@@ -1626,7 +1873,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 74
-      }
+      },
+      "row": 4,
+      "order": 6
     },
     {
       "id": 55,
@@ -1639,7 +1888,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 79
-      }
+      },
+      "row": 4,
+      "order": 7
     },
     {
       "id": 56,
@@ -1652,7 +1903,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 57
-      }
+      },
+      "row": 5,
+      "order": 1
     },
     {
       "id": 57,
@@ -1665,7 +1918,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 65
-      }
+      },
+      "row": 5,
+      "order": 2
     },
     {
       "id": 58,
@@ -1678,7 +1933,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 64
-      }
+      },
+      "row": 5,
+      "order": 3
     },
     {
       "id": 59,
@@ -1691,7 +1948,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 69
-      }
+      },
+      "row": 5,
+      "order": 4
     },
     {
       "id": 60,
@@ -1704,7 +1963,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 73
-      }
+      },
+      "row": 5,
+      "order": 5
     },
     {
       "id": 61,
@@ -1717,7 +1978,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 76
-      }
+      },
+      "row": 5,
+      "order": 6
     },
     {
       "id": 62,
@@ -1730,7 +1993,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 81
-      }
+      },
+      "row": 5,
+      "order": 7
     },
     {
       "id": 63,
@@ -1743,7 +2008,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 85
-      }
+      },
+      "row": 5,
+      "order": 8
     },
     {
       "id": 64,
@@ -1756,7 +2023,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 58
-      }
+      },
+      "row": 6,
+      "order": 1
     },
     {
       "id": 65,
@@ -1769,7 +2038,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 63
-      }
+      },
+      "row": 6,
+      "order": 2
     },
     {
       "id": 66,
@@ -1782,7 +2053,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 77
-      }
+      },
+      "row": 6,
+      "order": 3
     },
     {
       "id": 67,
@@ -1795,7 +2068,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 76
-      }
+      },
+      "row": 6,
+      "order": 4
     },
     {
       "id": 68,
@@ -1808,7 +2083,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 80
-      }
+      },
+      "row": 6,
+      "order": 5
     },
     {
       "id": 69,
@@ -1821,7 +2098,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 83
-      }
+      },
+      "row": 6,
+      "order": 6
     },
     {
       "id": 70,
@@ -1834,7 +2113,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 88
-      }
+      },
+      "row": 6,
+      "order": 7
     },
     {
       "id": 71,
@@ -1847,20 +2128,9 @@ window.defaultMappings = {
       },
       "close": {
         "note": 75
-      }
-    },
-    {
-      "id": 72,
-      "side": "right",
-      "label": "B72",
-      "x": 0.9202059985,
-      "y": 0.6916911818,
-      "open": {
-        "note": 79
       },
-      "close": {
-        "note": 75
-      }
+      "row": 6,
+      "order": 8
     }
   ]
 };
