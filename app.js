@@ -44,16 +44,51 @@ let reedNoiseBuffer = null;
 // Rows are read from each button's explicit `row` field (added by
 // add_row_order.js and verified against the reference charts), rather than
 // inferred from `id` order. Row 1 is the topmost/narrowest row.
+//
 // Different systems have different total row counts (Rheinische treble has
-// 6 rows, Einheits has 5), so which row number is "the last 4" is computed
-// per-layout below rather than hardcoded, so this keeps working correctly
-// regardless of which system is loaded.
-const KEYBOARD_ROWS = [
-  ['4', '5', '6', '7', '8', '9'],
-  ['e', 'r', 't', 'y', 'u', 'i', 'o'],
-  ['s', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
-  ['x', 'c', 'v', 'b', 'n', 'm', ',', '.']
+// 6 rows, Einheits has 5) AND different button-counts per row (Rheinische's
+// lower 4 rows are [6,7,8,8], Einheits' are [7,7,8,9]). Rather than hardcode
+// one fixed key set per keyboard row, each is defined as the FULL physical
+// row (10 keys) plus a "default anchor" — the slice used when a data row's
+// length matches the common case. When a row needs MORE keys than the
+// default provides, the selection extends outward from the anchor (e.g. the
+// bottom row's default is X-. (8 keys); a 9-button row extends left to
+// include Z, rather than needing a special case). This is what lets a new
+// system with different row lengths (or a future non-bandoneon layout, like
+// concertina/Chemnitzer) work by just adding its row-length data — no
+// keyboard-assignment code changes needed.
+const PHYSICAL_KEYBOARD_ROWS = [
+  ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+  ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+  ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';'],
+  ['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/']
 ];
+// The slice used when a row's button count matches the common case
+// (Rheinische's lower 4 rows: 6, 7, 8, 8). {start, length} are indices into
+// the corresponding PHYSICAL_KEYBOARD_ROWS entry above.
+const DEFAULT_ROW_ANCHORS = [
+  { start: 3, length: 6 }, // '4'-'9'
+  { start: 2, length: 7 }, // 'e'-'o'
+  { start: 1, length: 8 }, // 's'-'l'
+  { start: 1, length: 8 }  // 'x'-'.'
+];
+
+// Picks `neededLength` keys from physical row `rowIndex`. Matches the
+// default anchor when possible; when more keys are needed, extends toward
+// the outer edge of the row (lower index first) so the "standard" keys
+// (e.g. X-.) stay in place and only gain a neighbor (Z) rather than shifting.
+function selectKeysForRow(rowIndex, neededLength) {
+  const physicalRow = PHYSICAL_KEYBOARD_ROWS[rowIndex];
+  const anchor = DEFAULT_ROW_ANCHORS[rowIndex];
+  let start = anchor.start;
+  let length = Math.min(neededLength, anchor.length);
+  if (neededLength > anchor.length) {
+    const extra = neededLength - anchor.length;
+    start = Math.max(0, anchor.start - extra);
+    length = Math.min(neededLength, physicalRow.length - start);
+  }
+  return physicalRow.slice(start, start + length);
+}
 
 let keyboardKeyMap = new Map(); // key char -> button
 const heldKeyNotes = new Map(); // key char -> note currently sounding for it
@@ -64,14 +99,14 @@ function assignKeyboardKeys() {
 
   const right = mapping.filter((b) => b.side === 'right');
   const maxRow = right.reduce((max, b) => Math.max(max, b.row || 0), 0);
-  const keyboardRowStart = Math.max(1, maxRow - KEYBOARD_ROWS.length + 1);
+  const keyboardRowStart = Math.max(1, maxRow - PHYSICAL_KEYBOARD_ROWS.length + 1);
 
-  for (let i = 0; i < KEYBOARD_ROWS.length; i++) {
+  for (let i = 0; i < PHYSICAL_KEYBOARD_ROWS.length; i++) {
     const rowNumber = keyboardRowStart + i;
     const rowButtons = right
       .filter((b) => b.row === rowNumber)
       .sort((a, b) => a.order - b.order);
-    const keys = KEYBOARD_ROWS[i];
+    const keys = selectKeysForRow(i, rowButtons.length);
     rowButtons.forEach((button, idx) => {
       const key = keys[idx];
       if (!key) return;
@@ -84,9 +119,9 @@ function assignKeyboardKeys() {
 // Free-reed instrument character presets: reed-pair detune (beating), bellows
 // breath noise level, vibrato depth, and filter shaping per instrument.
 const REED_PRESETS = {
-  accordion: { detune: 12,  breath: 8,  vibrato: 4, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
+  accordion: { detune: 7,  breath: 8,  vibrato: 4, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
   harmonica: { detune: 3,  breath: 18, vibrato: 6, filterFreq: 3200, filterQ: 3.5, harmMix: 0.8 },
-  bandoneon: { detune: 0, breath: 5,  vibrato: 3, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 }
+  bandoneon: { detune: 10, breath: 5,  vibrato: 3, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 }
 };
 
 function isReedInstrument(name) {

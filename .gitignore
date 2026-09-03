@@ -65,4 +65,6 @@
 *.3dm
 *.max
 
+*.md
+
 # End of https://www.toptal.com/developers/gitignore/api/images
