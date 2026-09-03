@@ -41,8 +41,8 @@
 
   function normalizeMapping(raw, layout){
     if(!Array.isArray(raw) || raw.length === 0){
-      if(layout === '144'){return genDefaultMapping(144);}
-      if(layout === '142'){return genDefaultMapping(142);} 
+      if(layout === '144-einheits'){return genDefaultMapping(144);}
+      if(layout === '142-rheinische'){return genDefaultMapping(142);} 
     }
     return raw.map((it, idx) => {
       const x = typeof it.x === 'number'

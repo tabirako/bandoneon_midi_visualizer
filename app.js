@@ -41,16 +41,19 @@ const activeNotes = new Map();
 let reedNoiseBuffer = null;
 
 // Computer-keyboard mapping for the lower 4 rows of the treble (right) side.
-// Rows 1-6 (top to bottom) are read from each button's explicit `row` field
-// (added by add_row_order.js and verified against the reference charts),
-// rather than inferred from `id` order. Row 1 is the topmost/narrowest row.
+// Rows are read from each button's explicit `row` field (added by
+// add_row_order.js and verified against the reference charts), rather than
+// inferred from `id` order. Row 1 is the topmost/narrowest row.
+// Different systems have different total row counts (Rheinische treble has
+// 6 rows, Einheits has 5), so which row number is "the last 4" is computed
+// per-layout below rather than hardcoded, so this keeps working correctly
+// regardless of which system is loaded.
 const KEYBOARD_ROWS = [
   ['4', '5', '6', '7', '8', '9'],
   ['e', 'r', 't', 'y', 'u', 'i', 'o'],
   ['s', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
   ['x', 'c', 'v', 'b', 'n', 'm', ',', '.']
 ];
-const KEYBOARD_ROW_START = 3; // 1-indexed row number: rows 3-6 are mapped
 
 let keyboardKeyMap = new Map(); // key char -> button
 const heldKeyNotes = new Map(); // key char -> note currently sounding for it
@@ -60,9 +63,11 @@ function assignKeyboardKeys() {
   mapping.forEach((button) => { button.keyCap = undefined; });
 
   const right = mapping.filter((b) => b.side === 'right');
+  const maxRow = right.reduce((max, b) => Math.max(max, b.row || 0), 0);
+  const keyboardRowStart = Math.max(1, maxRow - KEYBOARD_ROWS.length + 1);
 
   for (let i = 0; i < KEYBOARD_ROWS.length; i++) {
-    const rowNumber = KEYBOARD_ROW_START + i;
+    const rowNumber = keyboardRowStart + i;
     const rowButtons = right
       .filter((b) => b.row === rowNumber)
       .sort((a, b) => a.order - b.order);
@@ -79,9 +84,9 @@ function assignKeyboardKeys() {
 // Free-reed instrument character presets: reed-pair detune (beating), bellows
 // breath noise level, vibrato depth, and filter shaping per instrument.
 const REED_PRESETS = {
-  accordion: { detune: 7,  breath: 8,  vibrato: 4, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
+  accordion: { detune: 12,  breath: 8,  vibrato: 4, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
   harmonica: { detune: 3,  breath: 18, vibrato: 6, filterFreq: 3200, filterQ: 3.5, harmMix: 0.8 },
-  bandoneon: { detune: 10, breath: 5,  vibrato: 3, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 }
+  bandoneon: { detune: 0, breath: 5,  vibrato: 3, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 }
 };
 
 function isReedInstrument(name) {
@@ -103,7 +108,7 @@ function updateReedLabels() {
   reedVibratoVal.textContent = reedVibratoInput.value;
 }
 let midiPlayback = null;
-let currentLayout = '142';
+let currentLayout = '142-rheinische';
 const persistedMappingKey = 'bandoneon-mapping-v1';
 
 
