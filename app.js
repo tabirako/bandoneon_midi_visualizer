@@ -151,10 +151,6 @@ function normalizeMapping(rawMapping, layout) {
   return window.bandoneonUtils.normalizeMapping(rawMapping, layout);
 }
 
-function findButtonColor(button, activeDef, note) {
-  return colorForMidi(note);
-}
-
 function findMatchingButtons(note, openState = isOpen) {
   return window.bandoneonUtils.findMatchingButtons(mapping, note, openState);
 }
@@ -257,7 +253,7 @@ function renderMapping() {
     const noteLabel = document.createElement('span');
     noteLabel.className = 'note-text';
     noteLabel.textContent = midiToLabel(note);
-    btn.style.background = findButtonColor(button, activeDef, note);
+    btn.style.background = colorForMidi(note);
     btn.style.borderColor = activeDef?.borderColor || button.borderColor || colorForAccent(note);
 
     const wrapper = document.createElement('div');
@@ -284,19 +280,9 @@ function renderMapping() {
     btn.appendChild(label);
     btn.appendChild(noteLabel);
     if (button.keyCap) {
-      if (!btn.style.position) {
-        btn.style.position = 'relative';
-      }
       const keyCapEl = document.createElement('span');
       keyCapEl.className = 'key-cap';
       keyCapEl.textContent = button.keyCap;
-      keyCapEl.style.position = 'absolute';
-      keyCapEl.style.top = '2px';
-      keyCapEl.style.right = '4px';
-      keyCapEl.style.fontSize = '10px';
-      keyCapEl.style.fontWeight = 'bold';
-      keyCapEl.style.opacity = '0.85';
-      keyCapEl.style.pointerEvents = 'none';
       btn.appendChild(keyCapEl);
       btn.setAttribute('title', btn.getAttribute('title') + ` • key ${button.keyCap}`);
     }
