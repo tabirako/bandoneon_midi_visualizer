@@ -19,6 +19,7 @@ const incomingVel = document.getElementById('incomingVel');
 const activeButtonsSpan = document.getElementById('activeButtons');
 const instrumentSelect = document.getElementById('instrumentSelect');
 const volumeInput = document.getElementById('volume');
+const volumeVal = document.getElementById('volumeVal');
 const reedDetuneInput = document.getElementById('reedDetune');
 const reedBreathInput = document.getElementById('reedBreath');
 const reedVibratoInput = document.getElementById('reedVibrato');
@@ -39,6 +40,8 @@ let activeOscillators = new Map();
 const activeReedVoices = new Map();
 const activeNotes = new Map();
 let reedNoiseBuffer = null;
+let midiAccess = null;
+let midiEnabled = false;
 
 // Computer-keyboard mapping for the lower 4 rows of the treble (right) side.
 // Rows are read from each button's explicit `row` field (added by
@@ -142,6 +145,11 @@ function updateReedLabels() {
   reedBreathVal.textContent = (reedBreathInput.value / 100).toFixed(2);
   reedVibratoVal.textContent = reedVibratoInput.value;
 }
+
+function updateVolumeLabel() {
+  volumeVal.textContent = Number(volumeInput.value).toFixed(2);
+}
+
 let midiPlayback = null;
 let currentLayout = '142-rheinische';
 const persistedMappingKey = 'bandoneon-mapping-v1';
@@ -343,25 +351,68 @@ function highlightButtonsForNote(note, on = true, vel = 127) {
   updateButtonHighlights();
 }
 
-async function initMIDI() {
+function attachMIDIListeners() {
+  if (!midiAccess) return;
+  midiAccess.inputs.forEach((input) => {
+    input.onmidimessage = onMIDIMessage;
+  });
+  midiAccess.onstatechange = () => {
+    midiAccess.inputs.forEach((input) => {
+      input.onmidimessage = onMIDIMessage;
+    });
+  };
+}
+
+function detachMIDIListeners() {
+  if (!midiAccess) return;
+  midiAccess.inputs.forEach((input) => {
+    input.onmidimessage = null;
+  });
+  midiAccess.onstatechange = null;
+}
+
+async function requestMIDIAccess() {
   if (!navigator.requestMIDIAccess) {
     midiStatus.textContent = 'Web MIDI not supported in this browser.';
     return;
   }
   try {
-    const midiAccess = await navigator.requestMIDIAccess();
-    midiStatus.textContent = 'MIDI ready. Connect a device and play.';
-    midiAccess.inputs.forEach((input) => {
-      input.onmidimessage = onMIDIMessage;
-    });
-    midiAccess.onstatechange = () => {
-      midiAccess.inputs.forEach((input) => {
-        input.onmidimessage = onMIDIMessage;
-      });
-    };
+    midiAccess = await navigator.requestMIDIAccess();
+    return true;
   } catch (err) {
     midiStatus.textContent = 'MIDI access denied or error.';
     console.error(err);
+    return false;
+  }
+}
+
+function toggleMIDI() {
+  const enableMidiBtn = document.getElementById('enableMidi');
+  if (!enableMidiBtn) return;
+
+  if (!midiEnabled) {
+    // Enable MIDI
+    if (!midiAccess) {
+      requestMIDIAccess().then((success) => {
+        if (success) {
+          midiEnabled = true;
+          attachMIDIListeners();
+          enableMidiBtn.textContent = 'Disable MIDI Keyboard';
+          midiStatus.textContent = 'MIDI ready. Connect a device and play.';
+        }
+      });
+    } else {
+      midiEnabled = true;
+      attachMIDIListeners();
+      enableMidiBtn.textContent = 'Disable MIDI Keyboard';
+      midiStatus.textContent = 'MIDI ready. Connect a device and play.';
+    }
+  } else {
+    // Disable MIDI
+    midiEnabled = false;
+    detachMIDIListeners();
+    enableMidiBtn.textContent = 'Enable MIDI Keyboard';
+    midiStatus.textContent = 'MIDI disabled.';
   }
 }
 
@@ -785,9 +836,12 @@ midiProgressInput.addEventListener('change', () => {
 
 layoutSelect.addEventListener('change', () => loadMappingForLayout(layoutSelect.value));
 
+volumeInput.addEventListener('input', updateVolumeLabel);
+updateVolumeLabel();
+
 const enableMidiBtn = document.getElementById('enableMidi');
 if (enableMidiBtn) {
-  enableMidiBtn.addEventListener('click', initMIDI);
+  enableMidiBtn.addEventListener('click', toggleMIDI);
 }
 
 loadMappingForLayout(layoutSelect.value);
