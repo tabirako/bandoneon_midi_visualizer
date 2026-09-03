@@ -147,7 +147,7 @@ function updateReedLabels() {
 }
 
 function updateVolumeLabel() {
-  volumeVal.textContent = Number(volumeInput.value).toFixed(2);
+  volumeVal.textContent = Math.round(volumeInput.value * 100) + '%';
 }
 
 let midiPlayback = null;
