@@ -67,7 +67,7 @@ const PHYSICAL_KEYBOARD_ROWS = [
 // (Rheinische's lower 4 rows: 6, 7, 8, 8). {start, length} are indices into
 // the corresponding PHYSICAL_KEYBOARD_ROWS entry above.
 const DEFAULT_ROW_ANCHORS = [
-  { start: 3, length: 6 }, // '4'-'9'
+  { start: 3, length: 7 }, // '4'-'0'
   { start: 2, length: 7 }, // 'e'-'o'
   { start: 1, length: 8 }, // 's'-'l'
   { start: 1, length: 8 }  // 'x'-'.'
@@ -121,7 +121,7 @@ function assignKeyboardKeys() {
 const REED_PRESETS = {
   accordion: { detune: 7,  breath: 8,  vibrato: 4, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
   harmonica: { detune: 3,  breath: 18, vibrato: 6, filterFreq: 3200, filterQ: 3.5, harmMix: 0.8 },
-  bandoneon: { detune: 10, breath: 5,  vibrato: 3, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 }
+  bandoneon: { detune: 0, breath: 5,  vibrato: 3, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 }
 };
 
 function isReedInstrument(name) {
