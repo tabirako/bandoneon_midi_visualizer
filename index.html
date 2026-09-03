@@ -11,81 +11,86 @@
 <body>
   <header>
     <h1>Bandoneon MIDI Visualizer</h1>
-    <p>Static client-side app for MIDI keyboard input and MIDI upload with separate 142/144 bandoneon layouts.</p>
+    <p data-i18n="appTagline">Static client-side app for MIDI keyboard input and MIDI upload with separate 142/144 bandoneon layouts.</p>
   </header>
 
   <main>
     <section class="controls">
-      <label>Layout:
+      <label><span data-i18n="langLabel">Language:</span>
+        <select id="langSelect"></select>
+      </label>
+
+      <label><span data-i18n="layoutLabel">Layout:</span>
         <select id="layoutSelect">
-          <option value="142-rheinische">142-button (Rheinische)</option>
-          <option value="144-einheits">144-button (Einheits)</option>
+          <option value="142-rheinische" data-i18n="layout142">142-tone (Rheinische)</option>
+          <option value="144-einheits" data-i18n="layout144">144-tone (Einheits)</option>
         </select>
       </label>
 
-      <button id="toggleOpenClose">Mode: Open</button>
-      <label class="kbd">(Space to toggle)</label>
-      <button id="enableMidi">Enable MIDI Keyboard</button>
+      <button id="toggleOpenClose" data-i18n="modeButtonOpen">Mode: Open</button>
+      <label class="kbd" data-i18n="spaceToggleHint">(Space to toggle)</label>
+      <button id="enableMidi" data-i18n="enableMidi">Enable MIDI Keyboard</button>
 
       <!-- <label class="file">Upload mapping JSON: <input type="file" id="mappingFile" accept="application/json"></label> -->
       <!-- <small class="mapping-hint">Mapping JSON: array of objects like {"id":3,"side":"left","label":"B3","push":{"note":60,"x":0.3,"y":0.7},"pull":{"note":62,"x":0.3,"y":0.7}}</small> -->
 
-      <label class="file">Upload MIDI file: <input type="file" id="midiFile" accept=".mid,.midi"></label>
-      <button id="playMidi">Play MIDI</button>
-      <button id="stopMidi">Stop</button>
+      <label class="file"><span data-i18n="uploadMidiFile">Upload MIDI file:</span> <input type="file" id="midiFile" accept=".mid,.midi"></label>
+      <button id="playMidi" data-i18n="playMidi">Play MIDI</button>
+      <button id="stopMidi" data-i18n="stopLabel">Stop</button>
 
-      <label class="progress">MIDI position:
+      <label class="progress"><span data-i18n="midiPositionLabel">MIDI position:</span>
         <input id="midiProgress" type="range" min="0" max="1000" value="0" step="10">
         <span id="midiTime">00:00&nbsp;/&nbsp;00:00</span>
       </label>
 
-      <label>Instrument:
+      <label><span data-i18n="instrumentLabel">Instrument:</span>
         <select id="instrumentSelect">
-          <option value="accordion" selected>Accordion (musette)</option>
-          <option value="harmonica">Harmonica</option>
-          <option value="bandoneon">Bandoneon</option>
-          <option value="sine">Sine</option>
-          <option value="square">Square</option>
-          <option value="sawtooth">Sawtooth</option>
-          <option value="triangle">Triangle</option>
+          <option value="accordion" selected data-i18n="instrumentAccordion">Accordion (musette)</option>
+          <option value="harmonica" data-i18n="instrumentHarmonica">Harmonica</option>
+          <option value="bandoneon" data-i18n="instrumentBandoneon">Bandoneon</option>
+          <option value="sine" data-i18n="instrumentSine">Sine</option>
+          <option value="square" data-i18n="instrumentSquare">Square</option>
+          <option value="sawtooth" data-i18n="instrumentSawtooth">Sawtooth</option>
+          <option value="triangle" data-i18n="instrumentTriangle">Triangle</option>
         </select>
       </label>
 
-      <label>Volume: <span id="volumeVal">40%</span>
+      <label><span data-i18n="volumeLabel">Volume:</span> <span id="volumeVal">40%</span>
         <input id="volume" type="range" min="0" max="1" step="0.01" value="0.4">
       </label>
 
-      <label>Reed detune (beating): <span id="reedDetuneVal">7</span>&nbsp;cents
+      <label><span data-i18n="reedDetuneLabel">Reed detune (beating):</span> <span id="reedDetuneVal">7</span>&nbsp;<span data-i18n="cents">cents</span>
         <input id="reedDetune" type="range" min="0" max="20" step="1" value="7">
       </label>
 
-      <label>Bellows breath: <span id="reedBreathVal">0.08</span>
+      <label><span data-i18n="bellowsBreathLabel">Bellows breath:</span> <span id="reedBreathVal">0.08</span>
         <input id="reedBreath" type="range" min="0" max="30" step="1" value="8">
       </label>
 
-      <label>Vibrato depth: <span id="reedVibratoVal">4</span>&nbsp;cents
+      <label><span data-i18n="vibratoDepthLabel">Vibrato depth:</span> <span id="reedVibratoVal">4</span>&nbsp;<span data-i18n="cents">cents</span>
         <input id="reedVibrato" type="range" min="0" max="15" step="1" value="4">
       </label>
 
       <div class="midi-status">
-        <strong>MIDI status:</strong> <span id="midiStatus">No MIDI access yet</span>
+        <strong data-i18n="midiStatusLabel">MIDI status:</strong> <span id="midiStatus" data-i18n="midiStatusInitial">No MIDI access yet</span>
       </div>
     </section>
 
     <section class="info">
-      <div>Incoming note: <span id="incomingNote">—</span></div>
-      <div>Velocity: <span id="incomingVel">—</span></div>
-      <div>Active mapping buttons: <span id="activeButtons">—</span></div>
+      <div><span data-i18n="incomingNoteLabel">Incoming note:</span> <span id="incomingNote">—</span></div>
+      <div><span data-i18n="velocityLabel">Velocity:</span> <span id="incomingVel">—</span></div>
+      <div><span data-i18n="activeButtonsLabel">Active mapping buttons:</span> <span id="activeButtons">—</span></div>
     </section>
 
     <section id="bandoneonContainer" class="bandoneon"></section>
 
     <section class="legend">
-      <p>Colors are by octave. Press space to switch between <u>Open</u> and <u>Close</u>.</p>
-      <p>Click any visual button OR pressed the <u>Enable MIDI Keyboard</u> button above to simulate press.</p>
+      <p data-i18n-html="legendLine1">Colors are by octave. Press space to switch between <u>Open</u> and <u>Close</u>.</p>
+      <p data-i18n-html="legendLine2">Click any visual button OR pressed the <u>Enable MIDI Keyboard</u> button above to simulate press.</p>
     </section>
   </main>
 
+  <script src="i18n.js"></script>
   <script src="bandoneon-utils.js"></script>
   <script src="mappings.js"></script>
   <script src="color-ranges.js"></script>

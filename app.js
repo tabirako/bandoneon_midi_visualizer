@@ -42,6 +42,70 @@ const activeNotes = new Map();
 let reedNoiseBuffer = null;
 let midiAccess = null;
 let midiEnabled = false;
+let currentLang = 'en';
+const persistedLangKey = 'bandoneon-lang-v1';
+
+// ---- i18n helpers -----------------------------------------------------
+// Looks up `key` in the active language's dictionary (i18n.js), falling
+// back to English, then to the raw key so a missing translation never
+// renders blank.
+function t(key) {
+  const dict = window.translations[currentLang] || window.translations.en;
+  return (dict && dict[key]) || window.translations.en[key] || key;
+}
+
+// Sets an element's text AND records which key produced it (via
+// data-i18n), so a later language switch can re-render it correctly even
+// though the text was set dynamically rather than at page load.
+function setI18nText(el, key) {
+  if (!el) return;
+  el.dataset.i18n = key;
+  el.textContent = t(key);
+}
+
+// Re-renders every translatable element in the active language: static
+// [data-i18n] text, [data-i18n-html] markup (legend lines with <u> tags),
+// and the <html lang> attribute screen readers rely on for pronunciation.
+function applyTranslations() {
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach((el) => {
+    el.innerHTML = t(el.dataset.i18nHtml);
+  });
+  updateModeButtonText();
+  updateMidiButtonText();
+  renderMapping(); // rebuilds tooltips/side titles, which are also translated
+}
+
+// Picks a saved preference, else a translation matching the browser's
+// language (with a region-based guess for Chinese script), else English.
+function detectInitialLang() {
+  try {
+    const saved = localStorage.getItem(persistedLangKey);
+    if (saved && window.translations[saved]) return saved;
+  } catch (err) {
+    // localStorage unavailable (private mode, etc.) — fall through
+  }
+  const nav = navigator.language || 'en';
+  if (window.translations[nav]) return nav;
+  const short = nav.split('-')[0];
+  if (short === 'zh') {
+    return /-(TW|HK|MO)$/i.test(nav) ? 'zh-Hant' : 'zh-Hans';
+  }
+  return window.translations[short] ? short : 'en';
+}
+
+function setLanguage(lang) {
+  currentLang = window.translations[lang] ? lang : 'en';
+  try {
+    localStorage.setItem(persistedLangKey, currentLang);
+  } catch (err) {
+    // ignore — language just won't persist across reloads
+  }
+  applyTranslations();
+}
 
 // Computer-keyboard mapping for the lower 4 rows of the treble (right) side.
 // Rows are read from each button's explicit `row` field (added by
@@ -227,7 +291,7 @@ function renderMapping() {
   const leftPanel = document.createElement('section');
   leftPanel.className = 'panel';
   const leftTitle = document.createElement('h2');
-  leftTitle.textContent = 'Left side · Bass';
+  leftTitle.textContent = t('leftSideBass');
   leftPanel.appendChild(leftTitle);
   const leftLayout = document.createElement('div');
   leftLayout.className = 'layout';
@@ -236,7 +300,7 @@ function renderMapping() {
   const rightPanel = document.createElement('section');
   rightPanel.className = 'panel';
   const rightTitle = document.createElement('h2');
-  rightTitle.textContent = 'Right side · Treble';
+  rightTitle.textContent = t('rightSideTreble');
   rightPanel.appendChild(rightTitle);
   const rightLayout = document.createElement('div');
   rightLayout.className = 'layout';
@@ -251,7 +315,7 @@ function renderMapping() {
     btn.dataset.open = button.open?.note ?? button.open;
     btn.dataset.side = button.side;
     btn.dataset.label = button.label;
-    btn.setAttribute('title', `${button.side} • ${button.label} • close ${button.close?.note ?? button.close} / open ${button.open?.note ?? button.open}`);
+    btn.setAttribute('title', `${button.side} • ${button.label} • ${t('stateClose')} ${button.close?.note ?? button.close} / ${t('stateOpen')} ${button.open?.note ?? button.open}`);
 
     const activeDef = isOpen ? button.open : button.close;
     const note = activeDef?.note ?? activeDef;
@@ -292,7 +356,7 @@ function renderMapping() {
       keyCapEl.className = 'key-cap';
       keyCapEl.textContent = button.keyCap;
       btn.appendChild(keyCapEl);
-      btn.setAttribute('title', btn.getAttribute('title') + ` • key ${button.keyCap}`);
+      btn.setAttribute('title', btn.getAttribute('title') + ` • ${t('keyWord')} ${button.keyCap}`);
     }
     btn.appendChild(halo);
     wrapper.appendChild(btn);
@@ -324,7 +388,7 @@ function updateButtonHighlights() {
     const matches = findMatchingButtons(note);
     matches.forEach((button) => {
       activeButtonIds.add(String(button.id));
-      activeButtonLabels.add(button.side + ': ' + button.label);
+      activeButtonLabels.add(t(button.side === 'left' ? 'sideLeft' : 'sideRight') + ': ' + button.label);
     });
     maxVel = Math.max(maxVel, vel || 127);
   });
@@ -373,17 +437,22 @@ function detachMIDIListeners() {
 
 async function requestMIDIAccess() {
   if (!navigator.requestMIDIAccess) {
-    midiStatus.textContent = 'Web MIDI not supported in this browser.';
+    setI18nText(midiStatus, 'midiNotSupported');
     return;
   }
   try {
     midiAccess = await navigator.requestMIDIAccess();
     return true;
   } catch (err) {
-    midiStatus.textContent = 'MIDI access denied or error.';
+    setI18nText(midiStatus, 'midiAccessDenied');
     console.error(err);
     return false;
   }
+}
+
+function updateMidiButtonText() {
+  const enableMidiBtn = document.getElementById('enableMidi');
+  setI18nText(enableMidiBtn, midiEnabled ? 'disableMidi' : 'enableMidi');
 }
 
 function toggleMIDI() {
@@ -397,22 +466,22 @@ function toggleMIDI() {
         if (success) {
           midiEnabled = true;
           attachMIDIListeners();
-          enableMidiBtn.textContent = 'Disable MIDI Keyboard';
-          midiStatus.textContent = 'MIDI ready. Connect a device and play.';
+          updateMidiButtonText();
+          setI18nText(midiStatus, 'midiReady');
         }
       });
     } else {
       midiEnabled = true;
       attachMIDIListeners();
-      enableMidiBtn.textContent = 'Disable MIDI Keyboard';
-      midiStatus.textContent = 'MIDI ready. Connect a device and play.';
+      updateMidiButtonText();
+      setI18nText(midiStatus, 'midiReady');
     }
   } else {
     // Disable MIDI
     midiEnabled = false;
     detachMIDIListeners();
-    enableMidiBtn.textContent = 'Enable MIDI Keyboard';
-    midiStatus.textContent = 'MIDI disabled.';
+    updateMidiButtonText();
+    setI18nText(midiStatus, 'midiDisabledStatus');
   }
 }
 
@@ -452,9 +521,13 @@ function handleNoteOff(note) {
   stopTone(note);
 }
 
+function updateModeButtonText() {
+  setI18nText(toggleBtn, isOpen ? 'modeButtonOpen' : 'modeButtonClose');
+}
+
 function setOpenState(open) {
   isOpen = !!open;
-  toggleBtn.textContent = 'Mode: ' + (isOpen ? 'Open' : 'Close');
+  updateModeButtonText();
   renderMapping();
 }
 
@@ -703,10 +776,10 @@ mappingFileInput?.addEventListener('change', (event) => {
       mapping = normalizeMapping(parsed, currentLayout);
       persistMapping();
       renderMapping();
-      midiStatus.textContent = 'Mapping loaded and saved.';
+      setI18nText(midiStatus, 'mappingLoaded');
     } catch (err) {
       console.error(err);
-      alert('Invalid mapping JSON.');
+      alert(t('invalidMappingJson'));
     }
   };
   reader.readAsText(file);
@@ -721,13 +794,13 @@ midiFileInput?.addEventListener('change', (event) => {
     try {
       const parsedMidi = new Midi(reader.result);
       midiPlayback = parsedMidi;
-      midiStatus.textContent = 'MIDI file loaded. Click Play.';
+      setI18nText(midiStatus, 'midiFileLoaded');
       midiProgressInput.max = String(Math.max(1, Math.round(parsedMidi.duration * 1000)));
       midiProgressInput.value = '0';
       updateProgressUI(0);
     } catch (err) {
       console.error(err);
-      alert('Failed to parse MIDI file.');
+      alert(t('failedParseMidi'));
     }
   };
   reader.readAsArrayBuffer(file);
@@ -768,7 +841,7 @@ function startProgressTimer() {
     updateProgressUI(elapsed);
     if (midiPlayback && elapsed >= midiPlayback.duration) {
       stopProgressTimer();
-      midiStatus.textContent = 'Finished.';
+      setI18nText(midiStatus, 'finished');
     }
   }, 100);
 }
@@ -800,12 +873,12 @@ function schedulePlaybackFrom(offsetSeconds) {
   playbackWallStartMs = Date.now() - offsetSeconds * 1000;
   updateProgressUI(offsetSeconds);
   startProgressTimer();
-  midiStatus.textContent = 'Playing MIDI...';
+  setI18nText(midiStatus, 'playingMidi');
 }
 
 playMidiBtn.addEventListener('click', () => {
   if (!midiPlayback) {
-    alert('Load a MIDI file first.');
+    alert(t('loadMidiFirst'));
     return;
   }
   schedulePlaybackFrom(0);
@@ -816,7 +889,7 @@ stopMidiBtn.addEventListener('click', () => {
   stopAllActiveNotes();
   stopProgressTimer();
   updateProgressUI(0);
-  midiStatus.textContent = 'Stopped.';
+  setI18nText(midiStatus, 'stoppedStatus');
 });
 
 midiProgressInput.addEventListener('input', () => {
@@ -844,7 +917,24 @@ if (enableMidiBtn) {
   enableMidiBtn.addEventListener('click', toggleMIDI);
 }
 
+// Populate the language switcher from i18n.js's language list, so adding a
+// new language there needs no HTML changes.
+const langSelect = document.getElementById('langSelect');
+if (langSelect) {
+  Object.keys(window.languageNames).forEach((code) => {
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = window.languageNames[code];
+    langSelect.appendChild(opt);
+  });
+  langSelect.addEventListener('change', () => setLanguage(langSelect.value));
+}
+
 loadMappingForLayout(layoutSelect.value);
+
+currentLang = detectInitialLang();
+if (langSelect) langSelect.value = currentLang;
+applyTranslations();
 
 window._bandoneon = {
   setOpenState,
