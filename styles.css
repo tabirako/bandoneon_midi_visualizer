@@ -42,6 +42,14 @@ header h1 {
   display: inline-block;
 }
 
+/* Forces the next control onto a new line within the wrapping .controls
+   flexbox, so unrelated control groups (MIDI file/play vs. instrument/reed
+   vs. status) don't visually blend into one continuous row. */
+.control-break {
+  flex-basis: 100%;
+  height: 0;
+}
+
 button {
   background: #1f2937;
   color: #e6eef6;
@@ -191,6 +199,19 @@ button:active {
 .legend {
   margin-top: 18px;
   color: #9fb2c8;
+}
+
+/* Hard-caps "Active mapping buttons" at 2 lines so a chord with lots of
+   simultaneous notes can't grow this line and push the bandoneon panels
+   below it down the page — it just truncates with an ellipsis instead. */
+.active-buttons-line {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  max-height: 2.8em;
+  line-height: 1.4em;
 }
 
 .midi-status {

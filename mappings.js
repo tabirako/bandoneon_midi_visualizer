@@ -1066,11 +1066,25 @@ window.defaultMappings = {
       "order": 8
     }
   ],
+  // NOTE on "144-einheits" button `label`s: unlike "142-rheinische" (whose
+  // labels are real numbers/fractions read off an actual reference chart —
+  // see handoff.md's "Data provenance" section), there is no standardized,
+  // manufacturer-agnostic button numbering for the 144-tone Einheits system.
+  // Checked two sources (an onmusic.org dictionary entry, and Peter Haas's
+  // bandoneon.petermhaas.de grifftabellen page) — neither documents one; the
+  // Haas page explicitly defers 142/144-tone charts to individual builders'
+  // sites, implying numbering (where it exists at all) is builder-specific.
+  // These labels are therefore just a plain sequential count in the app's
+  // own left-to-right, top-to-bottom, bass-then-treble reading order (1-35
+  // = left/bass, 36-72 = right/treble) — an internal reference number for
+  // pointing at a specific button in conversation, NOT a number you'd find
+  // printed on a real instrument. Don't treat it as sourced data the way the
+  // 142-rheinische labels are.
   "144-einheits": [
     {
       "id": 1,
       "side": "left",
-      "label": "E1",
+      "label": "1",
       "row": 1,
       "order": 1,
       "x": 0.303047236,
@@ -1085,7 +1099,7 @@ window.defaultMappings = {
     {
       "id": 2,
       "side": "left",
-      "label": "E2",
+      "label": "2",
       "row": 1,
       "order": 2,
       "x": 0.439941753,
@@ -1100,7 +1114,7 @@ window.defaultMappings = {
     {
       "id": 3,
       "side": "left",
-      "label": "E3",
+      "label": "3",
       "row": 1,
       "order": 3,
       "x": 0.568822937,
@@ -1115,7 +1129,7 @@ window.defaultMappings = {
     {
       "id": 4,
       "side": "left",
-      "label": "E4",
+      "label": "4",
       "row": 1,
       "order": 4,
       "x": 0.702378564,
@@ -1130,7 +1144,7 @@ window.defaultMappings = {
     {
       "id": 5,
       "side": "left",
-      "label": "E5",
+      "label": "5",
       "row": 1,
       "order": 5,
       "x": 0.827920859,
@@ -1145,7 +1159,7 @@ window.defaultMappings = {
     {
       "id": 6,
       "side": "left",
-      "label": "E6",
+      "label": "6",
       "row": 2,
       "order": 1,
       "x": 0.134345908,
@@ -1160,7 +1174,7 @@ window.defaultMappings = {
     {
       "id": 7,
       "side": "left",
-      "label": "E7",
+      "label": "7",
       "row": 2,
       "order": 2,
       "x": 0.248289419,
@@ -1175,7 +1189,7 @@ window.defaultMappings = {
     {
       "id": 8,
       "side": "left",
-      "label": "E8",
+      "label": "8",
       "row": 2,
       "order": 3,
       "x": 0.377170605,
@@ -1190,7 +1204,7 @@ window.defaultMappings = {
     {
       "id": 9,
       "side": "left",
-      "label": "E9",
+      "label": "9",
       "row": 2,
       "order": 4,
       "x": 0.501377334,
@@ -1205,7 +1219,7 @@ window.defaultMappings = {
     {
       "id": 10,
       "side": "left",
-      "label": "E10",
+      "label": "10",
       "row": 2,
       "order": 5,
       "x": 0.625584077,
@@ -1220,7 +1234,7 @@ window.defaultMappings = {
     {
       "id": 11,
       "side": "left",
-      "label": "E11",
+      "label": "11",
       "row": 2,
       "order": 6,
       "x": 0.750458603,
@@ -1235,7 +1249,7 @@ window.defaultMappings = {
     {
       "id": 12,
       "side": "left",
-      "label": "E12",
+      "label": "12",
       "row": 2,
       "order": 7,
       "x": 0.872661996,
@@ -1250,7 +1264,7 @@ window.defaultMappings = {
     {
       "id": 13,
       "side": "left",
-      "label": "E13",
+      "label": "13",
       "row": 3,
       "order": 1,
       "x": 0.201544946,
@@ -1265,7 +1279,7 @@ window.defaultMappings = {
     {
       "id": 14,
       "side": "left",
-      "label": "E14",
+      "label": "14",
       "row": 3,
       "order": 2,
       "x": 0.319741682,
@@ -1280,7 +1294,7 @@ window.defaultMappings = {
     {
       "id": 15,
       "side": "left",
-      "label": "E15",
+      "label": "15",
       "row": 3,
       "order": 3,
       "x": 0.439941753,
@@ -1295,7 +1309,7 @@ window.defaultMappings = {
     {
       "id": 16,
       "side": "left",
-      "label": "E16",
+      "label": "16",
       "row": 3,
       "order": 4,
       "x": 0.558806257,
@@ -1310,7 +1324,7 @@ window.defaultMappings = {
     {
       "id": 17,
       "side": "left",
-      "label": "E17",
+      "label": "17",
       "row": 3,
       "order": 5,
       "x": 0.676335222,
@@ -1325,7 +1339,7 @@ window.defaultMappings = {
     {
       "id": 18,
       "side": "left",
-      "label": "E18",
+      "label": "18",
       "row": 3,
       "order": 6,
       "x": 0.79319639,
@@ -1340,7 +1354,7 @@ window.defaultMappings = {
     {
       "id": 19,
       "side": "left",
-      "label": "E19",
+      "label": "19",
       "row": 3,
       "order": 7,
       "x": 0.910057558,
@@ -1355,7 +1369,7 @@ window.defaultMappings = {
     {
       "id": 20,
       "side": "left",
-      "label": "E20",
+      "label": "20",
       "row": 4,
       "order": 1,
       "x": 0.127421565,
@@ -1370,7 +1384,7 @@ window.defaultMappings = {
     {
       "id": 21,
       "side": "left",
-      "label": "E21",
+      "label": "21",
       "row": 4,
       "order": 2,
       "x": 0.240943845,
@@ -1385,7 +1399,7 @@ window.defaultMappings = {
     {
       "id": 22,
       "side": "left",
-      "label": "E22",
+      "label": "22",
       "row": 4,
       "order": 3,
       "x": 0.360476147,
@@ -1400,7 +1414,7 @@ window.defaultMappings = {
     {
       "id": 23,
       "side": "left",
-      "label": "E23",
+      "label": "23",
       "row": 4,
       "order": 4,
       "x": 0.483347336,
@@ -1415,7 +1429,7 @@ window.defaultMappings = {
     {
       "id": 24,
       "side": "left",
-      "label": "E24",
+      "label": "24",
       "row": 4,
       "order": 5,
       "x": 0.595534063,
@@ -1430,7 +1444,7 @@ window.defaultMappings = {
     {
       "id": 25,
       "side": "left",
-      "label": "E25",
+      "label": "25",
       "row": 4,
       "order": 6,
       "x": 0.711059691,
@@ -1445,7 +1459,7 @@ window.defaultMappings = {
     {
       "id": 26,
       "side": "left",
-      "label": "E26",
+      "label": "26",
       "row": 4,
       "order": 7,
       "x": 0.833930867,
@@ -1460,7 +1474,7 @@ window.defaultMappings = {
     {
       "id": 27,
       "side": "left",
-      "label": "E27",
+      "label": "27",
       "row": 4,
       "order": 8,
       "x": 0.94745312,
@@ -1475,7 +1489,7 @@ window.defaultMappings = {
     {
       "id": 28,
       "side": "left",
-      "label": "E28",
+      "label": "28",
       "row": 5,
       "order": 1,
       "x": 0.076002651,
@@ -1490,7 +1504,7 @@ window.defaultMappings = {
     {
       "id": 29,
       "side": "left",
-      "label": "E29",
+      "label": "29",
       "row": 5,
       "order": 2,
       "x": 0.166152707,
@@ -1505,7 +1519,7 @@ window.defaultMappings = {
     {
       "id": 30,
       "side": "left",
-      "label": "E30",
+      "label": "30",
       "row": 5,
       "order": 3,
       "x": 0.281678322,
@@ -1520,7 +1534,7 @@ window.defaultMappings = {
     {
       "id": 31,
       "side": "left",
-      "label": "E31",
+      "label": "31",
       "row": 5,
       "order": 4,
       "x": 0.399875058,
@@ -1535,7 +1549,7 @@ window.defaultMappings = {
     {
       "id": 32,
       "side": "left",
-      "label": "E32",
+      "label": "32",
       "row": 5,
       "order": 5,
       "x": 0.522078465,
@@ -1550,7 +1564,7 @@ window.defaultMappings = {
     {
       "id": 33,
       "side": "left",
-      "label": "E33",
+      "label": "33",
       "row": 5,
       "order": 6,
       "x": 0.637604093,
@@ -1565,7 +1579,7 @@ window.defaultMappings = {
     {
       "id": 34,
       "side": "left",
-      "label": "E34",
+      "label": "34",
       "row": 5,
       "order": 7,
       "x": 0.753797492,
@@ -1580,7 +1594,7 @@ window.defaultMappings = {
     {
       "id": 35,
       "side": "left",
-      "label": "E35",
+      "label": "35",
       "row": 5,
       "order": 8,
       "x": 0.873997549,
@@ -1595,7 +1609,7 @@ window.defaultMappings = {
     {
       "id": 36,
       "side": "right",
-      "label": "E36",
+      "label": "36",
       "row": 1,
       "order": 1,
       "x": 0.259565593,
@@ -1610,7 +1624,7 @@ window.defaultMappings = {
     {
       "id": 37,
       "side": "right",
-      "label": "E37",
+      "label": "37",
       "row": 1,
       "order": 2,
       "x": 0.391095493,
@@ -1625,7 +1639,7 @@ window.defaultMappings = {
     {
       "id": 38,
       "side": "right",
-      "label": "E38",
+      "label": "38",
       "row": 1,
       "order": 3,
       "x": 0.517813304,
@@ -1640,7 +1654,7 @@ window.defaultMappings = {
     {
       "id": 39,
       "side": "right",
-      "label": "E39",
+      "label": "39",
       "row": 1,
       "order": 4,
       "x": 0.647739168,
@@ -1655,7 +1669,7 @@ window.defaultMappings = {
     {
       "id": 40,
       "side": "right",
-      "label": "E40",
+      "label": "40",
       "row": 1,
       "order": 5,
       "x": 0.768842889,
@@ -1670,7 +1684,7 @@ window.defaultMappings = {
     {
       "id": 41,
       "side": "right",
-      "label": "E41",
+      "label": "41",
       "row": 1,
       "order": 6,
       "x": 0.88994661,
@@ -1685,7 +1699,7 @@ window.defaultMappings = {
     {
       "id": 42,
       "side": "right",
-      "label": "E42",
+      "label": "42",
       "row": 2,
       "order": 1,
       "x": 0.205830841,
@@ -1700,7 +1714,7 @@ window.defaultMappings = {
     {
       "id": 43,
       "side": "right",
-      "label": "E43",
+      "label": "43",
       "row": 2,
       "order": 2,
       "x": 0.325330543,
@@ -1715,7 +1729,7 @@ window.defaultMappings = {
     {
       "id": 44,
       "side": "right",
-      "label": "E44",
+      "label": "44",
       "row": 2,
       "order": 3,
       "x": 0.45204837,
@@ -1730,7 +1744,7 @@ window.defaultMappings = {
     {
       "id": 45,
       "side": "right",
-      "label": "E45",
+      "label": "45",
       "row": 2,
       "order": 4,
       "x": 0.576360144,
@@ -1745,7 +1759,7 @@ window.defaultMappings = {
     {
       "id": 46,
       "side": "right",
-      "label": "E46",
+      "label": "46",
       "row": 2,
       "order": 5,
       "x": 0.694255828,
@@ -1760,7 +1774,7 @@ window.defaultMappings = {
     {
       "id": 47,
       "side": "right",
-      "label": "E47",
+      "label": "47",
       "row": 2,
       "order": 6,
       "x": 0.810547492,
@@ -1775,7 +1789,7 @@ window.defaultMappings = {
     {
       "id": 48,
       "side": "right",
-      "label": "E48",
+      "label": "48",
       "row": 2,
       "order": 7,
       "x": 0.926839156,
@@ -1790,7 +1804,7 @@ window.defaultMappings = {
     {
       "id": 49,
       "side": "right",
-      "label": "E49",
+      "label": "49",
       "row": 3,
       "order": 1,
       "x": 0.156908145,
@@ -1805,7 +1819,7 @@ window.defaultMappings = {
     {
       "id": 50,
       "side": "right",
-      "label": "E50",
+      "label": "50",
       "row": 3,
       "order": 2,
       "x": 0.272397792,
@@ -1820,7 +1834,7 @@ window.defaultMappings = {
     {
       "id": 51,
       "side": "right",
-      "label": "E51",
+      "label": "51",
       "row": 3,
       "order": 3,
       "x": 0.38628342,
@@ -1835,7 +1849,7 @@ window.defaultMappings = {
     {
       "id": 52,
       "side": "right",
-      "label": "E52",
+      "label": "52",
       "row": 3,
       "order": 4,
       "x": 0.507387141,
@@ -1850,7 +1864,7 @@ window.defaultMappings = {
     {
       "id": 53,
       "side": "right",
-      "label": "E53",
+      "label": "53",
       "row": 3,
       "order": 5,
       "x": 0.623678821,
@@ -1865,7 +1879,7 @@ window.defaultMappings = {
     {
       "id": 54,
       "side": "right",
-      "label": "E54",
+      "label": "54",
       "row": 3,
       "order": 6,
       "x": 0.735158397,
@@ -1880,7 +1894,7 @@ window.defaultMappings = {
     {
       "id": 55,
       "side": "right",
-      "label": "E55",
+      "label": "55",
       "row": 3,
       "order": 7,
       "x": 0.851450077,
@@ -1895,7 +1909,7 @@ window.defaultMappings = {
     {
       "id": 56,
       "side": "right",
-      "label": "E56",
+      "label": "56",
       "row": 4,
       "order": 1,
       "x": 0.09,
@@ -1910,7 +1924,7 @@ window.defaultMappings = {
     {
       "id": 57,
       "side": "right",
-      "label": "E57",
+      "label": "57",
       "row": 4,
       "order": 2,
       "x": 0.189790604,
@@ -1925,7 +1939,7 @@ window.defaultMappings = {
     {
       "id": 58,
       "side": "right",
-      "label": "E58",
+      "label": "58",
       "row": 4,
       "order": 3,
       "x": 0.314102395,
@@ -1940,7 +1954,7 @@ window.defaultMappings = {
     {
       "id": 59,
       "side": "right",
-      "label": "E59",
+      "label": "59",
       "row": 4,
       "order": 4,
       "x": 0.423977952,
@@ -1955,7 +1969,7 @@ window.defaultMappings = {
     {
       "id": 60,
       "side": "right",
-      "label": "E60",
+      "label": "60",
       "row": 4,
       "order": 5,
       "x": 0.541873651,
@@ -1970,7 +1984,7 @@ window.defaultMappings = {
     {
       "id": 61,
       "side": "right",
-      "label": "E61",
+      "label": "61",
       "row": 4,
       "order": 6,
       "x": 0.659769334,
@@ -1985,7 +1999,7 @@ window.defaultMappings = {
     {
       "id": 62,
       "side": "right",
-      "label": "E62",
+      "label": "62",
       "row": 4,
       "order": 7,
       "x": 0.777665017,
@@ -2000,7 +2014,7 @@ window.defaultMappings = {
     {
       "id": 63,
       "side": "right",
-      "label": "E63",
+      "label": "63",
       "row": 4,
       "order": 8,
       "x": 0.889144609,
@@ -2015,7 +2029,7 @@ window.defaultMappings = {
     {
       "id": 64,
       "side": "right",
-      "label": "E64",
+      "label": "64",
       "row": 5,
       "order": 1,
       "x": 0.05,
@@ -2030,7 +2044,7 @@ window.defaultMappings = {
     {
       "id": 65,
       "side": "right",
-      "label": "E65",
+      "label": "65",
       "row": 5,
       "order": 2,
       "x": 0.14,
@@ -2045,7 +2059,7 @@ window.defaultMappings = {
     {
       "id": 66,
       "side": "right",
-      "label": "E66",
+      "label": "66",
       "row": 5,
       "order": 3,
       "x": 0.234703245,
@@ -2060,7 +2074,7 @@ window.defaultMappings = {
     {
       "id": 67,
       "side": "right",
-      "label": "E67",
+      "label": "67",
       "row": 5,
       "order": 4,
       "x": 0.346182836,
@@ -2075,7 +2089,7 @@ window.defaultMappings = {
     {
       "id": 68,
       "side": "right",
-      "label": "E68",
+      "label": "68",
       "row": 5,
       "order": 5,
       "x": 0.464078519,
@@ -2090,7 +2104,7 @@ window.defaultMappings = {
     {
       "id": 69,
       "side": "right",
-      "label": "E69",
+      "label": "69",
       "row": 5,
       "order": 6,
       "x": 0.580370184,
@@ -2105,7 +2119,7 @@ window.defaultMappings = {
     {
       "id": 70,
       "side": "right",
-      "label": "E70",
+      "label": "70",
       "row": 5,
       "order": 7,
       "x": 0.696661864,
@@ -2120,7 +2134,7 @@ window.defaultMappings = {
     {
       "id": 71,
       "side": "right",
-      "label": "E71",
+      "label": "71",
       "row": 5,
       "order": 8,
       "x": 0.816161582,
@@ -2135,7 +2149,7 @@ window.defaultMappings = {
     {
       "id": 72,
       "side": "right",
-      "label": "E72",
+      "label": "72",
       "row": 5,
       "order": 9,
       "x": 0.920205998,

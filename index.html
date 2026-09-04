@@ -34,14 +34,17 @@
       <!-- <label class="file">Upload mapping JSON: <input type="file" id="mappingFile" accept="application/json"></label> -->
       <!-- <small class="mapping-hint">Mapping JSON: array of objects like {"id":3,"side":"left","label":"B3","push":{"note":60,"x":0.3,"y":0.7},"pull":{"note":62,"x":0.3,"y":0.7}}</small> -->
 
+      <div class="control-break"></div>
+
       <label class="file"><span data-i18n="uploadMidiFile">Upload MIDI file:</span> <input type="file" id="midiFile" accept=".mid,.midi"></label>
       <button id="playMidi" data-i18n="playMidi">Play MIDI</button>
       <button id="stopMidi" data-i18n="stopLabel">Stop</button>
-
       <label class="progress"><span data-i18n="midiPositionLabel">MIDI position:</span>
         <input id="midiProgress" type="range" min="0" max="1000" value="0" step="10">
         <span id="midiTime">00:00&nbsp;/&nbsp;00:00</span>
       </label>
+
+      <div class="control-break"></div>
 
       <label><span data-i18n="instrumentLabel">Instrument:</span>
         <select id="instrumentSelect">
@@ -71,6 +74,8 @@
         <input id="reedVibrato" type="range" min="0" max="15" step="1" value="4">
       </label>
 
+      <div class="control-break"></div>
+
       <div class="midi-status">
         <strong data-i18n="midiStatusLabel">MIDI status:</strong> <span id="midiStatus" data-i18n="midiStatusInitial">No MIDI access yet</span>
       </div>
@@ -79,7 +84,7 @@
     <section class="info">
       <div><span data-i18n="incomingNoteLabel">Incoming note:</span> <span id="incomingNote">—</span></div>
       <div><span data-i18n="velocityLabel">Velocity:</span> <span id="incomingVel">—</span></div>
-      <div><span data-i18n="activeButtonsLabel">Active mapping buttons:</span> <span id="activeButtons">—</span></div>
+      <div class="active-buttons-line"><span data-i18n="activeButtonsLabel">Active mapping buttons:</span> <span id="activeButtons">—</span></div>
     </section>
 
     <section id="bandoneonContainer" class="bandoneon"></section>
