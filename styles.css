@@ -11,6 +11,22 @@ body {
   color: #e6eef6;
 }
 
+/* ========== Site Link (back to kei-c.com) ========== */
+.site-link {
+  margin-bottom: 8px;
+}
+
+.site-link a {
+  color: #9fb2c8;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.site-link a:hover {
+  color: #cfe6ff;
+  text-decoration: underline;
+}
+
 /* ========== Header ========== */
 header {
   display: flex;
