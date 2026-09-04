@@ -65,6 +65,6 @@
 *.3dm
 *.max
 
-*.md
+HANDOFF.md
 
 # End of https://www.toptal.com/developers/gitignore/api/images
