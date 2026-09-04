@@ -11,6 +11,21 @@ body {
   color: #e6eef6;
 }
 
+/* ========== Compatibility Banners ========== */
+/* Shared style for the two "this won't work" messages: <noscript> (JS
+   disabled) and the old-browser probe in index.html (JS enabled, but too
+   old to parse app.js's syntax — see handoff.md for the version floor). */
+.compat-banner {
+  background: #3a1f1f;
+  color: #ffd6d6;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 /* ========== Site Link (back to kei-c.com) ========== */
 .site-link {
   margin-bottom: 8px;

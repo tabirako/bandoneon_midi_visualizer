@@ -9,6 +9,44 @@
   <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.27/build/Midi.js"></script>
 </head>
 <body>
+  <!--
+    Old-browser probe: written in deliberately ancient JS (var, function
+    expressions, string concatenation — no let/const, arrow functions,
+    template literals, optional chaining) so it can run and report clearly
+    on the very browsers app.js can't. app.js relies on ES2020 syntax
+    (optional chaining `?.`, nullish coalescing `??`) that's a hard parse
+    failure on anything older than roughly Chrome/Edge 80, Firefox 74, or
+    Safari 13.1 (all ~2020) — see handoff.md for the full compatibility
+    write-up. A parse failure like that doesn't trigger <noscript> (JS is
+    enabled, it just can't read this file), so without this probe an
+    old-browser visitor would see a silent blank page instead of an
+    explanation. `new Function(...)` compiles its argument immediately,
+    throwing a SyntaxError synchronously if unsupported syntax is inside —
+    it's never actually called, just constructed, as the parse test itself.
+  -->
+  <script>
+    (function () {
+      try {
+        new Function('return null?.x ?? 1');
+      } catch (e) {
+        document.write(
+          '<div class="compat-banner">' +
+          'Your browser looks too old to run this app — it needs a newer ' +
+          'browser (roughly: Chrome or Edge 80+, Firefox 74+, Safari ' +
+          '13.1+, or an equivalent released since 2020). Please update ' +
+          'your browser, or try a different, newer one.' +
+          '</div>'
+        );
+      }
+    })();
+  </script>
+  <noscript>
+    <div class="compat-banner">
+      This app needs JavaScript to work: it draws the bandoneon keyboard, plays
+      all audio, and handles MIDI input entirely in-browser — none of that runs
+      with JavaScript disabled. Please enable it and reload the page.
+    </div>
+  </noscript>
   <div class="site-link"><a href="https://kei-c.com">← kei-c.com</a></div>
   <header>
     <h1>Bandoneon MIDI Visualizer</h1>
