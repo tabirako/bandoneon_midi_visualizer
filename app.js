@@ -42,6 +42,11 @@ const activeNotes = new Map();
 let reedNoiseBuffer = null;
 let midiAccess = null;
 let midiEnabled = false;
+
+// Mouse clicks and computer-keyboard presses carry no real velocity signal
+// (unlike a MIDI controller or the uploaded file), so both simulate the same
+// fixed press strength rather than drifting to different made-up numbers.
+const SIMULATED_VELOCITY = 100;
 let currentLang = 'en';
 const persistedLangKey = 'bandoneon-lang-v1';
 
@@ -365,7 +370,7 @@ function renderMapping() {
       const activeNote = activeDef?.note ?? activeDef;
       const clickState = isOpen;
       if (activeNote != null) {
-        handleNoteOn(activeNote, 127);
+        handleNoteOn(activeNote, SIMULATED_VELOCITY);
         setTimeout(() => handleNoteOff(activeNote, clickState), 220);
       }
     });
@@ -380,26 +385,33 @@ function renderMapping() {
 }
 
 function updateButtonHighlights() {
-  const activeButtonIds = new Set();
+  // button id -> velocity of the note lighting it up, so each button's glow
+  // reflects its own note's strength rather than the loudest note anyone is
+  // currently holding. (If two active notes somehow match the same button,
+  // the louder one wins — same tie-break the old shared maxVel gave.)
+  const buttonVelocities = new Map();
   const activeButtonLabels = new Set();
-  let maxVel = 0;
 
   activeNotes.forEach((vel, note) => {
     const matches = findMatchingButtons(note);
     matches.forEach((button) => {
-      activeButtonIds.add(String(button.id));
+      const id = String(button.id);
+      buttonVelocities.set(id, Math.max(buttonVelocities.get(id) || 0, vel || 127));
       activeButtonLabels.add(t(button.side === 'left' ? 'sideLeft' : 'sideRight') + ': ' + button.label);
     });
-    maxVel = Math.max(maxVel, vel || 127);
   });
 
   activeButtonsSpan.textContent = Array.from(activeButtonLabels).join(', ') || '—';
 
   document.querySelectorAll('.button-circle').forEach((button) => {
-    const isActive = activeButtonIds.has(button.dataset.id);
+    const vel = buttonVelocities.get(button.dataset.id);
+    const isActive = vel !== undefined;
     button.classList.toggle('active', isActive);
     button.style.opacity = isActive ? '1' : '0.95';
-    button.style.boxShadow = isActive ? '0 0 0 2px rgba(255,255,255,' + Math.min(0.6, maxVel / 160) + '), 0 10px 24px rgba(255,255,255,0.15)' : '';
+    // vel/127 spans the full glow range (0-0.6) across the full velocity
+    // range (0-127), so the loudest possible note reaches 0.6 exactly
+    // instead of saturating early.
+    button.style.boxShadow = isActive ? '0 0 0 2px rgba(255,255,255,' + (vel / 127 * 0.6) + '), 0 10px 24px rgba(255,255,255,0.15)' : '';
   });
 }
 
@@ -752,7 +764,7 @@ window.addEventListener('keydown', (event) => {
   const note = activeDef?.note ?? activeDef;
   if (note == null) return;
   heldKeyNotes.set(key, note);
-  handleNoteOn(note, 100);
+  handleNoteOn(note, SIMULATED_VELOCITY);
 });
 
 window.addEventListener('keyup', (event) => {
