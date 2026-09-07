@@ -1,3 +1,71 @@
+/* ========== Theme Tokens ========== */
+/* Three-way toggle (#themeSelect in index.html): "browser" leaves
+   data-theme unset on <html> and lets the prefers-color-scheme media query
+   below decide; "light"/"dark" set data-theme explicitly and always win
+   over system preference (that's what the :not([data-theme="dark"]) guard
+   is for). Dark is this app's original look, so it's also the plain
+   :root default — covers "browser" mode on a dark system, and any browser
+   too old to evaluate prefers-color-scheme at all. See app.js's
+   applyTheme()/setTheme() for the JS half, and the inline script in
+   index.html's <head> for the pre-paint flash fix. */
+:root {
+  --bg: #0f1722;
+  --text: #e6eef6;
+  --muted: #9fb2c8;
+  --text-bright: #cfe6ff;
+  --panel-title: #dbeeff;
+  --button-bg: #1f2937;
+  --button-border: rgba(255, 255, 255, 0.04);
+  --panel-grad-1: rgba(255, 255, 255, 0.02);
+  --panel-grad-2: rgba(255, 255, 255, 0.01);
+  --panel-border: rgba(255, 255, 255, 0.03);
+  --circle-border: rgba(255, 255, 255, 0.18);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f4f6f9;
+    --text: #182430;
+    --muted: #5a6b7d;
+    --text-bright: #1f5f96;
+    --panel-title: #14497a;
+    --button-bg: #e3e8ee;
+    --button-border: rgba(0, 0, 0, 0.12);
+    --panel-grad-1: rgba(0, 0, 0, 0.025);
+    --panel-grad-2: rgba(0, 0, 0, 0.01);
+    --panel-border: rgba(0, 0, 0, 0.06);
+    --circle-border: rgba(0, 0, 0, 0.15);
+  }
+}
+
+:root[data-theme="light"] {
+  --bg: #f4f6f9;
+  --text: #182430;
+  --muted: #5a6b7d;
+  --text-bright: #1f5f96;
+  --panel-title: #14497a;
+  --button-bg: #e3e8ee;
+  --button-border: rgba(0, 0, 0, 0.12);
+  --panel-grad-1: rgba(0, 0, 0, 0.025);
+  --panel-grad-2: rgba(0, 0, 0, 0.01);
+  --panel-border: rgba(0, 0, 0, 0.06);
+  --circle-border: rgba(0, 0, 0, 0.15);
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f1722;
+  --text: #e6eef6;
+  --muted: #9fb2c8;
+  --text-bright: #cfe6ff;
+  --panel-title: #dbeeff;
+  --button-bg: #1f2937;
+  --button-border: rgba(255, 255, 255, 0.04);
+  --panel-grad-1: rgba(255, 255, 255, 0.02);
+  --panel-grad-2: rgba(255, 255, 255, 0.01);
+  --panel-border: rgba(255, 255, 255, 0.03);
+  --circle-border: rgba(255, 255, 255, 0.18);
+}
+
 /* ========== Base / Global Styles ========== */
 * {
   box-sizing: border-box;
@@ -7,8 +75,8 @@
 body {
   margin: 0;
   padding: 16px;
-  background: #0f1722;
-  color: #e6eef6;
+  background: var(--bg);
+  color: var(--text);
 }
 
 /* ========== Compatibility Banners ========== */
@@ -32,13 +100,13 @@ body {
 }
 
 .site-link a {
-  color: #9fb2c8;
+  color: var(--muted);
   font-size: 13px;
   text-decoration: none;
 }
 
 .site-link a:hover {
-  color: #cfe6ff;
+  color: var(--text-bright);
   text-decoration: underline;
 }
 
@@ -82,9 +150,9 @@ header h1 {
 }
 
 button {
-  background: #1f2937;
-  color: #e6eef6;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: var(--button-bg);
+  color: var(--text);
+  border: 1px solid var(--button-border);
   padding: 8px 10px;
   border-radius: 6px;
   cursor: pointer;
@@ -94,16 +162,29 @@ button:active {
   transform: translateY(1px);
 }
 
+/* Plain <select>/file-input otherwise keep the browser's default white
+   chrome regardless of theme (there's no theme-aware default), which looks
+   out of place once Day/Night is a real, deliberate choice rather than
+   "whatever the browser happens to do." */
+select,
+input[type="file"] {
+  background: var(--button-bg);
+  color: var(--text);
+  border: 1px solid var(--button-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
 /* ========== Text & Labels ========== */
 .kbd {
   font-size: 12px;
-  color: #9fb2c8;
+  color: var(--muted);
 }
 
 .mapping-hint {
   display: block;
   font-size: 12px;
-  color: #9fb2c8;
+  color: var(--muted);
   margin-left: 6px;
 }
 
@@ -130,17 +211,17 @@ button:active {
 
 .panel {
   flex: 1;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+  background: linear-gradient(180deg, var(--panel-grad-1), var(--panel-grad-2));
   padding: 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--panel-border);
   overflow: hidden;
 }
 
 .panel h2 {
   margin: 0 0 8px 0;
   font-size: 14px;
-  color: #dbeeff;
+  color: var(--panel-title);
 }
 
 .panel .grid {
@@ -178,7 +259,7 @@ button:active {
   justify-content: center;
   background: rgba(255, 255, 255, 0.92);
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid var(--circle-border);
   transition: transform 0.08s, box-shadow 0.12s;
 }
 
@@ -224,12 +305,12 @@ button:active {
 /* ========== Info & Status ========== */
 .info {
   margin-top: 12px;
-  color: #cfe6ff;
+  color: var(--text-bright);
 }
 
 .legend {
   margin-top: 18px;
-  color: #9fb2c8;
+  color: var(--muted);
 }
 
 /* Hard-caps "Active mapping buttons" at 2 lines so a chord with lots of
@@ -247,7 +328,7 @@ button:active {
 
 .midi-status {
   margin-left: 8px;
-  color: #9fb2c8;
+  color: var(--muted);
 }
 
 /* ========== Responsive Media Queries ========== */

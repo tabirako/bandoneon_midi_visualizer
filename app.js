@@ -112,6 +112,47 @@ function setLanguage(lang) {
   applyTranslations();
 }
 
+// ---- Theme (Browser / Day / Night) -------------------------------------
+// "Browser" leaves data-theme unset on <html> and lets styles.css's
+// prefers-color-scheme media query decide. "light"/"dark" set it
+// explicitly and always win over system preference (see styles.css's
+// "Theme Tokens" section for the CSS half). persistedThemeKey MUST match
+// the hardcoded string in the pre-paint <script> in index.html's <head> —
+// that inline script re-applies a saved explicit choice before first paint
+// so switching Day/Night doesn't flash the wrong theme on reload; this
+// code re-derives and applies the same choice again on its own (harmless
+// and idempotent) and additionally keeps #themeSelect's displayed value in
+// sync.
+const persistedThemeKey = 'bandoneon-theme-v1';
+
+function detectInitialTheme() {
+  try {
+    const saved = localStorage.getItem(persistedThemeKey);
+    if (saved === 'light' || saved === 'dark' || saved === 'browser') return saved;
+  } catch (err) {
+    // localStorage unavailable — fall through to the default
+  }
+  return 'browser';
+}
+
+function applyTheme(theme) {
+  if (theme === 'light' || theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', theme);
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+}
+
+function setTheme(theme) {
+  const valid = (theme === 'light' || theme === 'dark') ? theme : 'browser';
+  try {
+    localStorage.setItem(persistedThemeKey, valid);
+  } catch (err) {
+    // ignore — theme choice just won't persist across reloads
+  }
+  applyTheme(valid);
+}
+
 // Computer-keyboard mapping for the lower 4 rows of the treble (right) side.
 // The row-selection logic itself lives in keyboard-mapping.js (pure,
 // unit-tested — see keyboard-mapping.test.js); this just applies its result
@@ -884,11 +925,20 @@ if (langSelect) {
   langSelect.addEventListener('change', () => setLanguage(langSelect.value));
 }
 
+const themeSelect = document.getElementById('themeSelect');
+if (themeSelect) {
+  themeSelect.addEventListener('change', () => setTheme(themeSelect.value));
+}
+
 loadMappingForLayout(layoutSelect.value);
 
 currentLang = detectInitialLang();
 if (langSelect) langSelect.value = currentLang;
 applyTranslations();
+
+const initialTheme = detectInitialTheme();
+if (themeSelect) themeSelect.value = initialTheme;
+applyTheme(initialTheme);
 
 window._bandoneon = {
   setOpenState,

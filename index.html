@@ -5,6 +5,26 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Bandoneon MIDI Visualizer</title>
   <link rel="stylesheet" href="styles.css">
+  <!--
+    Theme init: sets data-theme on <html> BEFORE first paint, so an explicit
+    saved choice (Day/Night) doesn't flash the wrong theme first. Must run
+    synchronously in <head>, ahead of body rendering — app.js (loaded at the
+    end of body) is too late for that, though it re-runs this same logic
+    for the dropdown's own sake. "Browser" mode (or no saved choice) leaves
+    data-theme unset on purpose: styles.css's `prefers-color-scheme` rule
+    handles that case in pure CSS, no JS or flash involved at all. The
+    localStorage key here ('bandoneon-theme-v1') must stay in sync with
+    persistedThemeKey in app.js.
+  -->
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem('bandoneon-theme-v1'); } catch (e) {}
+      if (saved === 'light' || saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', saved);
+      }
+    })();
+  </script>
   <!-- Midi parser via CDN (@tonejs/midi) -->
   <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.27/build/Midi.js"></script>
 </head>
@@ -57,6 +77,14 @@
     <section class="controls">
       <label><span data-i18n="langLabel">Language:</span>
         <select id="langSelect"></select>
+      </label>
+
+      <label><span data-i18n="themeLabel">Theme:</span>
+        <select id="themeSelect">
+          <option value="browser" data-i18n="themeBrowser">Browser</option>
+          <option value="light" data-i18n="themeDay">Day</option>
+          <option value="dark" data-i18n="themeNight">Night</option>
+        </select>
       </label>
 
       <label><span data-i18n="layoutLabel">Layout:</span>
