@@ -141,6 +141,20 @@ header h1 {
   display: inline-block;
 }
 
+/* Reed detune/bellows breath/vibrato only affect the reed-synth signal
+   chain (see startReedVoice() in app.js) — plain waveforms never read
+   them. Grayed out via a disabled input (native dimming/no-interaction)
+   plus dimming the label text itself, toggled by
+   updateReedControlsAvailability() whenever the instrument isn't one of
+   accordion/harmonica/bandoneon. */
+.reed-only.reed-disabled {
+  opacity: 0.45;
+}
+
+input:disabled {
+  cursor: not-allowed;
+}
+
 /* Forces the next control onto a new line within the wrapping .controls
    flexbox, so unrelated control groups (MIDI file/play vs. instrument/reed
    vs. status) don't visually blend into one continuous row. */

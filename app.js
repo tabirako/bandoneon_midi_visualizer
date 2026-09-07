@@ -198,6 +198,21 @@ function updateReedLabels() {
   reedVibratoVal.textContent = reedVibratoInput.value;
 }
 
+// Reed detune/bellows breath/vibrato only affect startReedVoice()'s signal
+// chain — plain waveforms (sine/square/sawtooth/triangle) never read these
+// sliders at all (see playTone()). Disabling them when a non-reed
+// instrument is selected isn't just cosmetic: it tells the user these
+// controls are currently inert, rather than implying they'd do something.
+function updateReedControlsAvailability() {
+  const active = isReedInstrument(instrumentSelect.value);
+  [reedDetuneInput, reedBreathInput, reedVibratoInput].forEach((el) => {
+    el.disabled = !active;
+  });
+  document.querySelectorAll('.reed-only').forEach((el) => {
+    el.classList.toggle('reed-disabled', !active);
+  });
+}
+
 function updateVolumeLabel() {
   volumeVal.textContent = Math.round(volumeInput.value * 100) + '%';
 }
@@ -708,6 +723,7 @@ instrumentSelect.addEventListener('change', () => {
   if (isReedInstrument(instrumentSelect.value)) {
     applyReedPreset(instrumentSelect.value);
   }
+  updateReedControlsAvailability();
 });
 [reedDetuneInput, reedBreathInput, reedVibratoInput].forEach((el) => {
   el.addEventListener('input', updateReedLabels);
@@ -717,6 +733,7 @@ if (isReedInstrument(instrumentSelect.value)) {
 } else {
   updateReedLabels();
 }
+updateReedControlsAvailability();
 
 toggleBtn.addEventListener('click', () => setOpenState(!isOpen));
 
