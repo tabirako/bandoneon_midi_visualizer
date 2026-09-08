@@ -123,19 +123,48 @@ body {
 }
 
 /* ========== Site Link (back to kei-c.com) ========== */
-.site-link {
+/* Top bar: the "back to main site" link (left) and the less-instrument-
+   specific settings — Language, Theme — (right), separated from the rest
+   of .controls since they're page-level preferences, not bandoneon
+   controls, and grouping them here keeps the "Enable MIDI Keyboard" row
+   below from growing too long to fit on one line. */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 8px;
 }
 
-.site-link a {
+.site-link {
   color: var(--muted);
   font-size: 13px;
   text-decoration: none;
 }
 
-.site-link a:hover {
+.site-link:hover {
   color: var(--text-bright);
   text-decoration: underline;
+}
+
+.top-bar-settings {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.top-bar-settings label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.top-bar-settings select {
+  font-size: 12px;
+  padding: 2px 4px;
 }
 
 /* ========== Header ========== */
@@ -350,27 +379,27 @@ input[type="file"] {
   color: var(--key-cap);
 }
 
-/* ========== "Without markings" Mode ========== */
-/* Set by applyMarkings() in app.js as data-markings="off" on <html>. It
-   blanks every visual hint about which button is which — octave color,
-   button label (1, 2, 3 / 1'0, 2'2 ...) and note name (C4, C#5) — so the
-   layout can be practiced from memory. The key caps stay: they're how you
-   play the thing from a computer keyboard, not a hint about the bandoneon,
-   so they only flip color to stay readable on the new key color. Doing
-   this in CSS rather than by rebuilding the DOM means switching Day/Night
-   while in this mode recolors the buttons instantly. */
-:root[data-markings="off"] .button-circle {
-  background: var(--blank-button-bg);
-  border-color: var(--blank-button-border);
+/* Piano button-color mode's accidental (black) buttons: .label-text/
+   .note-text/.key-cap are normally a fixed dark color that assumes a light
+   button background (true for Rainbow and Single-color mode, and Piano's
+   own natural/white buttons) — this overrides just the dark-background
+   case so text stays legible. Set via app.js's colorForButton() /
+   renderMapping(), independent of the page's own Theme (light/dark). */
+.button-circle.dark-bg .label-text,
+.button-circle.dark-bg .note-text,
+.button-circle.dark-bg .key-cap {
+  color: #f0f0f0;
 }
 
-:root[data-markings="off"] .label-text,
-:root[data-markings="off"] .note-text {
+/* "No hint" mode: hides every marking that gives away which note a button
+   plays (its label, computed note name, keyboard key-cap badge), leaving
+   just the colored, positioned, clickable circle. Toggled via a class on
+   #bandoneonContainer itself (see app.js's applyHintMode()), so it survives
+   renderMapping() rebuilding the container's children. */
+.hints-off .label-text,
+.hints-off .note-text,
+.hints-off .key-cap {
   display: none;
-}
-
-:root[data-markings="off"] .key-cap {
-  color: var(--key-cap-blank);
 }
 
 /* ========== Info & Status ========== */

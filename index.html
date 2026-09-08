@@ -67,7 +67,21 @@
       with JavaScript disabled. Please enable it and reload the page.
     </div>
   </noscript>
-  <div class="site-link"><a href="https://kei-c.com">← kei-c.com</a></div>
+  <div class="top-bar">
+    <a class="site-link" href="https://kei-c.com">← 🏠 kei-c.com</a>
+    <div class="top-bar-settings">
+      <label><span aria-hidden="true">🌐</span> <span data-i18n="langLabel">Language:</span>
+        <select id="langSelect"></select>
+      </label>
+      <label><span aria-hidden="true">🎨</span> <span data-i18n="themeLabel">Theme:</span>
+        <select id="themeSelect">
+          <option value="browser" data-i18n="themeBrowser">Browser</option>
+          <option value="light" data-i18n="themeDay">Day</option>
+          <option value="dark" data-i18n="themeNight">Night</option>
+        </select>
+      </label>
+    </div>
+  </div>
   <header>
     <h1>Bandoneon MIDI Visualizer</h1>
     <p data-i18n="appTagline">Static client-side app for MIDI keyboard input and MIDI upload with separate 142/144 bandoneon layouts.</p>
@@ -75,18 +89,6 @@
 
   <main>
     <section class="controls">
-      <label><span data-i18n="langLabel">Language:</span>
-        <select id="langSelect"></select>
-      </label>
-
-      <label><span data-i18n="themeLabel">Theme:</span>
-        <select id="themeSelect">
-          <option value="browser" data-i18n="themeBrowser">Browser</option>
-          <option value="light" data-i18n="themeDay">Day</option>
-          <option value="dark" data-i18n="themeNight">Night</option>
-        </select>
-      </label>
-
       <label><span data-i18n="layoutLabel">Layout:</span>
         <select id="layoutSelect">
           <option value="142-rheinische" data-i18n="layout142">142-tone (Rheinische)</option>
@@ -101,7 +103,22 @@
         </select>
       </label>
 
-      <button id="toggleOpenClose" data-i18n="modeButtonOpen">Mode: Open</button>
+      <label><span data-i18n="hintLabel">Hint:</span>
+        <select id="hintSelect">
+          <option value="default" data-i18n="hintDefault">Default</option>
+          <option value="none" data-i18n="hintNone">No hint</option>
+        </select>
+      </label>
+
+      <label><span data-i18n="buttonColorLabel">Button color:</span>
+        <select id="buttonColorSelect">
+          <option value="rainbow" data-i18n="buttonColorRainbow">Rainbow (by octave)</option>
+          <option value="piano" data-i18n="buttonColorPiano">Piano (black/white)</option>
+          <option value="mono" data-i18n="buttonColorMono">Single color</option>
+        </select>
+      </label>
+
+      <button id="toggleOpenClose" data-i18n="bellowsButtonOpen">Bellows: Open</button>
       <label class="kbd" data-i18n="spaceToggleHint">(Space to toggle)</label>
       <button id="enableMidi" data-i18n="enableMidi">Enable MIDI Keyboard</button>
 
@@ -122,9 +139,10 @@
 
       <label><span data-i18n="instrumentLabel">Instrument:</span>
         <select id="instrumentSelect">
-          <option value="accordion" selected data-i18n="instrumentAccordion">Accordion (musette)</option>
+          <option value="accordion" selected data-i18n="instrumentAccordion">Accordion</option>
           <option value="harmonica" data-i18n="instrumentHarmonica">Harmonica</option>
           <option value="bandoneon" data-i18n="instrumentBandoneon">Bandoneon</option>
+          <option value="musette" data-i18n="instrumentMusette">Musette</option>
           <option value="sine" data-i18n="instrumentSine">Sine</option>
           <option value="square" data-i18n="instrumentSquare">Square</option>
           <option value="sawtooth" data-i18n="instrumentSawtooth">Sawtooth</option>

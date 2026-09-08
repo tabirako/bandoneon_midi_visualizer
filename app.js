@@ -8,6 +8,8 @@
 
 const container = document.getElementById('bandoneonContainer');
 const layoutSelect = document.getElementById('layoutSelect');
+const hintSelect = document.getElementById('hintSelect');
+const buttonColorSelect = document.getElementById('buttonColorSelect');
 const toggleBtn = document.getElementById('toggleOpenClose');
 const mappingFileInput = document.getElementById('mappingFile');
 const midiFileInput = document.getElementById('midiFile');
@@ -79,7 +81,7 @@ function applyTranslations() {
   document.querySelectorAll('[data-i18n-html]').forEach((el) => {
     el.innerHTML = t(el.dataset.i18nHtml);
   });
-  updateModeButtonText();
+  updateBellowsButtonText();
   updateMidiButtonText();
   renderMapping(); // rebuilds tooltips/side titles, which are also translated
 }
@@ -153,46 +155,67 @@ function setTheme(theme) {
   applyTheme(valid);
 }
 
-// ---- Markings (With / Without) -----------------------------------------
-// "With markings" is the original look: per-octave button colors, the
-// button label (1, 2, 3 / 1'0, 2'2 ...) and the note name (C4, C#5).
-// "Without markings" blanks all three so the layout can be practiced from
-// memory, leaving only the computer-keyboard key caps (those are how you
-// play, not a hint about the instrument) and the press highlight.
-//
-// Like the theme, this is a data attribute on <html> plus theme tokens in
-// styles.css rather than a different DOM: switching Day/Night while in
-// blank mode then recolors the buttons instantly, with no re-render, and
-// each button's octave color stays parked on it as --btn-bg/--btn-border
-// (set in renderMapping()) ready for the moment markings come back on.
-// Unlike the theme it needs no pre-paint script in index.html's <head>,
-// because the buttons it affects don't exist until app.js builds them.
-const persistedMarkingsKey = 'bandoneon-markings-v1';
-let markingsOn = true;
+// ---- Hint mode (Default / No hint) -------------------------------------
+// "No hint" hides every on-button marking that gives away which note a
+// button plays — its label, computed note name, and keyboard key-cap badge
+// — leaving just the colored, positioned, still-clickable circle. Done
+// purely with a CSS class on #bandoneonContainer (see styles.css's
+// ".hints-off" rule) rather than by changing what renderMapping() builds,
+// so toggling it doesn't require a re-render and can't drift out of sync
+// with what's currently on screen.
+const persistedHintKey = 'bandoneon-hint-v1';
 
-function detectInitialMarkings() {
+function detectInitialHint() {
   try {
-    return localStorage.getItem(persistedMarkingsKey) !== 'off';
+    const saved = localStorage.getItem(persistedHintKey);
+    if (saved === 'default' || saved === 'none') return saved;
   } catch (err) {
-    return true; // localStorage unavailable — default to the original look
+    // localStorage unavailable — fall through to the default
   }
+  return 'default';
 }
 
-function applyMarkings(on) {
-  markingsOn = on;
-  document.documentElement.setAttribute('data-markings', on ? 'on' : 'off');
+function applyHintMode(mode) {
+  container.classList.toggle('hints-off', mode === 'none');
 }
 
-function setMarkings(on) {
+function setHintMode(mode) {
+  const valid = mode === 'none' ? 'none' : 'default';
   try {
-    localStorage.setItem(persistedMarkingsKey, on ? 'on' : 'off');
+    localStorage.setItem(persistedHintKey, valid);
   } catch (err) {
-    // ignore — the choice just won't persist across reloads
+    // ignore — hint choice just won't persist across reloads
   }
-  applyMarkings(on);
-  // The one part CSS can't hide is the hover tooltip, which spells out
-  // exactly the notes blank mode is meant to withhold — renderMapping()
-  // rebuilds it (or drops it) for the new mode.
+  applyHintMode(valid);
+}
+
+// ---- Button color (Rainbow / Piano / Single color) ---------------------
+// Unlike hint mode, this can't be a pure CSS toggle — colorForButton()
+// below computes each button's actual background/border color, so a
+// change has to go through a full renderMapping() to take effect. Kept as
+// its own module-level variable (rather than always reading
+// buttonColorSelect.value at render time) so renderMapping() doesn't need
+// to know the DOM element exists.
+const persistedButtonColorKey = 'bandoneon-button-color-v1';
+let buttonColorMode = 'rainbow';
+
+function detectInitialButtonColor() {
+  try {
+    const saved = localStorage.getItem(persistedButtonColorKey);
+    if (saved === 'rainbow' || saved === 'piano' || saved === 'mono') return saved;
+  } catch (err) {
+    // localStorage unavailable — fall through to the default
+  }
+  return 'rainbow';
+}
+
+function setButtonColorMode(mode) {
+  buttonColorMode = (mode === 'piano' || mode === 'mono') ? mode : 'rainbow';
+  try {
+    localStorage.setItem(persistedButtonColorKey, buttonColorMode);
+  } catch (err) {
+    // ignore — choice just won't persist across reloads
+  }
   renderMapping();
 }
 
@@ -214,12 +237,31 @@ function assignKeyboardKeys() {
   });
 }
 
-// Free-reed instrument character presets: reed-pair detune (beating), bellows
-// breath noise level, vibrato depth, and filter shaping per instrument.
+// Free-reed instrument character presets. Each instrument is built from up
+// to 4 reed voices, matching how real free-reed registers are named:
+//   L  = one octave below the note (bass/bassoon reed)
+//   M- = the note's own octave, detuned flat (tremolo/musette partner)
+//   M  = the note's own octave, in tune (the "dry" reference reed)
+//   M+ = the note's own octave, detuned sharp (tremolo/musette partner)
+// voiceMflat/voiceM/voiceMsharp are 0/1 switches for M-/M/M+. `harmMix`
+// (0 = off) doubles as both L's on/off switch and its blend amount, rather
+// than adding a redundant separate flag for it. `detune` sets how far M-/M+
+// sit from true pitch — M itself is always exactly on pitch.
+//
+// Real bandoneons are famously "dry" (no tremolo/beating between reeds,
+// unlike a wet-tuned accordion) — hence detune:0 and only the dry M voice
+// on. Accordion is L + dry M + one sharp-detuned M+ (an asymmetric wet
+// pair, still with a true dry reed); the *symmetric* M-/M+ pair with no dry
+// M at all (no L either) is a different, specific register real accordions
+// call "Sax" — not what plain "Accordion" here should sound like. Musette
+// is the full wet trio (M-, M, M+ all on) with no bass reed, for the lush
+// chorus/beating sound; Harmonica is the same dry-plus-sharp mid pair as
+// accordion but without the bass reed.
 const REED_PRESETS = {
-  accordion: { detune: 7,  breath: 8,  vibrato: 4, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
-  harmonica: { detune: 3,  breath: 18, vibrato: 6, filterFreq: 3200, filterQ: 3.5, harmMix: 0.8 },
-  bandoneon: { detune: 0, breath: 5,  vibrato: 3, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 }
+  bandoneon: { voiceMflat: 0, voiceM: 1, voiceMsharp: 0, detune: 0, breath: 5,  vibrato: 3, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 },
+  accordion: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 7, breath: 8,  vibrato: 4, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
+  harmonica: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 3, breath: 18, vibrato: 6, filterFreq: 3200, filterQ: 3.5, harmMix: 0 },
+  musette:   { voiceMflat: 1, voiceM: 1, voiceMsharp: 1, detune: 9, breath: 10, vibrato: 5, filterFreq: 2600, filterQ: 1.4, harmMix: 0 }
 };
 
 function isReedInstrument(name) {
@@ -317,6 +359,37 @@ function colorForAccent(note) {
   return 'hsl(' + hue + ' 65% 55%)';
 }
 
+// Pitch classes with no sharp/flat (white piano keys), 0 = C.
+const NATURAL_PITCH_CLASSES = new Set([0, 2, 4, 5, 7, 9, 11]);
+function isNaturalNote(note) {
+  return NATURAL_PITCH_CLASSES.has(((note % 12) + 12) % 12);
+}
+
+// "Single color" and Piano's natural (white) buttons share the same ivory
+// tone deliberately — it's meant to evoke a real bandoneon's light wood/bone
+// buttons against a dark case, per the user's own description, not an
+// arbitrary color pick.
+const IVORY_BUTTON = { background: '#f4f1e8', border: '#c9c2ae' };
+const PIANO_ACCIDENTAL_BUTTON = { background: '#1c1c1c', border: '#3a3a3a' };
+
+// Returns { background, border, needsLightText } for one button, given the
+// active `buttonColorMode`. `needsLightText` is only true for Piano's black
+// buttons — every other mode uses a light-enough background that the
+// existing fixed-dark-color .label-text/.note-text/.key-cap stay legible
+// (see styles.css's ".dark-bg" override for the one case that needs it).
+function colorForButton(note) {
+  if (buttonColorMode === 'piano') {
+    return isNaturalNote(note)
+      ? { background: IVORY_BUTTON.background, border: IVORY_BUTTON.border, needsLightText: false }
+      : { background: PIANO_ACCIDENTAL_BUTTON.background, border: PIANO_ACCIDENTAL_BUTTON.border, needsLightText: true };
+  }
+  if (buttonColorMode === 'mono') {
+    return { background: IVORY_BUTTON.background, border: IVORY_BUTTON.border, needsLightText: false };
+  }
+  // 'rainbow' (default): the original per-octave HSL formula.
+  return { background: colorForMidi(note), border: colorForAccent(note), needsLightText: false };
+}
+
 function midiToLabel(note) {
   if (note == null) return '—';
   const names = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'];
@@ -371,11 +444,10 @@ function renderMapping() {
     const noteLabel = document.createElement('span');
     noteLabel.className = 'note-text';
     noteLabel.textContent = midiToLabel(note);
-    // Custom properties rather than a direct inline background, so the
-    // "without markings" stylesheet rule can override the color — an
-    // inline background would outrank it. See styles.css's .button-circle.
-    btn.style.setProperty('--btn-bg', colorForMidi(note));
-    btn.style.setProperty('--btn-border', activeDef?.borderColor || button.borderColor || colorForAccent(note));
+    const colorInfo = colorForButton(note);
+    btn.style.background = colorInfo.background;
+    btn.style.borderColor = activeDef?.borderColor || button.borderColor || colorInfo.border;
+    btn.classList.toggle('dark-bg', colorInfo.needsLightText);
 
     const wrapper = document.createElement('div');
     wrapper.className = 'button-wrapper';
@@ -586,13 +658,13 @@ function handleNoteOff(note) {
   stopTone(note);
 }
 
-function updateModeButtonText() {
-  setI18nText(toggleBtn, isOpen ? 'modeButtonOpen' : 'modeButtonClose');
+function updateBellowsButtonText() {
+  setI18nText(toggleBtn, isOpen ? 'bellowsButtonOpen' : 'bellowsButtonClose');
 }
 
 function setOpenState(open) {
   isOpen = !!open;
-  updateModeButtonText();
+  updateBellowsButtonText();
   renderMapping();
 }
 
@@ -617,11 +689,15 @@ function getReedNoiseBuffer(ctx) {
   return buffer;
 }
 
-// Builds a free-reed voice: two detuned sawtooth "reeds" (the slight offset
-// creates the characteristic beating/chorus), a sub-octave layer for body,
-// a low-pass filter for reed-like timbre, filtered noise for bellows breath,
-// and an LFO for vibrato. The voice sustains until stopReedVoice() is called,
-// matching how a real reed sounds for as long as air keeps moving over it.
+// Builds a free-reed voice out of up to 4 reed oscillators per the preset's
+// voiceMflat/voiceM/voiceMsharp/harmMix switches (see REED_PRESETS above:
+// M-/M/M+ at the note's own octave, L an octave below), a low-pass filter
+// for reed-like timbre, filtered noise for bellows breath, and an LFO for
+// vibrato. All 4 reed oscillators are always created (matching the rest of
+// this codebase's style — see oscSub previously) with an inactive voice's
+// gain simply left at 0, rather than conditionally building the node graph.
+// The voice sustains until stopReedVoice() is called, matching how a real
+// reed sounds for as long as air keeps moving over it.
 function startReedVoice(note, velocity, instrument) {
   const ctx = ensureAudioContext();
   const preset = REED_PRESETS[instrument];
@@ -638,15 +714,27 @@ function startReedVoice(note, velocity, instrument) {
   master.gain.setValueAtTime(0, now);
   master.connect(ctx.destination);
 
-  const oscA = ctx.createOscillator();
-  const oscB = ctx.createOscillator();
-  oscA.type = 'sawtooth';
-  oscB.type = 'sawtooth';
-  oscA.frequency.value = freq;
-  oscB.frequency.value = freq;
-  oscA.detune.value = -detuneCents / 2;
-  oscB.detune.value = detuneCents / 2;
+  // M-, M, M+: three reeds at the note's own pitch. M stays exactly on
+  // pitch; M-/M+ are detuned by the full slider value in opposite
+  // directions from it (not halved — M is the true center now, unlike the
+  // old model where the only two mid oscillators were always a symmetric
+  // detuned pair with no dry reed at all).
+  const oscMflat = ctx.createOscillator();
+  const oscM = ctx.createOscillator();
+  const oscMsharp = ctx.createOscillator();
+  [oscMflat, oscM, oscMsharp].forEach((o) => { o.type = 'sawtooth'; o.frequency.value = freq; });
+  oscMflat.detune.value = -detuneCents;
+  oscMsharp.detune.value = detuneCents;
 
+  const gainMflat = ctx.createGain();
+  const gainM = ctx.createGain();
+  const gainMsharp = ctx.createGain();
+  gainMflat.gain.value = preset.voiceMflat;
+  gainM.gain.value = preset.voiceM;
+  gainMsharp.gain.value = preset.voiceMsharp;
+
+  // L: one octave down. harmMix doubles as both L's on/off switch and its
+  // blend level (0 = no bass reed at all — harmonica and musette).
   const oscSub = ctx.createOscillator();
   oscSub.type = 'triangle';
   oscSub.frequency.value = freq / 2;
@@ -658,19 +746,33 @@ function startReedVoice(note, velocity, instrument) {
   const lfoGain = ctx.createGain();
   lfoGain.gain.value = vibDepth;
   lfo.connect(lfoGain);
-  lfoGain.connect(oscA.detune);
-  lfoGain.connect(oscB.detune);
+  lfoGain.connect(oscMflat.detune);
+  lfoGain.connect(oscM.detune);
+  lfoGain.connect(oscMsharp.detune);
 
   const filter = ctx.createBiquadFilter();
   filter.type = 'lowpass';
   filter.frequency.value = preset.filterFreq;
   filter.Q.value = preset.filterQ;
 
+  // More simultaneously-active reed voices sum to more amplitude, so
+  // headroom scales down by how many are actually on for this preset
+  // (sqrt, not linear — a gentler rolloff than fully compensating, so a
+  // fuller preset like Musette still sounds a bit fuller than a sparser one
+  // like Bandoneon, not identically loud). The flat 0.75 (was a flat 0.9,
+  // with no voice-count compensation at all) is a further deliberate trim,
+  // since the reed path summing multiple oscillators was noticeably louder
+  // than the plain single-oscillator waveforms (sine/square/etc).
+  const activeVoices = preset.voiceMflat + preset.voiceM + preset.voiceMsharp + (preset.harmMix > 0 ? 1 : 0);
   const reedGain = ctx.createGain();
-  reedGain.gain.value = 0.9;
+  reedGain.gain.value = 0.75 / Math.sqrt(Math.max(1, activeVoices));
 
-  oscA.connect(filter);
-  oscB.connect(filter);
+  oscMflat.connect(gainMflat);
+  gainMflat.connect(filter);
+  oscM.connect(gainM);
+  gainM.connect(filter);
+  oscMsharp.connect(gainMsharp);
+  gainMsharp.connect(filter);
   oscSub.connect(subGain);
   subGain.connect(filter);
   filter.connect(reedGain);
@@ -693,13 +795,14 @@ function startReedVoice(note, velocity, instrument) {
   noiseGain.gain.linearRampToValueAtTime(breathAmt * targetGain, now + 0.03);
   noiseGain.gain.linearRampToValueAtTime(breathAmt * targetGain * 0.4, now + 0.25);
 
-  oscA.start(now);
-  oscB.start(now);
+  oscMflat.start(now);
+  oscM.start(now);
+  oscMsharp.start(now);
   oscSub.start(now);
   lfo.start(now);
   noiseSrc.start(now);
 
-  return { oscA, oscB, oscSub, lfo, noiseSrc, master, noiseGain };
+  return { oscMflat, oscM, oscMsharp, oscSub, lfo, noiseSrc, master, noiseGain };
 }
 
 function stopReedVoice(voice) {
@@ -712,7 +815,7 @@ function stopReedVoice(voice) {
   voice.noiseGain.gain.cancelScheduledValues(now);
   voice.noiseGain.gain.setValueAtTime(voice.noiseGain.gain.value, now);
   voice.noiseGain.gain.linearRampToValueAtTime(0, now + releaseTime);
-  [voice.oscA, voice.oscB, voice.oscSub, voice.lfo, voice.noiseSrc].forEach((n) => {
+  [voice.oscMflat, voice.oscM, voice.oscMsharp, voice.oscSub, voice.lfo, voice.noiseSrc].forEach((n) => {
     n.stop(now + releaseTime + 0.02);
   });
 }
@@ -1002,16 +1105,19 @@ if (themeSelect) {
   themeSelect.addEventListener('change', () => setTheme(themeSelect.value));
 }
 
-const markingsSelect = document.getElementById('markingsSelect');
-if (markingsSelect) {
-  markingsSelect.addEventListener('change', () => setMarkings(markingsSelect.value !== 'off'));
+if (hintSelect) {
+  hintSelect.addEventListener('change', () => setHintMode(hintSelect.value));
 }
 
-// Applied before the first render, not after it like the theme below, so a
-// saved "without markings" choice never flashes a colored keyboard first.
-const initialMarkings = detectInitialMarkings();
-if (markingsSelect) markingsSelect.value = initialMarkings ? 'on' : 'off';
-applyMarkings(initialMarkings);
+if (buttonColorSelect) {
+  buttonColorSelect.addEventListener('change', () => setButtonColorMode(buttonColorSelect.value));
+}
+
+// Set before the first loadMappingForLayout() (which triggers the first
+// renderMapping()) rather than after, so a saved non-default choice is
+// correct on first paint instead of only from the next re-render on.
+buttonColorMode = detectInitialButtonColor();
+if (buttonColorSelect) buttonColorSelect.value = buttonColorMode;
 
 loadMappingForLayout(layoutSelect.value);
 
@@ -1022,6 +1128,10 @@ applyTranslations();
 const initialTheme = detectInitialTheme();
 if (themeSelect) themeSelect.value = initialTheme;
 applyTheme(initialTheme);
+
+const initialHint = detectInitialHint();
+if (hintSelect) hintSelect.value = initialHint;
+applyHintMode(initialHint);
 
 window._bandoneon = {
   setOpenState,
