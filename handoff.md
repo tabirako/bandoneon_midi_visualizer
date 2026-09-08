@@ -261,6 +261,46 @@ transcription.
   chart images (`bass.jpg` / `treble.jpg`, "Omar Caccia" branded) by
   matching MIDI-derived note names against the printed labels — full
   agreement.
+- **`142-rheinische`'s entire bass/left side (all 5 rows, ids 1–33) had its
+  `x` values rescaled by exactly ×0.95, at the user's request, so buttons
+  shared with `144-einheits` land at the same visual x position when
+  switching layouts mid-session.** Discovered incrementally: the user first
+  flagged bass row 3 ("middle row": 6 buttons in 142-rheinische vs. 7 in
+  144-einheits) and row 4 ("2nd-lowest row": 7 vs. 8) as visually
+  mismatched — in both cases 144-einheits' extra button is appended to the
+  *right* end of the row (144's id 19 past 142's id 18; 144's id 27 past
+  142's id 25), so those two rows share every button except that one
+  trailing extra. Since the two systems' coordinates come from independently
+  extracted source diagrams (142 from an SVG, 144 from a PDF — see the
+  provenance entries here), there was no inherent guarantee the shared
+  buttons lined up in x at all. A least-squares fit of 142's original x
+  against 144's x, done independently per row over its shared buttons,
+  converged to the *same* factor for both flagged rows — exactly `0.95`,
+  ~zero shift — with residuals at essentially floating-point noise
+  (<0.00001). That immediately raised the question of whether the other 3
+  bass rows (1, 2, 5 — which have *matching* button counts in both systems,
+  so no "extra button" to work around) were coincidentally fine or
+  suffering the same unaddressed mismatch; checked with the identical
+  least-squares approach, and all three fit the *exact same* `0.95` factor
+  too. Conclusion: this isn't a rows-3/4-specific quirk, the entire
+  142-rheinische bass diagram is uniformly ~5% wider in x than
+  144-einheits' — so the same rescale was applied across all 5 rows for
+  consistency, not just the two originally flagged.
+  **Scope, explicitly**: only `x` was touched, not `y`, not `note`s, not
+  `label`s; only the bass/left side. **The treble/right side was
+  deliberately left untouched** — it doesn't have the same kind of
+  correspondence to check the same way: Rheinische treble has 6 rows
+  (counts 4/5/6/7/8/8) against Einheits' 5 rows (counts 6/7/7/8/9), so
+  there's no obvious 1:1 row mapping the way bass had (see "The domain"
+  above for the general point that button *count* doesn't imply note
+  *arrangement*). Fixing treble the same way would need the user's own
+  judgment on which Rheinische row corresponds to which Einheits row (if
+  any do cleanly) before any fit makes sense — don't attempt it
+  unprompted. **If `142-rheinische` bass data is ever re-extracted from the
+  source SVG**, this ×0.95 adjustment across all 5 rows will need to be
+  reapplied by hand (or re-derived the same way, against 144-einheits'
+  current values) — it lives only in `mappings.js`'s committed numbers, not
+  in `transform.py` or `data142.csv`.
 - **`144-einheits`**: built this session from scratch. The user manually
   extracted `data144.csv` (id, x, y — same row-major-id convention as
   `data142.csv`) from `layout-bandoneon-144-einheits.pdf`. Note *labels*

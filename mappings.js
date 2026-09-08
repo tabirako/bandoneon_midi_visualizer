@@ -4,7 +4,7 @@ window.defaultMappings = {
       "id": 1,
       "side": "left",
       "label": "2/2",
-      "x": 0.3189970904,
+      "x": 0.3030472359,
       "y": 0.1350279668,
       "open": {
         "note": 44
@@ -19,7 +19,7 @@ window.defaultMappings = {
       "id": 2,
       "side": "left",
       "label": "3/3",
-      "x": 0.4630965818,
+      "x": 0.4399417527,
       "y": 0.1100062178,
       "open": {
         "note": 46
@@ -34,7 +34,7 @@ window.defaultMappings = {
       "id": 3,
       "side": "left",
       "label": "4/4",
-      "x": 0.5987609866,
+      "x": 0.5688229373,
       "y": 0.1211269982,
       "open": {
         "note": 49
@@ -49,7 +49,7 @@ window.defaultMappings = {
       "id": 4,
       "side": "left",
       "label": "\ud834\udd0c",
-      "x": 0.7393458566,
+      "x": 0.7023785638,
       "y": 0.1600497434,
       "open": {
         "note": 53
@@ -64,7 +64,7 @@ window.defaultMappings = {
       "id": 5,
       "side": "left",
       "label": "0/0",
-      "x": 0.8714956414,
+      "x": 0.8279208593,
       "y": 0.2267744258,
       "open": {
         "note": 68
@@ -79,7 +79,7 @@ window.defaultMappings = {
       "id": 6,
       "side": "left",
       "label": "1/1",
-      "x": 0.1414167454,
+      "x": 0.1343459081,
       "y": 0.2841023664,
       "open": {
         "note": 40
@@ -94,7 +94,7 @@ window.defaultMappings = {
       "id": 7,
       "side": "left",
       "label": "1/2",
-      "x": 0.2613572832,
+      "x": 0.2482894190,
       "y": 0.2392852865,
       "open": {
         "note": 45
@@ -109,7 +109,7 @@ window.defaultMappings = {
       "id": 8,
       "side": "left",
       "label": "2/3",
-      "x": 0.3970216894,
+      "x": 0.3771706049,
       "y": 0.1948021649,
       "open": {
         "note": 55
@@ -124,7 +124,7 @@ window.defaultMappings = {
       "id": 9,
       "side": "left",
       "label": "3/4",
-      "x": 0.527765615,
+      "x": 0.5013773342,
       "y": 0.2003625689,
       "open": {
         "note": 51
@@ -139,7 +139,7 @@ window.defaultMappings = {
       "id": 10,
       "side": "left",
       "label": "4/0",
-      "x": 0.6585095546,
+      "x": 0.6255840769,
       "y": 0.22399421,
       "open": {
         "note": 65
@@ -154,7 +154,7 @@ window.defaultMappings = {
       "id": 11,
       "side": "left",
       "label": "+",
-      "x": 0.7899564237,
+      "x": 0.7504586025,
       "y": 0.2809882199,
       "open": {
         "note": 58
@@ -169,7 +169,7 @@ window.defaultMappings = {
       "id": 12,
       "side": "left",
       "label": "6/0",
-      "x": 0.9185915746,
+      "x": 0.8726619959,
       "y": 0.3588336826,
       "open": {
         "note": 41
@@ -184,7 +184,7 @@ window.defaultMappings = {
       "id": 13,
       "side": "left",
       "label": "1",
-      "x": 0.2121525752,
+      "x": 0.2015449464,
       "y": 0.3574436023,
       "open": {
         "note": 50
@@ -199,7 +199,7 @@ window.defaultMappings = {
       "id": 14,
       "side": "left",
       "label": "2",
-      "x": 0.3365701918,
+      "x": 0.3197416822,
       "y": 0.310180265,
       "open": {
         "note": 57
@@ -214,7 +214,7 @@ window.defaultMappings = {
       "id": 15,
       "side": "left",
       "label": "3",
-      "x": 0.4630965818,
+      "x": 0.4399417527,
       "y": 0.3004495924,
       "open": {
         "note": 60
@@ -229,7 +229,7 @@ window.defaultMappings = {
       "id": 16,
       "side": "left",
       "label": "4",
-      "x": 0.5882171126,
+      "x": 0.5588062570,
       "y": 0.3115703728,
       "open": {
         "note": 64
@@ -244,7 +244,7 @@ window.defaultMappings = {
       "id": 17,
       "side": "left",
       "label": "0",
-      "x": 0.7119318122,
+      "x": 0.6763352216,
       "y": 0.344932714,
       "open": {
         "note": 48
@@ -259,7 +259,7 @@ window.defaultMappings = {
       "id": 18,
       "side": "left",
       "label": "2/0",
-      "x": 0.8349435682,
+      "x": 0.7931963898,
       "y": 0.4144375846,
       "open": {
         "note": 43
@@ -274,7 +274,7 @@ window.defaultMappings = {
       "id": 19,
       "side": "left",
       "label": "5",
-      "x": 0.1341279637,
+      "x": 0.1274215655,
       "y": 0.552057273,
       "open": {
         "note": 52
@@ -289,7 +289,7 @@ window.defaultMappings = {
       "id": 20,
       "side": "left",
       "label": "6",
-      "x": 0.2536250997,
+      "x": 0.2409438447,
       "y": 0.4895028867,
       "open": {
         "note": 56
@@ -304,7 +304,7 @@ window.defaultMappings = {
       "id": 21,
       "side": "left",
       "label": "7",
-      "x": 0.3794485754,
+      "x": 0.3604761466,
       "y": 0.4547504377,
       "open": {
         "note": 59
@@ -319,7 +319,7 @@ window.defaultMappings = {
       "id": 22,
       "side": "left",
       "label": "8",
-      "x": 0.5087866698,
+      "x": 0.4833473363,
       "y": 0.4394593612,
       "open": {
         "note": 62
@@ -334,7 +334,7 @@ window.defaultMappings = {
       "id": 23,
       "side": "left",
       "label": "9",
-      "x": 0.6268779606,
+      "x": 0.5955340626,
       "y": 0.465871218,
       "open": {
         "note": 66
@@ -349,7 +349,7 @@ window.defaultMappings = {
       "id": 24,
       "side": "left",
       "label": "3/0",
-      "x": 0.7484838853,
+      "x": 0.7110596910,
       "y": 0.4895028592,
       "open": {
         "note": 61
@@ -364,7 +364,7 @@ window.defaultMappings = {
       "id": 25,
       "side": "left",
       "label": "16",
-      "x": 0.8778219657,
+      "x": 0.8339308674,
       "y": 0.5659582416,
       "open": {
         "note": 42
@@ -379,7 +379,7 @@ window.defaultMappings = {
       "id": 26,
       "side": "left",
       "label": "5/0",
-      "x": 0.08000279044,
+      "x": 0.0760026509,
       "y": 0.7299897594,
       "open": {
         "note": 38
@@ -394,7 +394,7 @@ window.defaultMappings = {
       "id": 27,
       "side": "left",
       "label": "10",
-      "x": 0.1748975867,
+      "x": 0.1661527074,
       "y": 0.6799462338,
       "open": {
         "note": 47
@@ -409,7 +409,7 @@ window.defaultMappings = {
       "id": 28,
       "side": "left",
       "label": "11",
-      "x": 0.2965034972,
+      "x": 0.2816783223,
       "y": 0.6160017396,
       "open": {
         "note": 67
@@ -424,7 +424,7 @@ window.defaultMappings = {
       "id": 29,
       "side": "left",
       "label": "12",
-      "x": 0.4209211138,
+      "x": 0.3998750581,
       "y": 0.5895898828,
       "open": {
         "note": 69
@@ -439,7 +439,7 @@ window.defaultMappings = {
       "id": 30,
       "side": "left",
       "label": "13",
-      "x": 0.5495562786,
+      "x": 0.5220784647,
       "y": 0.5895898828,
       "open": {
         "note": 63
@@ -454,7 +454,7 @@ window.defaultMappings = {
       "id": 31,
       "side": "left",
       "label": "14",
-      "x": 0.6711622033,
+      "x": 0.6376040931,
       "y": 0.607661175,
       "open": {
         "note": 54
@@ -469,7 +469,7 @@ window.defaultMappings = {
       "id": 32,
       "side": "left",
       "label": "15",
-      "x": 0.7934710437,
+      "x": 0.7537974915,
       "y": 0.6465838926,
       "open": {
         "note": 39
@@ -484,7 +484,7 @@ window.defaultMappings = {
       "id": 33,
       "side": "left",
       "label": "*",
-      "x": 0.9199974198,
+      "x": 0.8739975488,
       "y": 0.7119184947,
       "open": {
         "note": 36
