@@ -287,20 +287,50 @@ transcription.
   144-einheits' — so the same rescale was applied across all 5 rows for
   consistency, not just the two originally flagged.
   **Scope, explicitly**: only `x` was touched, not `y`, not `note`s, not
-  `label`s; only the bass/left side. **The treble/right side was
-  deliberately left untouched** — it doesn't have the same kind of
-  correspondence to check the same way: Rheinische treble has 6 rows
-  (counts 4/5/6/7/8/8) against Einheits' 5 rows (counts 6/7/7/8/9), so
-  there's no obvious 1:1 row mapping the way bass had (see "The domain"
-  above for the general point that button *count* doesn't imply note
-  *arrangement*). Fixing treble the same way would need the user's own
-  judgment on which Rheinische row corresponds to which Einheits row (if
-  any do cleanly) before any fit makes sense — don't attempt it
-  unprompted. **If `142-rheinische` bass data is ever re-extracted from the
+  `label`s; only the bass/left side (see the next entry for treble).
+  **If `142-rheinische` bass data is ever re-extracted from the
   source SVG**, this ×0.95 adjustment across all 5 rows will need to be
   reapplied by hand (or re-derived the same way, against 144-einheits'
   current values) — it lives only in `mappings.js`'s committed numbers, not
   in `transform.py` or `data142.csv`.
+- **`142-rheinische`'s treble/right side needed a different fix from bass —
+  two single-button corrections, not a per-row rescale — because it turned
+  out to already be pixel-identical to `144-einheits` almost everywhere.**
+  Treble doesn't have bass's clean 1:1 row correspondence on its face:
+  Rheinische has 6 treble rows (counts 4/5/6/7/8/8), Einheits has 5 (counts
+  6/7/7/8/9), so which Rheinische row corresponds to which Einheits row
+  isn't obvious from counts alone (see "The domain" above — button *count*
+  doesn't imply note *arrangement*). The user supplied the missing piece:
+  144's id 56 corresponds to 142's button labeled "8/0", 144's id 65
+  corresponds to 142's "7/0", and 144's id 64 is an extra button added to
+  the *left* (not right, unlike every bass case) of that "7/0" position.
+  That pins down the correspondence as **142 row `k` ↔ 144 row `k-1`, for
+  k=2..6** — i.e. aligned from the bottom, the same principle
+  `keyboard-mapping.js` already uses for the computer-keyboard row
+  assignment (`maxRow - N + 1`) — leaving 142's row 1 (topmost, 4 buttons,
+  ids 34–37) with **no 144 counterpart at all**, since 144 only has 5 rows
+  total and rows 2–6 of 142 already consume all of them. Checking that
+  hypothesis with the same least-squares fit used for bass turned up
+  something unexpected: rows 2, 3, and 4 fit **perfectly** (residual ~0,
+  the "difference" was 10th-decimal-place float noise, not a real
+  mismatch) — meaning most of 142's treble side was *already* exactly
+  aligned with 144's, unlike bass, which needed a uniform rescale
+  everywhere. Only two buttons were real outliers, both the leftmost
+  (`order: 1`) button of their row and both a slash-labeled combination
+  button rather than a plain numbered one: 142's id 56 (`"8/0"`, row 5) was
+  off from 144's id 56 by 0.0093, and 142's id 64 (`"7/0"`, row 6) was off
+  from 144's id 65 (the position after 144's left-side extra) by 0.023 —
+  both corrected to match 144's value exactly, matching the "adjust 142 to
+  follow 144" direction already established for bass, since it's a single
+  value copy either way and keeps one system as the consistent reference
+  point rather than splitting corrections across both. Row 1 (142's
+  topmost, no counterpart) was left as originally extracted — there's
+  nothing in 144 to align it against. **Takeaway for future data work**:
+  don't assume a whole-row rescale is always the right shape of fix just
+  because it was for bass — check the actual residuals per row first, since
+  here it would have been the wrong tool (it would have *moved* 6 out of 8
+  buttons per row away from an already-correct position, to fix the 1 that
+  was actually wrong).
 - **`144-einheits`**: built this session from scratch. The user manually
   extracted `data144.csv` (id, x, y — same row-major-id convention as
   `data142.csv`) from `layout-bandoneon-144-einheits.pdf`. Note *labels*

@@ -829,7 +829,7 @@ window.defaultMappings = {
       "id": 56,
       "side": "right",
       "label": "8/0",
-      "x": 0.08071704877,
+      "x": 0.09,
       "y": 0.55426825,
       "open": {
         "note": 57
@@ -949,7 +949,7 @@ window.defaultMappings = {
       "id": 64,
       "side": "right",
       "label": "7/0",
-      "x": 0.1169694321,
+      "x": 0.14,
       "y": 0.6884062045,
       "open": {
         "note": 58
