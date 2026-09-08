@@ -9,6 +9,7 @@
 const container = document.getElementById('bandoneonContainer');
 const layoutSelect = document.getElementById('layoutSelect');
 const hintSelect = document.getElementById('hintSelect');
+const buttonColorSelect = document.getElementById('buttonColorSelect');
 const toggleBtn = document.getElementById('toggleOpenClose');
 const mappingFileInput = document.getElementById('mappingFile');
 const midiFileInput = document.getElementById('midiFile');
@@ -188,6 +189,36 @@ function setHintMode(mode) {
   applyHintMode(valid);
 }
 
+// ---- Button color (Rainbow / Piano / Single color) ---------------------
+// Unlike hint mode, this can't be a pure CSS toggle — colorForButton()
+// below computes each button's actual background/border color, so a
+// change has to go through a full renderMapping() to take effect. Kept as
+// its own module-level variable (rather than always reading
+// buttonColorSelect.value at render time) so renderMapping() doesn't need
+// to know the DOM element exists.
+const persistedButtonColorKey = 'bandoneon-button-color-v1';
+let buttonColorMode = 'rainbow';
+
+function detectInitialButtonColor() {
+  try {
+    const saved = localStorage.getItem(persistedButtonColorKey);
+    if (saved === 'rainbow' || saved === 'piano' || saved === 'mono') return saved;
+  } catch (err) {
+    // localStorage unavailable — fall through to the default
+  }
+  return 'rainbow';
+}
+
+function setButtonColorMode(mode) {
+  buttonColorMode = (mode === 'piano' || mode === 'mono') ? mode : 'rainbow';
+  try {
+    localStorage.setItem(persistedButtonColorKey, buttonColorMode);
+  } catch (err) {
+    // ignore — choice just won't persist across reloads
+  }
+  renderMapping();
+}
+
 // Computer-keyboard mapping for the lower 4 rows of the treble (right) side.
 // The row-selection logic itself lives in keyboard-mapping.js (pure,
 // unit-tested — see keyboard-mapping.test.js); this just applies its result
@@ -309,6 +340,37 @@ function colorForAccent(note) {
   return 'hsl(' + hue + ' 65% 55%)';
 }
 
+// Pitch classes with no sharp/flat (white piano keys), 0 = C.
+const NATURAL_PITCH_CLASSES = new Set([0, 2, 4, 5, 7, 9, 11]);
+function isNaturalNote(note) {
+  return NATURAL_PITCH_CLASSES.has(((note % 12) + 12) % 12);
+}
+
+// "Single color" and Piano's natural (white) buttons share the same ivory
+// tone deliberately — it's meant to evoke a real bandoneon's light wood/bone
+// buttons against a dark case, per the user's own description, not an
+// arbitrary color pick.
+const IVORY_BUTTON = { background: '#f4f1e8', border: '#c9c2ae' };
+const PIANO_ACCIDENTAL_BUTTON = { background: '#1c1c1c', border: '#3a3a3a' };
+
+// Returns { background, border, needsLightText } for one button, given the
+// active `buttonColorMode`. `needsLightText` is only true for Piano's black
+// buttons — every other mode uses a light-enough background that the
+// existing fixed-dark-color .label-text/.note-text/.key-cap stay legible
+// (see styles.css's ".dark-bg" override for the one case that needs it).
+function colorForButton(note) {
+  if (buttonColorMode === 'piano') {
+    return isNaturalNote(note)
+      ? { background: IVORY_BUTTON.background, border: IVORY_BUTTON.border, needsLightText: false }
+      : { background: PIANO_ACCIDENTAL_BUTTON.background, border: PIANO_ACCIDENTAL_BUTTON.border, needsLightText: true };
+  }
+  if (buttonColorMode === 'mono') {
+    return { background: IVORY_BUTTON.background, border: IVORY_BUTTON.border, needsLightText: false };
+  }
+  // 'rainbow' (default): the original per-octave HSL formula.
+  return { background: colorForMidi(note), border: colorForAccent(note), needsLightText: false };
+}
+
 function midiToLabel(note) {
   if (note == null) return '—';
   const names = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'];
@@ -363,8 +425,10 @@ function renderMapping() {
     const noteLabel = document.createElement('span');
     noteLabel.className = 'note-text';
     noteLabel.textContent = midiToLabel(note);
-    btn.style.background = colorForMidi(note);
-    btn.style.borderColor = activeDef?.borderColor || button.borderColor || colorForAccent(note);
+    const colorInfo = colorForButton(note);
+    btn.style.background = colorInfo.background;
+    btn.style.borderColor = activeDef?.borderColor || button.borderColor || colorInfo.border;
+    btn.classList.toggle('dark-bg', colorInfo.needsLightText);
 
     const wrapper = document.createElement('div');
     wrapper.className = 'button-wrapper';
@@ -985,6 +1049,16 @@ if (themeSelect) {
 if (hintSelect) {
   hintSelect.addEventListener('change', () => setHintMode(hintSelect.value));
 }
+
+if (buttonColorSelect) {
+  buttonColorSelect.addEventListener('change', () => setButtonColorMode(buttonColorSelect.value));
+}
+
+// Set before the first loadMappingForLayout() (which triggers the first
+// renderMapping()) rather than after, so a saved non-default choice is
+// correct on first paint instead of only from the next re-render on.
+buttonColorMode = detectInitialButtonColor();
+if (buttonColorSelect) buttonColorSelect.value = buttonColorMode;
 
 loadMappingForLayout(layoutSelect.value);
 

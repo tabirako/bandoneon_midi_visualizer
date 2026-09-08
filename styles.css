@@ -320,6 +320,18 @@ input[type="file"] {
   color: var(--key-cap);
 }
 
+/* Piano button-color mode's accidental (black) buttons: .label-text/
+   .note-text/.key-cap are normally a fixed dark color that assumes a light
+   button background (true for Rainbow and Single-color mode, and Piano's
+   own natural/white buttons) — this overrides just the dark-background
+   case so text stays legible. Set via app.js's colorForButton() /
+   renderMapping(), independent of the page's own Theme (light/dark). */
+.button-circle.dark-bg .label-text,
+.button-circle.dark-bg .note-text,
+.button-circle.dark-bg .key-cap {
+  color: #f0f0f0;
+}
+
 /* "No hint" mode: hides every marking that gives away which note a button
    plays (its label, computed note name, keyboard key-cap badge), leaving
    just the colored, positioned, clickable circle. Toggled via a class on
