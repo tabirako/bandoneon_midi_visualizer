@@ -153,6 +153,49 @@ function setTheme(theme) {
   applyTheme(valid);
 }
 
+// ---- Markings (With / Without) -----------------------------------------
+// "With markings" is the original look: per-octave button colors, the
+// button label (1, 2, 3 / 1'0, 2'2 ...) and the note name (C4, C#5).
+// "Without markings" blanks all three so the layout can be practiced from
+// memory, leaving only the computer-keyboard key caps (those are how you
+// play, not a hint about the instrument) and the press highlight.
+//
+// Like the theme, this is a data attribute on <html> plus theme tokens in
+// styles.css rather than a different DOM: switching Day/Night while in
+// blank mode then recolors the buttons instantly, with no re-render, and
+// each button's octave color stays parked on it as --btn-bg/--btn-border
+// (set in renderMapping()) ready for the moment markings come back on.
+// Unlike the theme it needs no pre-paint script in index.html's <head>,
+// because the buttons it affects don't exist until app.js builds them.
+const persistedMarkingsKey = 'bandoneon-markings-v1';
+let markingsOn = true;
+
+function detectInitialMarkings() {
+  try {
+    return localStorage.getItem(persistedMarkingsKey) !== 'off';
+  } catch (err) {
+    return true; // localStorage unavailable — default to the original look
+  }
+}
+
+function applyMarkings(on) {
+  markingsOn = on;
+  document.documentElement.setAttribute('data-markings', on ? 'on' : 'off');
+}
+
+function setMarkings(on) {
+  try {
+    localStorage.setItem(persistedMarkingsKey, on ? 'on' : 'off');
+  } catch (err) {
+    // ignore — the choice just won't persist across reloads
+  }
+  applyMarkings(on);
+  // The one part CSS can't hide is the hover tooltip, which spells out
+  // exactly the notes blank mode is meant to withhold — renderMapping()
+  // rebuilds it (or drops it) for the new mode.
+  renderMapping();
+}
+
 // Computer-keyboard mapping for the lower 4 rows of the treble (right) side.
 // The row-selection logic itself lives in keyboard-mapping.js (pure,
 // unit-tested — see keyboard-mapping.test.js); this just applies its result
@@ -318,7 +361,7 @@ function renderMapping() {
     btn.dataset.open = button.open?.note ?? button.open;
     btn.dataset.side = button.side;
     btn.dataset.label = button.label;
-    btn.setAttribute('title', `${button.side} • ${button.label} • ${t('stateClose')} ${button.close?.note ?? button.close} / ${t('stateOpen')} ${button.open?.note ?? button.open}`);
+    let description = `${button.side} • ${button.label} • ${t('stateClose')} ${button.close?.note ?? button.close} / ${t('stateOpen')} ${button.open?.note ?? button.open}`;
 
     const activeDef = isOpen ? button.open : button.close;
     const note = activeDef?.note ?? activeDef;
@@ -328,8 +371,11 @@ function renderMapping() {
     const noteLabel = document.createElement('span');
     noteLabel.className = 'note-text';
     noteLabel.textContent = midiToLabel(note);
-    btn.style.background = colorForMidi(note);
-    btn.style.borderColor = activeDef?.borderColor || button.borderColor || colorForAccent(note);
+    // Custom properties rather than a direct inline background, so the
+    // "without markings" stylesheet rule can override the color — an
+    // inline background would outrank it. See styles.css's .button-circle.
+    btn.style.setProperty('--btn-bg', colorForMidi(note));
+    btn.style.setProperty('--btn-border', activeDef?.borderColor || button.borderColor || colorForAccent(note));
 
     const wrapper = document.createElement('div');
     wrapper.className = 'button-wrapper';
@@ -359,8 +405,14 @@ function renderMapping() {
       keyCapEl.className = 'key-cap';
       keyCapEl.textContent = button.keyCap;
       btn.appendChild(keyCapEl);
-      btn.setAttribute('title', btn.getAttribute('title') + ` • ${t('keyWord')} ${button.keyCap}`);
+      description += ` • ${t('keyWord')} ${button.keyCap}`;
     }
+    // With markings off, a hover tooltip would hand over the very notes the
+    // mode exists to hide, so the description moves to aria-label instead:
+    // still announced to screen readers — the visual labels are
+    // display:none, which would otherwise leave the button with no
+    // accessible name at all — just not shown on hover.
+    btn.setAttribute(markingsOn ? 'title' : 'aria-label', description);
     btn.appendChild(halo);
     wrapper.appendChild(btn);
 
@@ -408,8 +460,11 @@ function updateButtonHighlights() {
     button.style.opacity = isActive ? '1' : '0.95';
     // vel/127 spans the full glow range (0-0.6) across the full velocity
     // range (0-127), so the loudest possible note reaches 0.6 exactly
-    // instead of saturating early.
-    button.style.boxShadow = isActive ? '0 0 0 2px rgba(255,255,255,' + (vel / 127 * 0.6) + '), 0 10px 24px rgba(255,255,255,0.15)' : '';
+    // instead of saturating early. --glow-rgb (styles.css) supplies the
+    // channels: white on the dark theme, black on the light one, where a
+    // white glow on a light page — or on a blackish "without markings"
+    // button — would be all but invisible.
+    button.style.boxShadow = isActive ? '0 0 0 2px rgba(var(--glow-rgb),' + (vel / 127 * 0.6) + '), 0 10px 24px rgba(var(--glow-rgb),0.15)' : '';
   });
 }
 
@@ -946,6 +1001,17 @@ const themeSelect = document.getElementById('themeSelect');
 if (themeSelect) {
   themeSelect.addEventListener('change', () => setTheme(themeSelect.value));
 }
+
+const markingsSelect = document.getElementById('markingsSelect');
+if (markingsSelect) {
+  markingsSelect.addEventListener('change', () => setMarkings(markingsSelect.value !== 'off'));
+}
+
+// Applied before the first render, not after it like the theme below, so a
+// saved "without markings" choice never flashes a colored keyboard first.
+const initialMarkings = detectInitialMarkings();
+if (markingsSelect) markingsSelect.value = initialMarkings ? 'on' : 'off';
+applyMarkings(initialMarkings);
 
 loadMappingForLayout(layoutSelect.value);
 

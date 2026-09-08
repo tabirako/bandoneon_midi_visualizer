@@ -21,6 +21,18 @@
   --panel-border: rgba(255, 255, 255, 0.03);
   --circle-border: rgba(255, 255, 255, 0.18);
   --key-cap: #e6eef6;
+  /* "Without markings" mode (see #markingsSelect): buttons drop their
+     octave colors for a flat, theme-opposing key color — ivory-white
+     against the dark ground here, near-black under the light theme —
+     and the key cap flips to stay legible on it. */
+  --blank-button-bg: #ece7dc;
+  --blank-button-border: #b9b2a3;
+  --key-cap-blank: #1a1d22;
+  /* Press highlight (halo + glow ring). Kept as bare RGB channels so
+     both CSS and updateButtonHighlights()'s inline box-shadow can mix
+     their own alpha into it. White reads on the dark ground; the light
+     theme swaps it to black for the same reason. */
+  --glow-rgb: 255, 255, 255;
 }
 
 @media (prefers-color-scheme: light) {
@@ -37,6 +49,10 @@
     --panel-border: rgba(0, 0, 0, 0.06);
     --circle-border: rgba(0, 0, 0, 0.15);
     --key-cap: #182430;
+    --blank-button-bg: #23262b;
+    --blank-button-border: #454a52;
+    --key-cap-blank: #f0f2f5;
+    --glow-rgb: 0, 0, 0;
   }
 }
 
@@ -53,6 +69,10 @@
   --panel-border: rgba(0, 0, 0, 0.06);
   --circle-border: rgba(0, 0, 0, 0.15);
   --key-cap: #182430;
+  --blank-button-bg: #23262b;
+  --blank-button-border: #454a52;
+  --key-cap-blank: #f0f2f5;
+  --glow-rgb: 0, 0, 0;
 }
 
 :root[data-theme="dark"] {
@@ -68,6 +88,10 @@
   --panel-border: rgba(255, 255, 255, 0.03);
   --circle-border: rgba(255, 255, 255, 0.18);
   --key-cap: #e6eef6;
+  --blank-button-bg: #ece7dc;
+  --blank-button-border: #b9b2a3;
+  --key-cap-blank: #1a1d22;
+  --glow-rgb: 255, 255, 255;
 }
 
 /* ========== Base / Global Styles ========== */
@@ -266,6 +290,12 @@ input[type="file"] {
   justify-content: center;
 }
 
+/* --btn-bg / --btn-border carry each button's own octave color, set as
+   custom properties (not as a direct inline background) by renderMapping()
+   in app.js. Going through variables is what lets the "without markings"
+   rule below override the color with a plain stylesheet rule — an inline
+   `style="background: ..."` would outrank it — while the octave color
+   stays parked on the element, ready for the moment markings return. */
 .button-circle {
   position: relative;
   width: clamp(40px, 6.5vw, 64px);
@@ -275,9 +305,9 @@ input[type="file"] {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--btn-bg, rgba(255, 255, 255, 0.92));
   cursor: pointer;
-  border: 1px solid var(--circle-border);
+  border: 1px solid var(--btn-border, var(--circle-border));
   transition: transform 0.08s, box-shadow 0.12s;
 }
 
@@ -303,7 +333,7 @@ input[type="file"] {
   height: 72px;
   border-radius: 50%;
   pointer-events: none;
-  background: rgba(255, 255, 255, 0.24);
+  background: rgba(var(--glow-rgb), 0.24);
   opacity: 0;
   transition: opacity 0.16s ease, transform 0.16s ease;
 }
@@ -318,6 +348,29 @@ input[type="file"] {
   opacity: 0.85;
   pointer-events: none;
   color: var(--key-cap);
+}
+
+/* ========== "Without markings" Mode ========== */
+/* Set by applyMarkings() in app.js as data-markings="off" on <html>. It
+   blanks every visual hint about which button is which — octave color,
+   button label (1, 2, 3 / 1'0, 2'2 ...) and note name (C4, C#5) — so the
+   layout can be practiced from memory. The key caps stay: they're how you
+   play the thing from a computer keyboard, not a hint about the bandoneon,
+   so they only flip color to stay readable on the new key color. Doing
+   this in CSS rather than by rebuilding the DOM means switching Day/Night
+   while in this mode recolors the buttons instantly. */
+:root[data-markings="off"] .button-circle {
+  background: var(--blank-button-bg);
+  border-color: var(--blank-button-border);
+}
+
+:root[data-markings="off"] .label-text,
+:root[data-markings="off"] .note-text {
+  display: none;
+}
+
+:root[data-markings="off"] .key-cap {
+  color: var(--key-cap-blank);
 }
 
 /* ========== Info & Status ========== */
