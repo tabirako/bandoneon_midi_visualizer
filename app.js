@@ -237,12 +237,31 @@ function assignKeyboardKeys() {
   });
 }
 
-// Free-reed instrument character presets: reed-pair detune (beating), bellows
-// breath noise level, vibrato depth, and filter shaping per instrument.
+// Free-reed instrument character presets. Each instrument is built from up
+// to 4 reed voices, matching how real free-reed registers are named:
+//   L  = one octave below the note (bass/bassoon reed)
+//   M- = the note's own octave, detuned flat (tremolo/musette partner)
+//   M  = the note's own octave, in tune (the "dry" reference reed)
+//   M+ = the note's own octave, detuned sharp (tremolo/musette partner)
+// voiceMflat/voiceM/voiceMsharp are 0/1 switches for M-/M/M+. `harmMix`
+// (0 = off) doubles as both L's on/off switch and its blend amount, rather
+// than adding a redundant separate flag for it. `detune` sets how far M-/M+
+// sit from true pitch — M itself is always exactly on pitch.
+//
+// Real bandoneons are famously "dry" (no tremolo/beating between reeds,
+// unlike a wet-tuned accordion) — hence detune:0 and only the dry M voice
+// on. Accordion is L + dry M + one sharp-detuned M+ (an asymmetric wet
+// pair, still with a true dry reed); the *symmetric* M-/M+ pair with no dry
+// M at all (no L either) is a different, specific register real accordions
+// call "Sax" — not what plain "Accordion" here should sound like. Musette
+// is the full wet trio (M-, M, M+ all on) with no bass reed, for the lush
+// chorus/beating sound; Harmonica is the same dry-plus-sharp mid pair as
+// accordion but without the bass reed.
 const REED_PRESETS = {
-  accordion: { detune: 7,  breath: 8,  vibrato: 4, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
-  harmonica: { detune: 3,  breath: 18, vibrato: 6, filterFreq: 3200, filterQ: 3.5, harmMix: 0.8 },
-  bandoneon: { detune: 0, breath: 5,  vibrato: 3, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 }
+  bandoneon: { voiceMflat: 0, voiceM: 1, voiceMsharp: 0, detune: 0, breath: 5,  vibrato: 3, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 },
+  accordion: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 7, breath: 8,  vibrato: 4, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
+  harmonica: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 3, breath: 18, vibrato: 6, filterFreq: 3200, filterQ: 3.5, harmMix: 0 },
+  musette:   { voiceMflat: 1, voiceM: 1, voiceMsharp: 1, detune: 9, breath: 10, vibrato: 5, filterFreq: 2600, filterQ: 1.4, harmMix: 0 }
 };
 
 function isReedInstrument(name) {
@@ -661,11 +680,15 @@ function getReedNoiseBuffer(ctx) {
   return buffer;
 }
 
-// Builds a free-reed voice: two detuned sawtooth "reeds" (the slight offset
-// creates the characteristic beating/chorus), a sub-octave layer for body,
-// a low-pass filter for reed-like timbre, filtered noise for bellows breath,
-// and an LFO for vibrato. The voice sustains until stopReedVoice() is called,
-// matching how a real reed sounds for as long as air keeps moving over it.
+// Builds a free-reed voice out of up to 4 reed oscillators per the preset's
+// voiceMflat/voiceM/voiceMsharp/harmMix switches (see REED_PRESETS above:
+// M-/M/M+ at the note's own octave, L an octave below), a low-pass filter
+// for reed-like timbre, filtered noise for bellows breath, and an LFO for
+// vibrato. All 4 reed oscillators are always created (matching the rest of
+// this codebase's style — see oscSub previously) with an inactive voice's
+// gain simply left at 0, rather than conditionally building the node graph.
+// The voice sustains until stopReedVoice() is called, matching how a real
+// reed sounds for as long as air keeps moving over it.
 function startReedVoice(note, velocity, instrument) {
   const ctx = ensureAudioContext();
   const preset = REED_PRESETS[instrument];
@@ -682,15 +705,27 @@ function startReedVoice(note, velocity, instrument) {
   master.gain.setValueAtTime(0, now);
   master.connect(ctx.destination);
 
-  const oscA = ctx.createOscillator();
-  const oscB = ctx.createOscillator();
-  oscA.type = 'sawtooth';
-  oscB.type = 'sawtooth';
-  oscA.frequency.value = freq;
-  oscB.frequency.value = freq;
-  oscA.detune.value = -detuneCents / 2;
-  oscB.detune.value = detuneCents / 2;
+  // M-, M, M+: three reeds at the note's own pitch. M stays exactly on
+  // pitch; M-/M+ are detuned by the full slider value in opposite
+  // directions from it (not halved — M is the true center now, unlike the
+  // old model where the only two mid oscillators were always a symmetric
+  // detuned pair with no dry reed at all).
+  const oscMflat = ctx.createOscillator();
+  const oscM = ctx.createOscillator();
+  const oscMsharp = ctx.createOscillator();
+  [oscMflat, oscM, oscMsharp].forEach((o) => { o.type = 'sawtooth'; o.frequency.value = freq; });
+  oscMflat.detune.value = -detuneCents;
+  oscMsharp.detune.value = detuneCents;
 
+  const gainMflat = ctx.createGain();
+  const gainM = ctx.createGain();
+  const gainMsharp = ctx.createGain();
+  gainMflat.gain.value = preset.voiceMflat;
+  gainM.gain.value = preset.voiceM;
+  gainMsharp.gain.value = preset.voiceMsharp;
+
+  // L: one octave down. harmMix doubles as both L's on/off switch and its
+  // blend level (0 = no bass reed at all — harmonica and musette).
   const oscSub = ctx.createOscillator();
   oscSub.type = 'triangle';
   oscSub.frequency.value = freq / 2;
@@ -702,19 +737,33 @@ function startReedVoice(note, velocity, instrument) {
   const lfoGain = ctx.createGain();
   lfoGain.gain.value = vibDepth;
   lfo.connect(lfoGain);
-  lfoGain.connect(oscA.detune);
-  lfoGain.connect(oscB.detune);
+  lfoGain.connect(oscMflat.detune);
+  lfoGain.connect(oscM.detune);
+  lfoGain.connect(oscMsharp.detune);
 
   const filter = ctx.createBiquadFilter();
   filter.type = 'lowpass';
   filter.frequency.value = preset.filterFreq;
   filter.Q.value = preset.filterQ;
 
+  // More simultaneously-active reed voices sum to more amplitude, so
+  // headroom scales down by how many are actually on for this preset
+  // (sqrt, not linear — a gentler rolloff than fully compensating, so a
+  // fuller preset like Musette still sounds a bit fuller than a sparser one
+  // like Bandoneon, not identically loud). The flat 0.75 (was a flat 0.9,
+  // with no voice-count compensation at all) is a further deliberate trim,
+  // since the reed path summing multiple oscillators was noticeably louder
+  // than the plain single-oscillator waveforms (sine/square/etc).
+  const activeVoices = preset.voiceMflat + preset.voiceM + preset.voiceMsharp + (preset.harmMix > 0 ? 1 : 0);
   const reedGain = ctx.createGain();
-  reedGain.gain.value = 0.9;
+  reedGain.gain.value = 0.75 / Math.sqrt(Math.max(1, activeVoices));
 
-  oscA.connect(filter);
-  oscB.connect(filter);
+  oscMflat.connect(gainMflat);
+  gainMflat.connect(filter);
+  oscM.connect(gainM);
+  gainM.connect(filter);
+  oscMsharp.connect(gainMsharp);
+  gainMsharp.connect(filter);
   oscSub.connect(subGain);
   subGain.connect(filter);
   filter.connect(reedGain);
@@ -737,13 +786,14 @@ function startReedVoice(note, velocity, instrument) {
   noiseGain.gain.linearRampToValueAtTime(breathAmt * targetGain, now + 0.03);
   noiseGain.gain.linearRampToValueAtTime(breathAmt * targetGain * 0.4, now + 0.25);
 
-  oscA.start(now);
-  oscB.start(now);
+  oscMflat.start(now);
+  oscM.start(now);
+  oscMsharp.start(now);
   oscSub.start(now);
   lfo.start(now);
   noiseSrc.start(now);
 
-  return { oscA, oscB, oscSub, lfo, noiseSrc, master, noiseGain };
+  return { oscMflat, oscM, oscMsharp, oscSub, lfo, noiseSrc, master, noiseGain };
 }
 
 function stopReedVoice(voice) {
@@ -756,7 +806,7 @@ function stopReedVoice(voice) {
   voice.noiseGain.gain.cancelScheduledValues(now);
   voice.noiseGain.gain.setValueAtTime(voice.noiseGain.gain.value, now);
   voice.noiseGain.gain.linearRampToValueAtTime(0, now + releaseTime);
-  [voice.oscA, voice.oscB, voice.oscSub, voice.lfo, voice.noiseSrc].forEach((n) => {
+  [voice.oscMflat, voice.oscM, voice.oscMsharp, voice.oscSub, voice.lfo, voice.noiseSrc].forEach((n) => {
     n.stop(now + releaseTime + 0.02);
   });
 }
