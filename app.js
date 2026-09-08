@@ -8,6 +8,7 @@
 
 const container = document.getElementById('bandoneonContainer');
 const layoutSelect = document.getElementById('layoutSelect');
+const hintSelect = document.getElementById('hintSelect');
 const toggleBtn = document.getElementById('toggleOpenClose');
 const mappingFileInput = document.getElementById('mappingFile');
 const midiFileInput = document.getElementById('midiFile');
@@ -79,7 +80,7 @@ function applyTranslations() {
   document.querySelectorAll('[data-i18n-html]').forEach((el) => {
     el.innerHTML = t(el.dataset.i18nHtml);
   });
-  updateModeButtonText();
+  updateBellowsButtonText();
   updateMidiButtonText();
   renderMapping(); // rebuilds tooltips/side titles, which are also translated
 }
@@ -151,6 +152,40 @@ function setTheme(theme) {
     // ignore — theme choice just won't persist across reloads
   }
   applyTheme(valid);
+}
+
+// ---- Hint mode (Default / No hint) -------------------------------------
+// "No hint" hides every on-button marking that gives away which note a
+// button plays — its label, computed note name, and keyboard key-cap badge
+// — leaving just the colored, positioned, still-clickable circle. Done
+// purely with a CSS class on #bandoneonContainer (see styles.css's
+// ".hints-off" rule) rather than by changing what renderMapping() builds,
+// so toggling it doesn't require a re-render and can't drift out of sync
+// with what's currently on screen.
+const persistedHintKey = 'bandoneon-hint-v1';
+
+function detectInitialHint() {
+  try {
+    const saved = localStorage.getItem(persistedHintKey);
+    if (saved === 'default' || saved === 'none') return saved;
+  } catch (err) {
+    // localStorage unavailable — fall through to the default
+  }
+  return 'default';
+}
+
+function applyHintMode(mode) {
+  container.classList.toggle('hints-off', mode === 'none');
+}
+
+function setHintMode(mode) {
+  const valid = mode === 'none' ? 'none' : 'default';
+  try {
+    localStorage.setItem(persistedHintKey, valid);
+  } catch (err) {
+    // ignore — hint choice just won't persist across reloads
+  }
+  applyHintMode(valid);
 }
 
 // Computer-keyboard mapping for the lower 4 rows of the treble (right) side.
@@ -531,13 +566,13 @@ function handleNoteOff(note) {
   stopTone(note);
 }
 
-function updateModeButtonText() {
-  setI18nText(toggleBtn, isOpen ? 'modeButtonOpen' : 'modeButtonClose');
+function updateBellowsButtonText() {
+  setI18nText(toggleBtn, isOpen ? 'bellowsButtonOpen' : 'bellowsButtonClose');
 }
 
 function setOpenState(open) {
   isOpen = !!open;
-  updateModeButtonText();
+  updateBellowsButtonText();
   renderMapping();
 }
 
@@ -947,6 +982,10 @@ if (themeSelect) {
   themeSelect.addEventListener('change', () => setTheme(themeSelect.value));
 }
 
+if (hintSelect) {
+  hintSelect.addEventListener('change', () => setHintMode(hintSelect.value));
+}
+
 loadMappingForLayout(layoutSelect.value);
 
 currentLang = detectInitialLang();
@@ -956,6 +995,10 @@ applyTranslations();
 const initialTheme = detectInitialTheme();
 if (themeSelect) themeSelect.value = initialTheme;
 applyTheme(initialTheme);
+
+const initialHint = detectInitialHint();
+if (hintSelect) hintSelect.value = initialHint;
+applyHintMode(initialHint);
 
 window._bandoneon = {
   setOpenState,

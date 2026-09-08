@@ -320,6 +320,17 @@ input[type="file"] {
   color: var(--key-cap);
 }
 
+/* "No hint" mode: hides every marking that gives away which note a button
+   plays (its label, computed note name, keyboard key-cap badge), leaving
+   just the colored, positioned, clickable circle. Toggled via a class on
+   #bandoneonContainer itself (see app.js's applyHintMode()), so it survives
+   renderMapping() rebuilding the container's children. */
+.hints-off .label-text,
+.hints-off .note-text,
+.hints-off .key-cap {
+  display: none;
+}
+
 /* ========== Info & Status ========== */
 .info {
   margin-top: 12px;
