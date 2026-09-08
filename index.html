@@ -67,18 +67,12 @@
       with JavaScript disabled. Please enable it and reload the page.
     </div>
   </noscript>
-  <div class="site-link"><a href="https://kei-c.com">← kei-c.com</a></div>
-  <header>
-    <h1>Bandoneon MIDI Visualizer</h1>
-    <p data-i18n="appTagline">Static client-side app for MIDI keyboard input and MIDI upload with separate 142/144 bandoneon layouts.</p>
-  </header>
-
-  <main>
-    <section class="controls">
-      <label><span data-i18n="langLabel">Language:</span>
+  <div class="top-bar">
+    <a class="site-link" href="https://kei-c.com">← kei-c.com</a>
+    <div class="top-bar-settings">
+      <label><span aria-hidden="true">🌐</span> <span data-i18n="langLabel">Language:</span>
         <select id="langSelect"></select>
       </label>
-
       <label><span data-i18n="themeLabel">Theme:</span>
         <select id="themeSelect">
           <option value="browser" data-i18n="themeBrowser">Browser</option>
@@ -86,7 +80,15 @@
           <option value="dark" data-i18n="themeNight">Night</option>
         </select>
       </label>
+    </div>
+  </div>
+  <header>
+    <h1>Bandoneon MIDI Visualizer</h1>
+    <p data-i18n="appTagline">Static client-side app for MIDI keyboard input and MIDI upload with separate 142/144 bandoneon layouts.</p>
+  </header>
 
+  <main>
+    <section class="controls">
       <label><span data-i18n="layoutLabel">Layout:</span>
         <select id="layoutSelect">
           <option value="142-rheinische" data-i18n="layout142">142-tone (Rheinische)</option>

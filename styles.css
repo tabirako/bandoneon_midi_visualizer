@@ -99,19 +99,48 @@ body {
 }
 
 /* ========== Site Link (back to kei-c.com) ========== */
-.site-link {
+/* Top bar: the "back to main site" link (left) and the less-instrument-
+   specific settings — Language, Theme — (right), separated from the rest
+   of .controls since they're page-level preferences, not bandoneon
+   controls, and grouping them here keeps the "Enable MIDI Keyboard" row
+   below from growing too long to fit on one line. */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 8px;
 }
 
-.site-link a {
+.site-link {
   color: var(--muted);
   font-size: 13px;
   text-decoration: none;
 }
 
-.site-link a:hover {
+.site-link:hover {
   color: var(--text-bright);
   text-decoration: underline;
+}
+
+.top-bar-settings {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.top-bar-settings label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.top-bar-settings select {
+  font-size: 12px;
+  padding: 2px 4px;
 }
 
 /* ========== Header ========== */
