@@ -20,6 +20,7 @@
   --panel-grad-2: rgba(255, 255, 255, 0.01);
   --panel-border: rgba(255, 255, 255, 0.03);
   --circle-border: rgba(255, 255, 255, 0.18);
+  --key-cap: #e6eef6;
 }
 
 @media (prefers-color-scheme: light) {
@@ -35,6 +36,7 @@
     --panel-grad-2: rgba(0, 0, 0, 0.01);
     --panel-border: rgba(0, 0, 0, 0.06);
     --circle-border: rgba(0, 0, 0, 0.15);
+    --key-cap: #182430;
   }
 }
 
@@ -50,6 +52,7 @@
   --panel-grad-2: rgba(0, 0, 0, 0.01);
   --panel-border: rgba(0, 0, 0, 0.06);
   --circle-border: rgba(0, 0, 0, 0.15);
+  --key-cap: #182430;
 }
 
 :root[data-theme="dark"] {
@@ -64,6 +67,7 @@
   --panel-grad-2: rgba(255, 255, 255, 0.01);
   --panel-border: rgba(255, 255, 255, 0.03);
   --circle-border: rgba(255, 255, 255, 0.18);
+  --key-cap: #e6eef6;
 }
 
 /* ========== Base / Global Styles ========== */
@@ -313,7 +317,7 @@ input[type="file"] {
   font-weight: bold;
   opacity: 0.85;
   pointer-events: none;
-  color: #e6eef6;
+  color: var(--key-cap);
 }
 
 /* ========== Info & Status ========== */
