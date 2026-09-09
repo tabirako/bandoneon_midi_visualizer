@@ -651,6 +651,10 @@ function handleNoteOff(note) {
 
 function updateBellowsButtonText() {
   setI18nText(toggleBtn, isOpen ? 'bellowsButtonOpen' : 'bellowsButtonClose');
+  // Standard squeezebox notation: V = open/push bellows, ⊓ = close/pull.
+  // Shown only here (not per-key) since bellows direction is one global
+  // state for the whole instrument, not a per-button property.
+  toggleBtn.textContent = (isOpen ? 'V ' : '⊓ ') + toggleBtn.textContent;
 }
 
 function setOpenState(open) {
