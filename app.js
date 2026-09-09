@@ -222,17 +222,28 @@ function setButtonColorMode(mode) {
 // Computer-keyboard mapping for the lower 4 rows of the treble (right) side.
 // The row-selection logic itself lives in keyboard-mapping.js (pure,
 // unit-tested — see keyboard-mapping.test.js); this just applies its result
-// to this app's own state (keyboardKeyMap, button.keyCap).
-let keyboardKeyMap = new Map(); // key char -> button
-const heldKeyNotes = new Map(); // key char -> note currently sounding for it
+// to this app's own state (keyboardCodeMap, button.keyCap).
+//
+// Matching happens on KeyboardEvent.code (physical key position, e.g.
+// 'KeyA'/'Semicolon'/'Digit1'), not .key (the character produced) — code is
+// unaffected by Shift or Caps Lock, so e.g. Shift+';' (which reports key
+// ':') still triggers the button assigned to the ';' position. It also
+// stays tied to physical finger position across non-QWERTY OS keyboard
+// layouts, the same way WASD-style game controls do. The on-screen key-cap
+// label (button.keyCap) intentionally still shows the QWERTY character —
+// relabeling it per actual layout would need navigator.keyboard.getLayoutMap(),
+// which is Chromium-only and permission-gated, so it's left as a known
+// limitation for non-QWERTY players rather than solved here.
+let keyboardCodeMap = new Map(); // KeyboardEvent.code -> button
+const heldKeyNotes = new Map(); // KeyboardEvent.code -> note currently sounding for it
 
 function assignKeyboardKeys() {
-  keyboardKeyMap = new Map();
+  keyboardCodeMap = new Map();
   mapping.forEach((button) => { button.keyCap = undefined; });
 
   const right = mapping.filter((b) => b.side === 'right');
-  window.keyboardMapping.computeKeyAssignments(right).forEach(({ key, button }) => {
-    keyboardKeyMap.set(key, button);
+  window.keyboardMapping.computeKeyAssignments(right).forEach(({ key, code, button }) => {
+    keyboardCodeMap.set(code, button);
     button.keyCap = key.toUpperCase();
   });
 }
@@ -904,9 +915,9 @@ window.addEventListener('keydown', (event) => {
     return;
   }
 
-  const key = event.key.toLowerCase();
-  if (heldKeyNotes.has(key)) return; // ignore OS key-repeat while already held
-  const button = keyboardKeyMap.get(key);
+  const code = event.code;
+  if (heldKeyNotes.has(code)) return; // ignore OS key-repeat while already held
+  const button = keyboardCodeMap.get(code);
   if (!button) return;
 
   event.preventDefault();
@@ -916,15 +927,15 @@ window.addEventListener('keydown', (event) => {
   const activeDef = isOpen ? button.open : button.close;
   const note = activeDef?.note ?? activeDef;
   if (note == null) return;
-  heldKeyNotes.set(key, note);
+  heldKeyNotes.set(code, note);
   handleNoteOn(note, SIMULATED_VELOCITY);
 });
 
 window.addEventListener('keyup', (event) => {
-  const key = event.key.toLowerCase();
-  if (!heldKeyNotes.has(key)) return;
-  const note = heldKeyNotes.get(key);
-  heldKeyNotes.delete(key);
+  const code = event.code;
+  if (!heldKeyNotes.has(code)) return;
+  const note = heldKeyNotes.get(code);
+  heldKeyNotes.delete(code);
   handleNoteOff(note);
 });
 

@@ -6,7 +6,7 @@
 // other code changes are needed — app.js reads both objects generically.
 window.translations = {
   en: {
-    appTagline: "Static client-side app for MIDI keyboard input and MIDI upload with separate 142/144 bandoneon layouts.",
+    appTagline: "Static client-side app for MIDI keyboard input and<br>MIDI upload with separate 142/144 bandoneon layouts.",
     langLabel: "Language:",
     themeLabel: "Theme:",
     themeBrowser: "Browser",
@@ -75,7 +75,7 @@ window.translations = {
   },
 
   ja: {
-    appTagline: "MIDIキーボード入力とMIDIファイルのアップロードに対応し、142/144ボタンのバンドネオン配列を切り替えられるクライアントサイドアプリです。",
+    appTagline: "MIDIキーボード入力とMIDIファイルのアップロードに対応し、<br>142/144ボタンのバンドネオン配列を切り替えられるクライアントサイドアプリです。",
     langLabel: "言語:",
     themeLabel: "テーマ:",
     themeBrowser: "ブラウザ",
@@ -144,7 +144,7 @@ window.translations = {
   },
 
   "zh-Hans": {
-    appTagline: "纯客户端应用,支持MIDI键盘输入与MIDI文件上传,可在142/144键班多钮手风琴布局间切换。",
+    appTagline: "纯客户端应用,支持MIDI键盘输入与MIDI文件上传,<br>可在142/144键班多钮手风琴布局间切换。",
     langLabel: "语言:",
     themeLabel: "主题:",
     themeBrowser: "浏览器",
@@ -213,7 +213,7 @@ window.translations = {
   },
 
   "zh-Hant": {
-    appTagline: "純客戶端應用程式,支援MIDI鍵盤輸入與MIDI檔案上傳,可在142/144鍵班多鈕手風琴排列間切換。",
+    appTagline: "純客戶端應用程式,支援MIDI鍵盤輸入與MIDI檔案上傳,<br>可在142/144鍵班多鈕手風琴排列間切換。",
     langLabel: "語言:",
     themeLabel: "主題:",
     themeBrowser: "瀏覽器",
@@ -282,7 +282,7 @@ window.translations = {
   },
 
   ko: {
-    appTagline: "MIDI 키보드 입력과 MIDI 파일 업로드를 지원하며, 142/144버튼 반도네온 배열을 전환할 수 있는 클라이언트 사이드 앱입니다.",
+    appTagline: "MIDI 키보드 입력과 MIDI 파일 업로드를 지원하며,<br>142/144버튼 반도네온 배열을 전환할 수 있는 클라이언트 사이드 앱입니다.",
     langLabel: "언어:",
     themeLabel: "테마:",
     themeBrowser: "브라우저",
@@ -351,7 +351,7 @@ window.translations = {
   },
 
   es: {
-    appTagline: "Aplicación del lado del cliente para entrada de teclado MIDI y carga de archivos MIDI, con distribuciones de bandoneón de 142/144 botones.",
+    appTagline: "Aplicación del lado del cliente para entrada de teclado MIDI y carga de archivos MIDI,<br>con distribuciones de bandoneón de 142/144 botones.",
     langLabel: "Idioma:",
     themeLabel: "Tema:",
     themeBrowser: "Navegador",
@@ -420,7 +420,7 @@ window.translations = {
   },
 
   fr: {
-    appTagline: "Application côté client pour la saisie au clavier MIDI et l'importation de fichiers MIDI, avec des dispositions de bandonéon 142/144 boutons.",
+    appTagline: "Application côté client pour la saisie au clavier MIDI et l'importation de fichiers MIDI,<br>avec des dispositions de bandonéon 142/144 boutons.",
     langLabel: "Langue :",
     themeLabel: "Thème :",
     themeBrowser: "Navigateur",
@@ -489,7 +489,7 @@ window.translations = {
   },
 
   de: {
-    appTagline: "Clientseitige App für MIDI-Tastatureingabe und MIDI-Datei-Upload mit umschaltbaren 142/144-tönigen Bandoneon-Layouts.",
+    appTagline: "Clientseitige App für MIDI-Tastatureingabe und MIDI-Datei-Upload<br>mit umschaltbaren 142/144-tönigen Bandoneon-Layouts.",
     langLabel: "Sprache:",
     themeLabel: "Thema:",
     themeBrowser: "Browser",

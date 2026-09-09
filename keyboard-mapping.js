@@ -1,8 +1,9 @@
 // Computer-keyboard mapping for the lower 4 rows of the treble (right) side.
 // Exposes window.keyboardMapping with:
-// - PHYSICAL_KEYBOARD_ROWS, DEFAULT_ROW_ANCHORS (data)
+// - PHYSICAL_KEYBOARD_ROWS, PHYSICAL_KEYBOARD_CODES, DEFAULT_ROW_ANCHORS (data)
 // - selectKeysForRow(rowIndex, neededLength)
-// - computeKeyAssignments(rightSideButtons)
+// - selectCodesForRow(rowIndex, neededLength)
+// - computeKeyAssignments(rightSideButtons) -> [{ key, code, button }]
 //
 // Pulled out of app.js (which still does the actual DOM/state wiring via
 // assignKeyboardKeys()) so this logic is pure and unit-testable — see
@@ -34,6 +35,23 @@
     ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';'],
     ['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/']
   ];
+  // KeyboardEvent.code equivalents of the row above, same indices. `code`
+  // identifies a key by its physical position on a US-ANSI-reference
+  // layout and is unaffected by Shift/Caps Lock or the OS's active
+  // keyboard-layout/language setting — unlike `event.key`, which reports
+  // the actual character produced (so e.g. Shift+';' is ':', a different
+  // string, and an AZERTY user's key in this same physical spot reports a
+  // completely different character). app.js's keydown/keyup handlers match
+  // on `code` for this reason; the `key` characters above are kept only for
+  // the on-screen key-cap labels (which intentionally still show the
+  // QWERTY character — see the event.code discussion in the chat/handoff
+  // for why that's a separate, harder problem than matching itself).
+  var PHYSICAL_KEYBOARD_CODES = [
+    ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'],
+    ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP'],
+    ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon'],
+    ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma', 'Period', 'Slash']
+  ];
   // The slice used when a row's button count matches the common case
   // (Rheinische's lower 4 rows: 6, 7, 8, 8). {start, length} are indices
   // into the corresponding PHYSICAL_KEYBOARD_ROWS entry above.
@@ -49,7 +67,9 @@
   // the outer edge of the row (lower index first) so the "standard" keys
   // (e.g. X-.) stay in place and only gain a neighbor (Z) rather than
   // shifting.
-  function selectKeysForRow(rowIndex, neededLength) {
+  // Shared by selectKeysForRow()/selectCodesForRow() so the `key` and `code`
+  // rows above (which are index-parallel) always pick the same slice.
+  function selectIndicesForRow(rowIndex, neededLength) {
     var physicalRow = PHYSICAL_KEYBOARD_ROWS[rowIndex];
     var anchor = DEFAULT_ROW_ANCHORS[rowIndex];
     var start = anchor.start;
@@ -59,13 +79,23 @@
       start = Math.max(0, anchor.start - extra);
       length = Math.min(neededLength, physicalRow.length - start);
     }
-    return physicalRow.slice(start, start + length);
+    return { start: start, length: length };
+  }
+
+  function selectKeysForRow(rowIndex, neededLength) {
+    var idx = selectIndicesForRow(rowIndex, neededLength);
+    return PHYSICAL_KEYBOARD_ROWS[rowIndex].slice(idx.start, idx.start + idx.length);
+  }
+
+  function selectCodesForRow(rowIndex, neededLength) {
+    var idx = selectIndicesForRow(rowIndex, neededLength);
+    return PHYSICAL_KEYBOARD_CODES[rowIndex].slice(idx.start, idx.start + idx.length);
   }
 
   // Pure: takes the treble ("right" side) buttons and returns the
-  // key -> button assignments for the lower 4 rows, without touching any
-  // button, Map, or other state. Caller (assignKeyboardKeys() in app.js)
-  // applies the result to keyboardKeyMap / button.keyCap.
+  // key/code -> button assignments for the lower 4 rows, without touching
+  // any button, Map, or other state. Caller (assignKeyboardKeys() in
+  // app.js) applies the result to keyboardCodeMap / button.keyCap.
   //
   // `rightSideButtons` items need `row` (1-indexed, top row = 1), `order`
   // (1-indexed position within the row, left-to-right), and whatever the
@@ -84,10 +114,11 @@
         .filter(function (b) { return b.row === rowNumber; })
         .sort(function (a, b) { return a.order - b.order; });
       var keys = selectKeysForRow(i, rowButtons.length);
+      var codes = selectCodesForRow(i, rowButtons.length);
       rowButtons.forEach(function (button, idx) {
         var key = keys[idx];
         if (!key) return;
-        assignments.push({ key: key, button: button });
+        assignments.push({ key: key, code: codes[idx], button: button });
       });
     }
     return assignments;
@@ -95,8 +126,10 @@
 
   window.keyboardMapping = {
     PHYSICAL_KEYBOARD_ROWS: PHYSICAL_KEYBOARD_ROWS,
+    PHYSICAL_KEYBOARD_CODES: PHYSICAL_KEYBOARD_CODES,
     DEFAULT_ROW_ANCHORS: DEFAULT_ROW_ANCHORS,
     selectKeysForRow: selectKeysForRow,
+    selectCodesForRow: selectCodesForRow,
     computeKeyAssignments: computeKeyAssignments
   };
 })();

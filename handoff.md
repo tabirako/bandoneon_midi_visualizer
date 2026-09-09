@@ -555,6 +555,30 @@ knowing before "simplifying" something back to the naive version.
       Unified under one named constant, `SIMULATED_VELOCITY = 100`, used by
       both, so they can't silently drift apart again.
 
+14. **Keyboard matching switched from `KeyboardEvent.key` to `.code`.**
+    `key` reports the *character* a key produces, which changes under Shift
+    (and, for letters, Caps Lock) — the handler already lowercased letters
+    to absorb that, but the top number row and the `; , . /` punctuation
+    keys have no such fix: Shift+`;` reports `:`, a different string
+    entirely, so holding Shift silently broke those specific buttons (they
+    just wouldn't sound). `code` reports physical key *position* instead
+    (e.g. `'KeyA'`, `'Semicolon'`, `'Digit1'`) and is immune to every
+    modifier, fixing this for good — and as a side effect makes the mapping
+    stay pinned to the same physical keys across non-QWERTY OS keyboard
+    layouts (AZERTY, Dvorak, etc.), the same way WASD-style game controls
+    are typically bound. `keyboard-mapping.js` now defines
+    `PHYSICAL_KEYBOARD_CODES` index-parallel to the existing
+    `PHYSICAL_KEYBOARD_ROWS` (characters), and `computeKeyAssignments()`
+    returns both `key` and `code` per assignment — `code` for matching
+    (`keyboardCodeMap`, `heldKeyNotes`, both renamed/rekeyed from the old
+    `keyboardKeyMap`), `key` still only for the on-screen key-cap label.
+    **Known limitation, not fixed here**: the key-cap badge still always
+    shows the QWERTY character, so a non-QWERTY player's physical keycap
+    won't visually match it (right finger position, different printed
+    letter). Properly relabeling it per actual layout would need
+    `navigator.keyboard.getLayoutMap()`, which is Chromium-only and
+    permission-gated — left as a known gap rather than solved.
+
 ## Testing
 
 `bandoneon-utils.test.js` and `keyboard-mapping.test.js` cover the project's
@@ -581,7 +605,7 @@ instruments, verified by cross-checking against reference charts — see
 
 `keyboard-mapping.js` was pulled out of `app.js` specifically to make this
 possible: it used to be inline, DOM-adjacent code (`assignKeyboardKeys()`
-mutated `app.js`'s own `keyboardKeyMap`/`mapping` state directly). Now
+mutated `app.js`'s own `keyboardCodeMap`/`mapping` state directly). Now
 `keyboard-mapping.js` exposes a pure `computeKeyAssignments(rightSideButtons)`
 that returns assignments without mutating anything, and `app.js`'s
 `assignKeyboardKeys()` just applies that result to its own state. Confirmed
