@@ -13,8 +13,9 @@ parsing; everything else is hand-written.
 
 | File | Role |
 |---|---|
-| `index.html` | Markup + controls. No logic beyond wiring element IDs. |
-| `app.js` | All application logic: rendering, audio synthesis, MIDI I/O. Keyboard-mapping *logic* now lives in `keyboard-mapping.js`; `app.js` just applies its result to its own state (`assignKeyboardKeys()`). |
+| `index.html` | Markup + controls, plus two small inline `<script>`s that must run before `app.js`/first paint: the pre-paint theme setter (see "Theme" below) and the old-browser compatibility probe (Decision Log #11). Otherwise no logic beyond wiring element IDs. |
+| `app.js` | All application logic: rendering, audio synthesis, MIDI I/O, i18n, theme. Keyboard-mapping *logic* now lives in `keyboard-mapping.js`; `app.js` just applies its result to its own state (`assignKeyboardKeys()`). |
+| `i18n.js` | `window.translations` (one dictionary per language code) and `window.languageNames` (native-script display names for the switcher). Pure data, no logic — `app.js`'s `t()`/`applyTranslations()` read it. See "Internationalization" below. |
 | `bandoneon-utils.js` | `window.bandoneonUtils` — `normalizeMapping()` and `findMatchingButtons()`. Small, shared, deliberately dependency-free (no DOM access) so it's easy to unit-test — see `bandoneon-utils.test.js`. |
 | `keyboard-mapping.js` | `window.keyboardMapping` — `selectKeysForRow()` and `computeKeyAssignments()`, the pure logic that turns a layout's `row`/`order` data into computer-keyboard key caps. Extracted out of `app.js` specifically so it's unit-testable (see `keyboard-mapping.test.js`) and so adding a new fingering system's row-length data doesn't require touching DOM-coupled code. |
 | `mappings.js` | `window.defaultMappings` — the actual button/note layout data for each supported system. This is the file most likely to be wrong in some small way; see "Data provenance" below before trusting any single note blindly. |
@@ -118,6 +119,15 @@ Three sliders (`#reedDetune`, `#reedBreath`, `#reedVibrato`) let the user
 hand-tune these live; switching the instrument dropdown snaps them to that
 preset's defaults.
 
+These three sliders only affect `startReedVoice()`'s signal chain — plain
+waveforms (sine/square/sawtooth/triangle) never read them at all (see
+`playTone()`). `updateReedControlsAvailability()` disables the sliders
+(native `disabled` attribute, plus a `.reed-disabled` class toggled on
+anything marked `.reed-only` in the markup, for label dimming) whenever a
+non-reed instrument is selected, and re-enables them when switching back.
+Not just cosmetic — it tells the user these controls are currently inert
+rather than implying they'd do something.
+
 ### Keyboard mapping (computer keys → treble buttons)
 
 Deliberately scoped to **the lower 4 rows of the treble side only** — the
@@ -170,6 +180,74 @@ reschedules note-on/note-off timers shifted by the offset. The progress bar
 (`#midiProgress`, `#midiTime`) is a native `<input type="range">` updated by
 a 100ms `setInterval`, paused while the user is actively dragging.
 
+### Internationalization (i18n)
+
+Plain client-side JS string-swap i18n — no build step, no per-language HTML
+files, matching the rest of the project's zero-tooling approach. Deliberately
+chosen over the more bot/SEO-friendly alternative of generating a static
+HTML file per language (real content per URL, crawlable with JS off);
+rejected here because this is an interactive tool with a link shared
+directly with people, not a content page where search indexing across
+languages matters. See Decision Log #12 for the full reasoning and the
+trade-off this accepts.
+
+- **`i18n.js`** holds `window.translations` (8 languages: `en`, `ja`,
+  `zh-Hans`, `zh-Hant`, `ko`, `es`, `fr`, `de` — each a flat key→string
+  dictionary) and `window.languageNames` (native-script labels for the
+  switcher `<select id="langSelect">`, populated by `app.js` from this
+  object's keys — adding a 9th language needs zero HTML changes, just a new
+  entry in both objects).
+- **Static markup**: elements carry `data-i18n="key"`; `app.js`'s
+  `applyTranslations()` walks `[data-i18n]` and sets `textContent` from
+  `t(key)`. The two legend lines contain `<u>` emphasis tags, so they use
+  `data-i18n-html` instead (sets `innerHTML`, not `textContent`) — safe here
+  since the markup is developer-authored translation strings, not user
+  input.
+- **Dynamic strings** (MIDI status messages, the Mode/Enable-MIDI button
+  text) go through `setI18nText(el, key)` instead of a plain `t(key)`
+  assignment — it stamps `data-i18n` onto the element as it sets the text,
+  so a mid-session language switch correctly re-renders whatever was last
+  shown (e.g. "Playing MIDI...") rather than only the page's original
+  load-time text.
+- **`document.documentElement.lang`** is set on every `applyTranslations()`
+  call. This matters for accessibility, not just cosmetics: a screen reader
+  picks pronunciation rules from `lang`, so a language switch that updated
+  visible text but left `lang="en"` stuck would mispronounce every word —
+  this was an explicit fix, not an incidental one (see Decision Log #12).
+- **Detection order**: saved `localStorage` choice → `navigator.language`
+  (with a region-based guess for Chinese script: `zh-TW`/`zh-HK`/`zh-MO` →
+  Traditional, else Simplified) → English fallback.
+- **Translation quality caveat**: all 8 dictionaries were written by the
+  assistant in this session, not reviewed by native speakers of any of the
+  target languages. Domain terms (waveform names, "musette," bandoneon vs.
+  accordion vs. bandoneón vs. Bandoneon spelling per language) were
+  researched, but treat these as "plausible machine-assisted translation,"
+  not verified the way `mappings.js`'s note data was — worth a native-speaker
+  pass before treating any of them as authoritative, especially if a friend
+  who speaks one of these languages flags something.
+
+### Theme (Browser / Day / Night)
+
+`#themeSelect` offers three choices, stored under `localStorage` key
+`bandoneon-theme-v1`: `"browser"` (default — leaves `data-theme` unset on
+`<html>`, so `styles.css`'s `prefers-color-scheme` media query decides),
+`"light"`, or `"dark"` (both set `data-theme` explicitly, overriding system
+preference). `app.js`'s `applyTheme()`/`setTheme()` do the runtime work;
+`detectInitialTheme()` reads the saved choice on load.
+
+The one non-obvious piece: **a duplicate, minimal theme-setting script runs
+inline in `index.html`'s `<head>`, before `app.js` loads.** Without it, an
+explicit Day/Night choice would flash the wrong theme for a moment on every
+reload (page paints with the default/system theme first, then `app.js`
+loads and corrects it). The inline script re-reads the same
+`bandoneon-theme-v1` localStorage key and sets `data-theme` before first
+paint; `app.js`'s own `detectInitialTheme()`/`applyTheme()` then run too
+(harmless, idempotent) and additionally sync `#themeSelect`'s displayed
+value. **The localStorage key is duplicated as a literal string in both
+places** — if it's ever renamed in one, it must be renamed in the other, or
+the pre-paint script silently stops working while `app.js` still functions
+normally (no error, just the flash-of-wrong-theme bug coming back).
+
 ## Data provenance (why the note data should be trusted, and how much)
 
 This matters because a wrong note is a silent, hard-to-notice bug in a music
@@ -183,6 +261,76 @@ transcription.
   chart images (`bass.jpg` / `treble.jpg`, "Omar Caccia" branded) by
   matching MIDI-derived note names against the printed labels — full
   agreement.
+- **`142-rheinische`'s entire bass/left side (all 5 rows, ids 1–33) had its
+  `x` values rescaled by exactly ×0.95, at the user's request, so buttons
+  shared with `144-einheits` land at the same visual x position when
+  switching layouts mid-session.** Discovered incrementally: the user first
+  flagged bass row 3 ("middle row": 6 buttons in 142-rheinische vs. 7 in
+  144-einheits) and row 4 ("2nd-lowest row": 7 vs. 8) as visually
+  mismatched — in both cases 144-einheits' extra button is appended to the
+  *right* end of the row (144's id 19 past 142's id 18; 144's id 27 past
+  142's id 25), so those two rows share every button except that one
+  trailing extra. Since the two systems' coordinates come from independently
+  extracted source diagrams (142 from an SVG, 144 from a PDF — see the
+  provenance entries here), there was no inherent guarantee the shared
+  buttons lined up in x at all. A least-squares fit of 142's original x
+  against 144's x, done independently per row over its shared buttons,
+  converged to the *same* factor for both flagged rows — exactly `0.95`,
+  ~zero shift — with residuals at essentially floating-point noise
+  (<0.00001). That immediately raised the question of whether the other 3
+  bass rows (1, 2, 5 — which have *matching* button counts in both systems,
+  so no "extra button" to work around) were coincidentally fine or
+  suffering the same unaddressed mismatch; checked with the identical
+  least-squares approach, and all three fit the *exact same* `0.95` factor
+  too. Conclusion: this isn't a rows-3/4-specific quirk, the entire
+  142-rheinische bass diagram is uniformly ~5% wider in x than
+  144-einheits' — so the same rescale was applied across all 5 rows for
+  consistency, not just the two originally flagged.
+  **Scope, explicitly**: only `x` was touched, not `y`, not `note`s, not
+  `label`s; only the bass/left side (see the next entry for treble).
+  **If `142-rheinische` bass data is ever re-extracted from the
+  source SVG**, this ×0.95 adjustment across all 5 rows will need to be
+  reapplied by hand (or re-derived the same way, against 144-einheits'
+  current values) — it lives only in `mappings.js`'s committed numbers, not
+  in `transform.py` or `data142.csv`.
+- **`142-rheinische`'s treble/right side needed a different fix from bass —
+  two single-button corrections, not a per-row rescale — because it turned
+  out to already be pixel-identical to `144-einheits` almost everywhere.**
+  Treble doesn't have bass's clean 1:1 row correspondence on its face:
+  Rheinische has 6 treble rows (counts 4/5/6/7/8/8), Einheits has 5 (counts
+  6/7/7/8/9), so which Rheinische row corresponds to which Einheits row
+  isn't obvious from counts alone (see "The domain" above — button *count*
+  doesn't imply note *arrangement*). The user supplied the missing piece:
+  144's id 56 corresponds to 142's button labeled "8/0", 144's id 65
+  corresponds to 142's "7/0", and 144's id 64 is an extra button added to
+  the *left* (not right, unlike every bass case) of that "7/0" position.
+  That pins down the correspondence as **142 row `k` ↔ 144 row `k-1`, for
+  k=2..6** — i.e. aligned from the bottom, the same principle
+  `keyboard-mapping.js` already uses for the computer-keyboard row
+  assignment (`maxRow - N + 1`) — leaving 142's row 1 (topmost, 4 buttons,
+  ids 34–37) with **no 144 counterpart at all**, since 144 only has 5 rows
+  total and rows 2–6 of 142 already consume all of them. Checking that
+  hypothesis with the same least-squares fit used for bass turned up
+  something unexpected: rows 2, 3, and 4 fit **perfectly** (residual ~0,
+  the "difference" was 10th-decimal-place float noise, not a real
+  mismatch) — meaning most of 142's treble side was *already* exactly
+  aligned with 144's, unlike bass, which needed a uniform rescale
+  everywhere. Only two buttons were real outliers, both the leftmost
+  (`order: 1`) button of their row and both a slash-labeled combination
+  button rather than a plain numbered one: 142's id 56 (`"8/0"`, row 5) was
+  off from 144's id 56 by 0.0093, and 142's id 64 (`"7/0"`, row 6) was off
+  from 144's id 65 (the position after 144's left-side extra) by 0.023 —
+  both corrected to match 144's value exactly, matching the "adjust 142 to
+  follow 144" direction already established for bass, since it's a single
+  value copy either way and keeps one system as the consistent reference
+  point rather than splitting corrections across both. Row 1 (142's
+  topmost, no counterpart) was left as originally extracted — there's
+  nothing in 144 to align it against. **Takeaway for future data work**:
+  don't assume a whole-row rescale is always the right shape of fix just
+  because it was for bass — check the actual residuals per row first, since
+  here it would have been the wrong tool (it would have *moved* 6 out of 8
+  buttons per row away from an already-correct position, to fix the 1 that
+  was actually wrong).
 - **`144-einheits`**: built this session from scratch. The user manually
   extracted `data144.csv` (id, x, y — same row-major-id convention as
   `data142.csv`) from `layout-bandoneon-144-einheits.pdf`. Note *labels*
@@ -364,6 +512,49 @@ knowing before "simplifying" something back to the naive version.
       user hasn't asked for — the banners just make the existing floor
       *visible* instead of silent.
 
+12. **i18n implemented as client-side JS string-swap, not per-language
+    static HTML files — a deliberate trade-off, not the default choice.**
+    The static-file approach (real, pre-rendered HTML per language, crawlable
+    by any bot including with JS off, correct `lang` per file) is more
+    robust for content/SEO purposes, but needs a build step to generate the
+    files from a template — a real cost for a project that's otherwise
+    zero-tooling. Client-side swap was chosen instead because this app's
+    audience is people the link gets shared with directly (the whole reason
+    languages were added — friends who speak them), not search engines
+    discovering it in their language; bot-crawlability across languages
+    doesn't matter here the way it might for a content site. Accepted
+    trade-off: a crawler that doesn't execute JS only ever sees the English
+    default. Two things were fixed specifically because "just swap the
+    text" alone (the user's own prior experience: their personal site did
+    exactly this and it caused problems) breaks accessibility if left there:
+    `document.documentElement.lang` is updated on every language switch
+    (screen readers pick pronunciation rules from it — leaving it stuck on
+    `en` while showing German text would mispronounce everything), and
+    dynamic status strings re-stamp their own `data-i18n` key via
+    `setI18nText()` so a language switch mid-session re-renders the actual
+    last-shown status, not just the page's original load-time text.
+
+13. **Button highlight intensity fixed to track each note's own velocity,
+    not the loudest note anyone happened to be holding at the same time.**
+    `updateButtonHighlights()` used to compute one `maxVel` across every
+    currently-active note and paint that same brightness onto every lit
+    button — so a softly-played note held alongside a hard-hit one would
+    visually read as equally loud, which is exactly backwards for a feature
+    meant to show velocity. Fixed by tracking velocity per-button
+    (`buttonVelocities`, a `Map` from button id to the velocity of the note
+    lighting it) instead of one shared max. Same pass also fixed the
+    alpha formula: `maxVel / 160` capped at `0.6` meant the cap was already
+    reached at velocity 96, so the top quarter of the MIDI velocity range
+    (96–127) was visually indistinguishable even for a single note in
+    isolation; changed to `vel / 127 * 0.6` so the full 0–127 range maps
+    onto the full 0–0.6 alpha range.
+    - **Related, smaller fix in the same investigation**: mouse clicks and
+      computer-keyboard presses used to simulate different velocities (127
+      vs. 100) for no real reason — neither input method carries an actual
+      velocity signal, so there was nothing to justify them disagreeing.
+      Unified under one named constant, `SIMULATED_VELOCITY = 100`, used by
+      both, so they can't silently drift apart again.
+
 ## Testing
 
 `bandoneon-utils.test.js` and `keyboard-mapping.test.js` cover the project's
@@ -410,6 +601,12 @@ refactor.
 
 ## Open items / natural next steps
 
+- **`i18n.js`'s 8 translation dictionaries need a native-speaker review.**
+  See the "Internationalization" section's caveat above — they were written
+  by the assistant, not verified by anyone fluent in the target languages.
+  The user's own stated reason for adding these specific 8 languages was
+  friends who speak them; if/when one of those friends actually uses the
+  page, that's the natural point to collect corrections.
 - **`144-einheits` bass side is real data now** (this session finished it),
   but per "Data provenance" above, treat it as "cross-checked against
   documents," not "verified against a real instrument." The user
