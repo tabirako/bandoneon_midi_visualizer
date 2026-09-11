@@ -77,6 +77,15 @@ the same buttons from your computer keyboard.
 - **Very dense MIDI files** with many simultaneous notes may not highlight every
   button perfectly.
 
+### Future plans
+
+The underlying approach here &mdash; map buttons to notes, highlight them from
+MIDI input &mdash; isn't specific to the bandoneon. I'd like to extend it to
+other squeeze-box instruments, most of which (like the Anglo and Chemnitzer
+concertinas) are likewise bisonoric, playing a different note on the push than
+on the pull; a few, like the English concertina, are unisonoric instead. More
+layouts may be added as time allows.
+
 ### Running it locally
 
 It's a static site &mdash; plain HTML, CSS, and JavaScript with no build step.
