@@ -5,7 +5,7 @@ notes. Play a connected MIDI keyboard, load a MIDI file, click the on-screen
 buttons, or use your computer keyboard, and the matching buttons light up on both
 sides of a 142- or 144-tone bandoneon in real time.
 
-**Live:** https://kei-c.com/bandoneon_midi_visualizer/
+**Live:** [https://kei-c.com/bandoneon_midi_visualizer/](https://bandoneon.kei-c.com/)
 
 **Languages:** [English](#english) &middot; [日本語](#日本語) &middot; [中文（繁體）](#中文繁體)
 
