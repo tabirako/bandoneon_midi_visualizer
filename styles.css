@@ -210,6 +210,19 @@ button {
   cursor: pointer;
 }
 
+/* updateBellowsButtonText() (app.js) prefixes this button's text with a
+   literal "V " or "⊓ " depending on bellows state. "⊓" (U+2293) isn't in
+   the font stack above, so the browser silently falls back to a different
+   font just for that glyph -- and that fallback font's line-height metrics
+   differ slightly from "V"'s, so the button's own rendered height would
+   shift by a px or two depending on which one is showing, reflowing
+   everything below it in this wrapping flex layout (the whole keyboard
+   included). An explicit line-height makes the button's box height
+   independent of which font ends up rendering the glyph. */
+#toggleOpenClose {
+  line-height: 1.4;
+}
+
 button:active {
   transform: translateY(1px);
 }
