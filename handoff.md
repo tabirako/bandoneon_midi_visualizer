@@ -655,3 +655,47 @@ refactor.
   deliberate scope choice given this project's size and deployment model,
   not an oversight to "finish" — but worth re-examining if either untested
   area keeps growing in complexity.
+- **Velocity-layered reed recordings, to make loud notes brighter, not just
+  louder.** `startReedVoice()`'s `velocity` argument currently only scales
+  gain; real reed instruments also gain upper-harmonic energy under more
+  bellows pressure, which the current PeriodicWave resynthesis (see
+  `accordion_analysis/`) doesn't capture — every velocity uses the same
+  harmonic table. Plan: record the `mid` register only, at soft/medium/loud,
+  for 2-3 notes spanning the range (reuse `F3`/`C5`/`A6` so they line up
+  with the existing 21 recordings) — NOT the full low/mid/hi x 7-note x
+  3-dynamic matrix, which would be 63 files for little extra benefit. Keep
+  each take's dynamic level flat (no crescendo within a take). Extend
+  `analyze.py` to measure the per-harmonic dB delta between soft and loud
+  (a "brightness curve"), then apply that curve procedurally to the
+  existing 21 spectra rather than needing new recordings for every
+  note/register combination. In `app.js`, quantize `velocity` into a few
+  tiers (mirroring the existing 7-note pitch quantization in
+  `getReedPeriodicWave()`) so this doesn't blow up the PeriodicWave cache.
+- **Real bandoneon recordings** (the user owns one — rare, professionally
+  tuned) **to replace the guessed `bandoneon` preset in `REED_PRESETS`**
+  (`detune: 0, breath: 5, filterFreq: 1500` — all hand-picked, unlike
+  `accordion`'s now-measured values). Arguably higher value than the
+  accordion pass was, since this app's actual subject is the bandoneon.
+  Two real-instrument wrinkles the accordion recordings didn't have:
+  - Unlike the accordion, this bandoneon can't switch stops — it always
+    sounds a fixed reed combination per note: "ML" (a Low + a Mid reed
+    together, an octave apart) in the low range, "MM" (two Mid reeds
+    together, near-unison) higher up, and the crossover point isn't
+    standardized across instruments. This isn't a blocker for analysis:
+    `analyze.py`'s existing register-ratio detection (the octave-relative
+    peak search that told low/mid/hi apart for the accordion) can tell ML
+    from MM from the spectrum itself — an octave-split pair vs. a
+    same-octave beating pair — without needing the crossover note in
+    advance. It's also a *cleaner* case than the accordion for the
+    existing reed-beat/detune measurement: for the accordion, the small
+    measured beat was ambiguous (probably bellows-pressure wobble, since
+    low/mid/hi were separately-recorded single reeds) — here, two reeds are
+    genuinely sounding together, so a measured beat is unambiguous.
+  - Bandoneon push and pull are different notes (unlike the accordion
+    samples), so a proper set effectively doubles per "note" recorded.
+  Scope recommendation: 5-7 representative notes x both bellows
+  directions (~10-14 files), not full-range coverage — same reasoning as
+  why the accordion pass used 7 notes instead of all of them. Drop
+  recordings in `accordion_analysis/samples/` (or a separate subfolder) and
+  the existing pipeline (`analyze.py` -> `generate_periodic_waves.py` ->
+  `reed-harmonics.js`) extends with no changes needed beyond what's above.
