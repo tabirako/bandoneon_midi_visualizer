@@ -68,3 +68,6 @@
 # HANDOFF.md
 
 # End of https://www.toptal.com/developers/gitignore/api/images
+
+# Accordion sample analysis (scratch research, not shipped app code)
+/accordion_analysis/

@@ -268,11 +268,18 @@ function assignKeyboardKeys() {
 // is the full wet trio (M-, M, M+ all on) with no bass reed, for the lush
 // chorus/beating sound; Harmonica is the same dry-plus-sharp mid pair as
 // accordion but without the bass reed.
+// vibrato: peak cents-deviation of the LFO on the M-oscillators' pitch.
+// accordion's value (45) is measured (accordion_analysis/results.json --
+// real sustained-note vibrato peaked ~26-71c, occasionally more); the other
+// three presets aren't recordings we have, so they keep their original
+// *proportion relative to accordion* (0.75x/1.5x/1.25x) rather than being
+// re-guessed from nothing. #reedVibrato's slider range was widened to match
+// (was 0-15, which couldn't even reach the low end of the measured range).
 const REED_PRESETS = {
-  bandoneon: { voiceMflat: 0, voiceM: 1, voiceMsharp: 0, detune: 0, breath: 5,  vibrato: 3, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 },
-  accordion: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 7, breath: 8,  vibrato: 4, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
-  harmonica: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 3, breath: 18, vibrato: 6, filterFreq: 3200, filterQ: 3.5, harmMix: 0 },
-  musette:   { voiceMflat: 1, voiceM: 1, voiceMsharp: 1, detune: 9, breath: 10, vibrato: 5, filterFreq: 2600, filterQ: 1.4, harmMix: 0 }
+  bandoneon: { voiceMflat: 0, voiceM: 1, voiceMsharp: 0, detune: 0, breath: 5,  vibrato: 34, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 },
+  accordion: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 7, breath: 8,  vibrato: 45, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
+  harmonica: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 3, breath: 18, vibrato: 68, filterFreq: 3200, filterQ: 3.5, harmMix: 0 },
+  musette:   { voiceMflat: 1, voiceM: 1, voiceMsharp: 1, detune: 9, breath: 10, vibrato: 56, filterFreq: 2600, filterQ: 1.4, harmMix: 0 }
 };
 
 function isReedInstrument(name) {
@@ -695,6 +702,48 @@ function getReedNoiseBuffer(ctx) {
   return buffer;
 }
 
+// ---- Measured-timbre PeriodicWaves (see accordion_analysis/) ------------
+// reed-harmonics.js (generated from real accordion recordings' Fourier
+// analysis) supplies linear harmonic-1-10 amplitudes per reed rank (low =
+// the M-voices' octave-down partner, mid = the M-voices themselves) at 7
+// sampled keys spanning the range. Every played note snaps to its nearest
+// sampled key's table -- the timbre visibly/audibly changes with register
+// (see accordion_analysis/plot_C4_registers.png) so one global table would
+// be wrong everywhere except the note it was measured on, but true
+// per-note morphing between the 7 samples isn't worth the complexity here.
+// Only harmonics 1-10 are present (that's what was measured), which rolls
+// off a bit earlier than a true sawtooth's infinite series -- inaudible
+// under the lowpass `filter` already in the signal chain for every preset.
+// No phase was measured (only magnitude spectra), so all harmonics are
+// placed in the imaginary (sine-phase) component; this doesn't change how
+// a sustained tone is perceived, only its exact onset waveshape.
+const reedWaveCache = new Map(); // `${register}:${sampleNote}` -> PeriodicWave
+
+function nearestSampleNote(note, sampleNotes) {
+  return sampleNotes.reduce((best, n) =>
+    Math.abs(n - note) < Math.abs(best - note) ? n : best);
+}
+
+// Returns a cached PeriodicWave for `register` (see reed-harmonics.js) at
+// the sampled key nearest `note`, or null if the data file didn't load --
+// callers fall back to a plain oscillator type in that case.
+function getReedPeriodicWave(ctx, register, note) {
+  const table = window.reedHarmonics;
+  if (!table || !table[register] || !table.sampleNotes) return null;
+  const sampleNote = nearestSampleNote(note, table.sampleNotes);
+  const cacheKey = register + ':' + sampleNote;
+  if (reedWaveCache.has(cacheKey)) return reedWaveCache.get(cacheKey);
+  const amps = table[register][sampleNote];
+  if (!amps) return null;
+  // index 0 = DC, which PeriodicWave requires present and silent.
+  const real = new Float32Array(amps.length + 1);
+  const imag = new Float32Array(amps.length + 1);
+  amps.forEach((a, i) => { imag[i + 1] = a; });
+  const wave = ctx.createPeriodicWave(real, imag);
+  reedWaveCache.set(cacheKey, wave);
+  return wave;
+}
+
 // Builds a free-reed voice out of up to 4 reed oscillators per the preset's
 // voiceMflat/voiceM/voiceMsharp/harmMix switches (see REED_PRESETS above:
 // M-/M/M+ at the note's own octave, L an octave below), a low-pass filter
@@ -728,7 +777,11 @@ function startReedVoice(note, velocity, instrument) {
   const oscMflat = ctx.createOscillator();
   const oscM = ctx.createOscillator();
   const oscMsharp = ctx.createOscillator();
-  [oscMflat, oscM, oscMsharp].forEach((o) => { o.type = 'sawtooth'; o.frequency.value = freq; });
+  const midWave = getReedPeriodicWave(ctx, 'mid', note);
+  [oscMflat, oscM, oscMsharp].forEach((o) => {
+    if (midWave) o.setPeriodicWave(midWave); else o.type = 'sawtooth';
+    o.frequency.value = freq;
+  });
   oscMflat.detune.value = -detuneCents;
   oscMsharp.detune.value = detuneCents;
 
@@ -742,7 +795,8 @@ function startReedVoice(note, velocity, instrument) {
   // L: one octave down. harmMix doubles as both L's on/off switch and its
   // blend level (0 = no bass reed at all — harmonica and musette).
   const oscSub = ctx.createOscillator();
-  oscSub.type = 'triangle';
+  const lowWave = getReedPeriodicWave(ctx, 'low', note);
+  if (lowWave) oscSub.setPeriodicWave(lowWave); else oscSub.type = 'triangle';
   oscSub.frequency.value = freq / 2;
   const subGain = ctx.createGain();
   subGain.gain.value = preset.harmMix * 0.3;
