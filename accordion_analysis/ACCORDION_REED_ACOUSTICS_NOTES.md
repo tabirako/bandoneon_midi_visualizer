@@ -30,7 +30,7 @@ spectrum" will confidently pick the wrong octave. Fixes that worked:
   chosen "fundamental," the true fundamental is almost certainly the lower
   one and the algorithm latched onto a strong 2nd harmonic instead.
 
-## 2. Registers/stops can be exact octave multiples of the pressed key
+## 2. Registers/stops are octave multiples of the pressed key — almost universally
 
 On this instrument, the three switchable reed ranks measured as *exactly*
 0.5x / 1x / 2x the pressed key's frequency across the whole tested range
@@ -38,10 +38,37 @@ On this instrument, the three switchable reed ranks measured as *exactly*
 16'/8'/4' organ-stop-style design. This was independently confirmed by two
 different pitch-detection methods agreeing on 19/21 test recordings.
 
-Don't assume this generalizes to every accordion (registration schemes
-vary), but it's a real, testable design some instruments use, and the
-octave-multiple structure is easy to verify: search for spectral peaks near
-key_freq × {0.5, 1, 2, 4} and see which one is real.
+This isn't just this instrument's quirk — almost all accordions use
+octave-multiple ranks (0.5x/1x/2x, occasionally 4x for a second piccolo
+rank). Non-octave ratios (e.g. 1.5x, a fifth above) have existed but never
+caught on — and the real reason is *beating*, not generic dissonance. A
+fixed non-octave interval hard-wired onto every key will, for some real
+chord voicings, land only a semitone or so away from a *different* note
+actually being played, and two pitches that close together beat against
+each other harshly (the same underlying phenomenon as the "wet" reed
+shimmer measured throughout this document — just at a spacing of dozens of
+Hz instead of a few, which reads as grinding interference rather than a
+pleasant chorus). Concretely: wire a fixed fifth-above rank to a C4 key and
+it sounds ~G5 — fine over a C major chord. Play that same C4 as the root of
+a C **minor** chord instead (C, Eb, G) and voice the Eb up near E5, and now
+the rank's fixed output and an intentionally-played chord tone are a
+semitone apart, beating audibly. An octave multiple can't do this: it
+always lands on the exact same pitch class as whatever's being played, so
+it can only reinforce a note, never nearly-collide with a different one.
+
+This particular failure mode hits organs and accordions especially hard,
+more than a plain single-voice instrument: both are built around stacking
+*multiple octaves of the same note* on every single press (that's exactly
+what the L/M/H registers analyzed in this document already do). Every
+extra octave copy a press already produces is another chance for a
+non-octave rank's output to land near some *other* chord tone's own octave
+copies. A fixed non-octave rank isn't colliding with one melody note here
+and there — it's colliding with an entire family of octave-doubled copies
+of every other note in the chord, which is a much bigger, much harder to
+avoid target.
+
+The octave-multiple structure is easy to verify in a recording: search for
+spectral peaks near key_freq × {0.5, 1, 2, 4} and see which one is real.
 
 ## 3. "Wet"/musette tuning is NOT a constant cents offset across the keyboard
 

@@ -69,5 +69,15 @@
 
 # End of https://www.toptal.com/developers/gitignore/api/images
 
-# Accordion sample analysis (scratch research, not shipped app code)
-/accordion_analysis/
+# Accordion sample analysis (scratch research, not shipped app code) --
+# ignore everything in the folder EXCEPT a small "lessons learned" bundle
+# worth keeping in git history (general reusable findings, not tied to
+# this app -- see the .md for why). Note: /accordion_analysis/* (not a
+# bare /accordion_analysis/) is required for the negations below to work --
+# git won't apply per-file exceptions inside a directory that's ignored
+# wholesale.
+/accordion_analysis/*
+!/accordion_analysis/ACCORDION_REED_ACOUSTICS_NOTES.md
+!/accordion_analysis/plot_musette_ideal_vs_real.png
+!/accordion_analysis/plot_lowF3_weak_fundamental.png
+!/accordion_analysis/plot_C4_registers.png
