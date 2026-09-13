@@ -655,47 +655,73 @@ refactor.
   deliberate scope choice given this project's size and deployment model,
   not an oversight to "finish" — but worth re-examining if either untested
   area keeps growing in complexity.
-- **Velocity-layered reed recordings, to make loud notes brighter, not just
-  louder.** `startReedVoice()`'s `velocity` argument currently only scales
-  gain; real reed instruments also gain upper-harmonic energy under more
-  bellows pressure, which the current PeriodicWave resynthesis (see
-  `accordion_analysis/`) doesn't capture — every velocity uses the same
-  harmonic table. Plan: record the `mid` register only, at soft/medium/loud,
-  for 2-3 notes spanning the range (reuse `F3`/`C5`/`A6` so they line up
-  with the existing 21 recordings) — NOT the full low/mid/hi x 7-note x
-  3-dynamic matrix, which would be 63 files for little extra benefit. Keep
-  each take's dynamic level flat (no crescendo within a take). Extend
-  `analyze.py` to measure the per-harmonic dB delta between soft and loud
-  (a "brightness curve"), then apply that curve procedurally to the
-  existing 21 spectra rather than needing new recordings for every
-  note/register combination. In `app.js`, quantize `velocity` into a few
-  tiers (mirroring the existing 7-note pitch quantization in
-  `getReedPeriodicWave()`) so this doesn't blow up the PeriodicWave cache.
-- **Real bandoneon recordings** (the user owns one — rare, professionally
-  tuned) **to replace the guessed `bandoneon` preset in `REED_PRESETS`**
-  (`detune: 0, breath: 5, filterFreq: 1500` — all hand-picked, unlike
-  `accordion`'s now-measured values). Arguably higher value than the
-  accordion pass was, since this app's actual subject is the bandoneon.
-  Two real-instrument wrinkles the accordion recordings didn't have:
-  - Unlike the accordion, this bandoneon can't switch stops — it always
-    sounds a fixed reed combination per note: "ML" (a Low + a Mid reed
-    together, an octave apart) in the low range, "MM" (two Mid reeds
-    together, near-unison) higher up, and the crossover point isn't
-    standardized across instruments. This isn't a blocker for analysis:
-    `analyze.py`'s existing register-ratio detection (the octave-relative
-    peak search that told low/mid/hi apart for the accordion) can tell ML
-    from MM from the spectrum itself — an octave-split pair vs. a
-    same-octave beating pair — without needing the crossover note in
-    advance. It's also a *cleaner* case than the accordion for the
-    existing reed-beat/detune measurement: for the accordion, the small
-    measured beat was ambiguous (probably bellows-pressure wobble, since
-    low/mid/hi were separately-recorded single reeds) — here, two reeds are
-    genuinely sounding together, so a measured beat is unambiguous.
-  - Bandoneon push and pull are different notes (unlike the accordion
-    samples), so a proper set effectively doubles per "note" recorded.
-  Scope recommendation: 5-7 representative notes x both bellows
-  directions (~10-14 files), not full-range coverage — same reasoning as
-  why the accordion pass used 7 notes instead of all of them. Drop
-  recordings in `accordion_analysis/samples/` (or a separate subfolder) and
-  the existing pipeline (`analyze.py` -> `generate_periodic_waves.py` ->
-  `reed-harmonics.js`) extends with no changes needed beyond what's above.
+- **Instrument provenance** (came up while discussing the recordings below,
+  worth keeping on record since neither instrument's origin is derivable
+  from the audio itself): the accordion is an Italian **Serenellini**. The
+  user's own estimate is that its "wet" reed pair (M vs M-/M+) is tuned
+  **~11-12 cents** per side — `accordion_analysis/reinterpret_registers.py`'s
+  higher-register measurements (G3, C5: 5-8c) landed closer to this than
+  the lower-register ones (C3, G2: 51-64c) did, so 11-12c is the figure to
+  treat as this accordion's actual spec, not an average of everything
+  measured (see the next item for why the low-register numbers are less
+  trustworthy). The bandoneon is second-hand, marked **"Arno Arnold"** — per
+  the user, Arno Arnold was a relative of the historically significant
+  Alfred Arnold (legendary in tango circles), and some early Arno Arnold
+  instruments are known to have used old Alfred Arnold stock parts. Whether
+  *this* instrument does is unverified — a Taiwan repair shop the user
+  consulted couldn't confirm it either (specialists in this instrument are
+  scarce outside Europe/South America), so treat it as unresolved rather
+  than pursue further unless new information surfaces.
+- **Velocity-layered reed recordings** — first pass recorded and analyzed
+  (`accordion_analysis/analyze_loud_weak.py`, using `mid *(loud|weak).wav`
+  in `samples/accordion/`), but inconclusive: the user's audio interface
+  gain knob slipped between takes, decoupling `rms_db` from actual playing
+  force (a pure gain change doesn't corrupt the harmonic-*balance*
+  measurement itself — it's normalized to each file's own fundamental, so
+  gain cancels out — but it does mean loudness can no longer be used as the
+  x-axis for a clean brightness curve). One signal came through anyway: the
+  2nd harmonic brightened under "loud" in 6 of 7 notes (avg +5.9dB), which
+  is plausibly real. Nothing from this is wired into `app.js` yet. If
+  redone, keep the gain knob fixed across soft/normal/loud takes of the
+  same note so `rms_db` is trustworthy again.
+- **Real bandoneon recordings** — done: 25 notes across both bellows
+  directions and both sides, in `samples/bandoneon/{open,close}/{left,right}/`.
+  Analyzed by `analyze_bandoneon.py` (harmonics, pitch, reed-beat, attack)
+  and exported by `generate_bandoneon_waves.py` into `bandoneon-harmonics.js`
+  (same linear-harmonic-table format as `reed-harmonics.js`, keyed by
+  bellows/side/note instead of register/MIDI-key since a bandoneon button is
+  one fixed pitch, not a switchable stop) — **generated but not yet wired
+  into `app.js`**; that's the natural next step whenever a real bandoneon
+  voice is wanted. Findings (full detail in `bandoneon_results.json`):
+  - **Tuning**: 24 of 25 notes measured 5-22 cents sharp of standard A440;
+    one (`C2`) measured 11.4c flat. Reads like this instrument was built to
+    a reference pitch other than 440Hz rather than being randomly out of
+    tune, but that's a guess pending someone who knows the instrument.
+  - **Reed-beat**: remarkably consistent, ~0.8-1.4Hz across nearly the
+    whole range, both sides, both bellows directions (one outlier at
+    6.25Hz, flagged low-confidence off a short note) — a cleaner, more
+    consistent result than the accordion's own wet-stop measurement below.
+  - **The ML/MM-octave assumption in the previous version of this entry was
+    wrong.** It assumed "ML" meant a Low reed sounding an *octave* below a
+    Mid reed, like the accordion's bass register. Checking every note for
+    energy at exactly half its fundamental (the smoking gun an octave-down
+    reed would leave, since a reed has no partial below its own
+    fundamental) found nothing anywhere — all -42 to -74dB, i.e. absent.
+    That points to "L" and "M" naming different reed *plates/materials*
+    paired at the *same* pitch (parallel to how "MM" pairs two of the same
+    type) rather than different octaves — **unconfirmed, needs the user
+    (or someone who knows this instrument) to verify**, since it changes
+    how any future bandoneon voice should be built.
+- **Wet-reed ("stop") accordion recordings** — first pass
+  (`samples/accordion/registers/{L&M,L&M&M+,M&M+,M-&M&M+}.wav`) recorded as
+  short passages rather than held notes, so `analyze_registers.py` had to
+  auto-segment them (error-prone) and most segments came out under 1.5
+  seconds — too short to resolve a sub-few-Hz beat precisely. Also
+  discovered along the way: `L&M` isn't a beating pair at all (L and M are
+  an octave apart; only pairs containing both M and M+/M- actually beat),
+  and the beat-to-cents conversion needs the *full* measured beat (not
+  half) when one reed (M) is the stationary dry reference — see
+  `reinterpret_registers.py`'s docstring for the derivation. Redo agreed
+  with the user: **one note per file** (not a passage), held **5-8
+  seconds**, **3-4 notes** across the range is enough. Once that lands, both
+  scripts above are ready to reprocess it as-is.
