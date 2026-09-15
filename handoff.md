@@ -116,6 +116,9 @@ Real free-reed instruments name their reed ranks by register:
 - `M-` — the note's own octave, detuned flat (tremolo/musette partner)
 - `M` — the note's own octave, in tune (the "dry" reference reed)
 - `M+` — the note's own octave, detuned sharp (tremolo/musette partner)
+- `H` — one octave above the note (the accordion's "piccolo" reed). Listed
+  for completeness only: `startReedVoice()` has no oscillator for it (see
+  the 4 slots below), so no preset currently sounds an `H` rank
 
 `startReedVoice()` always builds all 4 oscillator slots (`oscMflat`, `oscM`,
 `oscMsharp`, `oscSub` for `L`) — matching the rest of this codebase's style
