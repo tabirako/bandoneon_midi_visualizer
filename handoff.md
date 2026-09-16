@@ -725,3 +725,39 @@ refactor.
   with the user: **one note per file** (not a passage), held **5-8
   seconds**, **3-4 notes** across the range is enough. Once that lands, both
   scripts above are ready to reprocess it as-is.
+- **This accordion's actual stop names, mapped to reed combos** (from the
+  user, not derivable from the audio) — useful for tying the measured
+  `registers/*.wav` files to real-world stop labels, and for spotting which
+  combos this instrument doesn't even wire up:
+  - **VIOLIN = M&M+** — the 2-reed wet voice, matches the `M&M+ *.wav`
+    files used for the `accordion` preset's `detune: 7→16` fix. The
+    `accordion` preset's voice flags (`voiceMflat:0, voiceM:1,
+    voiceMsharp:1`) are really modeling VIOLIN specifically, not some
+    generic "accordion" average.
+  - **MUSETTE = M-&M&M+** — the 3-reed wet voice, matches the
+    `M-&M&M+ *.wav` files (the asymmetric 3.13/4.84Hz beat data) and the
+    `musette` preset's flags (`voiceMflat:1, voiceM:1, voiceMsharp:1`).
+  - **No M-&M+ stop exists on this instrument** — plausibly because, without
+    the dry M reed, that combo has no stationary reference and is just two
+    detuned reeds beating symmetrically against each other with no clean
+    unison anchor; consistent with the beating-physics reasoning already in
+    `ACCORDION_REED_ACOUSTICS_NOTES.md` §2.
+  - **SAX = L&M-&M+&H** — a 4-reed combo, uncommon on most accordions, that
+    spans 3 octaves and includes *both* wet mid reeds but skips the dry M
+    entirely, so there's no pure unison in it at all. Not represented by any
+    current preset; if a SAX preset is ever wanted, the voice flags are
+    already known (L on, M off, M- and M+ on, H on) and no new measurement
+    is needed, since M- and M+ are already characterized.
+  - **CELESTE = L&M+&H** — also uncommon, and mechanically different from
+    the other stops: only *one* detuned mid reed and no dry M, so there's no
+    second mid reed for M+ to beat against directly. It still likely
+    shimmers, though more subtly, via a harmonic-level beat: L's 2nd
+    harmonic sits at the same frequency a dry M would (an octave-down reed's
+    2nd harmonic = unison — the same "weak fundamental, strong upper
+    harmonics" property documented in
+    `ACCORDION_REED_ACOUSTICS_NOTES.md` §1), so it beats against M+'s
+    fundamental the way a real dry M would; similarly M+'s own 2nd harmonic
+    sits near H's fundamental, giving a second, related beat an octave
+    higher. Unverified against real measurements (would need per-key L/H
+    harmonic-strength ratios to size the effect) — a plausible mechanism,
+    not a confirmed one.

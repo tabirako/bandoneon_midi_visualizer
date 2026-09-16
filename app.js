@@ -246,6 +246,25 @@ function assignKeyboardKeys() {
     keyboardCodeMap.set(code, button);
     button.keyCap = key.toUpperCase();
   });
+
+  // C4/C#4 (id 38 on 142-rheinische, id 36 on 144-einheits -- found by note
+  // pair rather than id, since ids differ between layouts) sits in the
+  // topmost treble row on both layouts, which computeKeyAssignments()
+  // above never reaches (it only covers the lower 4 rows) -- so this
+  // important, central button otherwise has no keyboard key at all. F4 is
+  // bound to it as a bonus, on top of whatever it already got above: no
+  // mainstream browser has a default action on a bare F4 press (unlike
+  // Alt+F4 or Ctrl+F4, which are modifier combos this never touches), so
+  // there's nothing to conflict with. On platforms where the OS intercepts
+  // the physical F4 key before it ever reaches the browser (e.g. macOS's
+  // default Launchpad binding), the keydown listener below simply never
+  // fires -- silent, harmless graceful degradation, not something
+  // detectable or worth branching on in code.
+  const centerButton = right.find((b) => b.open?.note === 61 && b.close?.note === 60);
+  if (centerButton) {
+    keyboardCodeMap.set('F4', centerButton);
+    if (!centerButton.keyCap) centerButton.keyCap = 'F4';
+  }
 }
 
 // Free-reed instrument character presets. Each instrument is built from up
@@ -277,7 +296,7 @@ function assignKeyboardKeys() {
 // (was 0-15, which couldn't even reach the low end of the measured range).
 const REED_PRESETS = {
   bandoneon: { voiceMflat: 0, voiceM: 1, voiceMsharp: 0, detune: 0, breath: 5,  vibrato: 34, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 },
-  accordion: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 7, breath: 8,  vibrato: 45, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
+  accordion: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 16, breath: 8,  vibrato: 45, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
   harmonica: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 3, breath: 18, vibrato: 68, filterFreq: 3200, filterQ: 3.5, harmMix: 0 },
   musette:   { voiceMflat: 1, voiceM: 1, voiceMsharp: 1, detune: 9, breath: 10, vibrato: 56, filterFreq: 2600, filterQ: 1.4, harmMix: 0 }
 };
