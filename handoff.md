@@ -19,7 +19,9 @@ parsing; everything else is hand-written.
 | `bandoneon-utils.js` | `window.bandoneonUtils` — `normalizeMapping()` and `findMatchingButtons()`. Small, shared, deliberately dependency-free (no DOM access) so it's easy to unit-test — see `bandoneon-utils.test.js`. |
 | `keyboard-mapping.js` | `window.keyboardMapping` — `selectKeysForRow()` and `computeKeyAssignments()`, the pure logic that turns a layout's `row`/`order` data into computer-keyboard key caps. Extracted out of `app.js` specifically so it's unit-testable (see `keyboard-mapping.test.js`) and so adding a new fingering system's row-length data doesn't require touching DOM-coupled code. |
 | `mappings.js` | `window.defaultMappings` — the actual button/note layout data for each supported system. This is the file most likely to be wrong in some small way; see "Data provenance" below before trusting any single note blindly. |
-| `color-ranges.js` | Currently **dead code** — see "Known dead code" below. Still loaded by `index.html` but nothing reads `window.buttonColorRanges` anymore. |
+| `reed-harmonics.js` | `window.reedHarmonics` — auto-generated (`accordion_analysis/generate_periodic_waves.py`) linear harmonic-amplitude tables (harmonics 1-10) measured from real accordion recordings, per reed rank (`low`/`mid`/`hi`) and 7 sampled MIDI keys. `app.js`'s `getReedPeriodicWave()` reads `low` and `mid` to build real-timbre `PeriodicWave`s for the reed synth — see "Reed synthesis" below. **`hi` is present in the data but currently unused by `app.js`** (only `low`/`mid` are read) — not a bug, just harmonic data that hasn't been wired to a third oscillator rank yet. |
+| `bandoneon-harmonics.js` | `window.bandoneonHarmonics` — auto-generated (`accordion_analysis/generate_bandoneon_waves.py`) harmonic-amplitude tables measured from a real bandoneon, keyed by bellows direction (`open`/`close`) / side (`left`/`right`) / note name, plus per-note `measured_f0_hz`/`beat_hz`/`beat_reliable`. **Not `<script>`-loaded by `index.html` and not read anywhere in `app.js`** — generated data waiting for a real bandoneon voice to be built; see "Open items" below. |
+| `color-ranges.js` | **Deleted.** Used to be dead code (see Decision Log #4 — nothing read `window.buttonColorRanges` even while it was loaded); has since been removed from the repo entirely, and its `<script>` tag in `index.html` was removed to match (it had gone stale, still pointing at the deleted file). No trace of it should remain in either file going forward. |
 | `add_row_order.js` | One-time migration script (already run) that added `row`/`order` fields to the Rheinische data. Kept for reference/history, not part of the runtime app. Not referenced by `index.html`. |
 | `test-helpers.js`, `bandoneon-utils.test.js`, `keyboard-mapping.test.js` | Plain Node test files, no framework/dependencies — run with e.g. `node bandoneon-utils.test.js`. See "Testing" below. |
 
@@ -78,13 +80,17 @@ Roughly, in the order things happen:
    `bandoneonUtils.normalizeMapping`, then calls `assignKeyboardKeys()` and
    `renderMapping()`.
 2. **`renderMapping()`** — builds the DOM: one `.button-circle` per button,
-   absolutely positioned via `x`/`y`, colored via `colorForMidi()` (pure
-   HSL-from-note-number formula — see Decision Log for why it's *only*
-   this), labeled with note name + optional computer-keyboard key-cap badge.
+   absolutely positioned via `x`/`y`, colored via `colorForButton()` (which
+   dispatches to one of three color modes — see "Button color" below —
+   Rainbow being the original `colorForMidi()`/`colorForAccent()`
+   pure-HSL-from-note-number formula; see Decision Log #4 for why that
+   formula itself has no per-note/per-button override layers), labeled with
+   note name + optional computer-keyboard key-cap badge (both hideable via
+   "Hint" mode, see below).
 3. **Audio** — two independent synthesis paths coexist in `playTone()`:
    - Plain waveforms (sine/square/sawtooth/triangle): short fixed-decay
      "pluck," unchanged from the original app.
-   - Free-reed instruments (accordion/harmonica/bandoneon): a real
+   - Free-reed instruments (accordion/harmonica/bandoneon/musette): a real
      synthesized voice — see "Reed synthesis" below — that **sustains until
      note-off**, unlike the pluck path.
 4. **Input sources**, all funneled through the same `handleNoteOn(note,
@@ -99,34 +105,103 @@ Roughly, in the order things happen:
 ### Reed synthesis (`startReedVoice` / `stopReedVoice`)
 
 Not a sample — pure Web Audio synthesis, chosen deliberately over sampling
-because this needs to work as a static site with zero asset files. Signal
-chain per note:
+because this needs to work as a static site with zero asset files. **This is
+the second, real-timbre-informed version of the signal chain** — see Decision
+Log #16 for what the original two-oscillator-plus-noise model looked like and
+why it was replaced; this section describes the current one only.
 
-- Two detuned `sawtooth` oscillators (reed-pair "beating"/chorus — real
-  accordions tune two physical reeds a few cents apart on purpose)
-- One `triangle` sub-oscillator an octave down (body/warmth)
-- A lowpass `BiquadFilterNode` (shapes the buzzy sawtooth into something
-  reed-like; cutoff/Q differ per instrument preset)
-- Bandpass-filtered noise, loud on attack and fading (bellows "breath")
-- An LFO modulating both main oscillators' `detune` (vibrato)
+Real free-reed instruments name their reed ranks by register:
+
+- `L` — one octave below the note (bass/bassoon reed)
+- `M-` — the note's own octave, detuned flat (tremolo/musette partner)
+- `M` — the note's own octave, in tune (the "dry" reference reed)
+- `M+` — the note's own octave, detuned sharp (tremolo/musette partner)
+- `H` — one octave above the note (the accordion's "piccolo" reed). Listed
+  for completeness only: `startReedVoice()` has no oscillator for it (see
+  the 4 slots below), so no preset currently sounds an `H` rank
+
+`startReedVoice()` always builds all 4 oscillator slots (`oscMflat`, `oscM`,
+`oscMsharp`, `oscSub` for `L`) — matching the rest of this codebase's style
+of not conditionally building the node graph — and mutes whichever ones a
+given preset doesn't use via a 0 gain, rather than skipping their creation.
+Per note, the signal chain is:
+
+- `oscMflat`/`oscM`/`oscMsharp`: three oscillators at the note's own pitch.
+  `oscM` stays exactly on pitch; `oscMflat`/`oscMsharp` are detuned by the
+  **full** `#reedDetune` slider value in opposite directions from `oscM` (not
+  halved — `oscM` is the true dry center, unlike an earlier design where the
+  only two mid oscillators were a symmetric detuned pair with no dry reed at
+  all). Each preset's `voiceMflat`/`voiceM`/`voiceMsharp` (0 or 1) gate that
+  oscillator's own `GainNode` on/off.
+- `oscSub`: one octave down (`freq / 2`), for the `L` bass reed. `harmMix`
+  (0 = off) doubles as both its on/off switch and its blend level — 0 for
+  Harmonica and Musette (no bass reed on those real instruments), nonzero for
+  Accordion/Bandoneon.
+- **Real timbre, not a generic waveform, where data exists**: `oscMflat`/
+  `oscM`/`oscMsharp` try to use a `PeriodicWave` built from `reed-harmonics.js`'s
+  `mid` table (`getReedPeriodicWave(ctx, 'mid', note)`); `oscSub` tries the
+  same table's `low` register. Each falls back to a plain `sawtooth`/`triangle`
+  oscillator type if `window.reedHarmonics` didn't load or has no table for
+  that register. The measured tables are keyed by 7 sampled MIDI notes only
+  (`sampleNotes: [53, 60, 65, 72, 77, 84, 93]`) — every played note snaps to
+  its *nearest* sampled key's harmonic table (`nearestSampleNote()`) rather
+  than interpolating between samples, since the timbre visibly/audibly
+  changes with register (accordion reeds get thinner/brighter going up) and
+  true per-note morphing wasn't judged worth the complexity. Built
+  `PeriodicWave`s are cached per `register:sampleNote` (`reedWaveCache`) since
+  the same table gets reused across many notes/octaves.
+- A lowpass `BiquadFilterNode` (cutoff/Q differ per instrument preset) —
+  still shapes the summed reed signal, same role as before.
+- Bandpass-filtered noise, loud on attack and fading (bellows "breath") —
+  unchanged in role from the original design.
+- An LFO modulating the three mid oscillators' `detune` (vibrato) — same
+  role, now driving 3 oscillators instead of 2.
+- Headroom: with up to 4 oscillators now summing (vs. 2 previously), overall
+  gain is scaled by `0.75 / sqrt(activeVoices)` (`activeVoices` = however many
+  of the 4 slots this preset actually turns on) rather than a flat constant —
+  a fuller preset (Musette, 3 mid voices) still ends up a bit louder than a
+  sparser one (Bandoneon, 1 mid voice + `L`), not identically loud, but none
+  of them clip regardless of voice count.
 - A wrapping `GainNode` that ramps up on note-on and **only** ramps down on
-  `stopReedVoice()` — i.e. it sustains for exactly as long as the note is
-  held, not a fixed duration.
+  `stopReedVoice()` — sustains for exactly as long as the note is held, not a
+  fixed duration (unchanged from the original design).
 
-`REED_PRESETS` (accordion/harmonica/bandoneon) are just different starting
-values for detune/breath/vibrato/filter — same signal graph throughout.
-Three sliders (`#reedDetune`, `#reedBreath`, `#reedVibrato`) let the user
-hand-tune these live; switching the instrument dropdown snaps them to that
-preset's defaults.
+`REED_PRESETS` now has one entry per instrument (`bandoneon`, `accordion`,
+`harmonica`, and `musette` — **Musette is new**, a 4th reed-instrument choice
+added alongside this rewrite; see `index.html`'s `#instrumentSelect` and
+`i18n.js`'s `instrumentMusette` key across all 8 languages), each specifying
+`voiceMflat`/`voiceM`/`voiceMsharp`/`harmMix` (which reeds are on) plus
+starting `detune`/`breath`/`vibrato`/`filterFreq`/`filterQ` values. Concretely:
+Bandoneon is dry M only + `L` (real bandoneons don't beat/tremolo — hence
+`detune: 0`); Accordion is dry `M` + sharp `M+` + `L` (an asymmetric wet pair
+with a true dry reference reed, not the symmetric M-/M+ "Sax" register);
+Harmonica is the same dry-plus-sharp mid pair as Accordion but with no bass
+reed (`harmMix: 0`); Musette is the full wet trio (`M-`, `M`, `M+` all on)
+with no bass reed, for the lush chorus/beating sound. Three sliders
+(`#reedDetune`, `#reedBreath`, `#reedVibrato`) let the user hand-tune
+detune/breath/vibrato live; switching the instrument dropdown snaps them to
+that preset's defaults via `applyReedPreset()`. Accordion's `vibrato: 45` and
+Musette/Harmonica/Bandoneon's vibrato values are calibrated against real
+measurements (see `accordion_analysis/results.json` and the "Instrument
+provenance"/"Real bandoneon recordings" entries under "Open items") rather
+than guessed from nothing — `#reedVibrato`'s slider range was widened (from
+an original 0-15) specifically because it couldn't reach the low end of the
+measured range otherwise.
 
-These three sliders only affect `startReedVoice()`'s signal chain — plain
-waveforms (sine/square/sawtooth/triangle) never read them at all (see
-`playTone()`). `updateReedControlsAvailability()` disables the sliders
-(native `disabled` attribute, plus a `.reed-disabled` class toggled on
-anything marked `.reed-only` in the markup, for label dimming) whenever a
-non-reed instrument is selected, and re-enables them when switching back.
-Not just cosmetic — it tells the user these controls are currently inert
-rather than implying they'd do something.
+These three sliders (and the reed timbre/oscillator chain generally) only
+affect `startReedVoice()` — plain waveforms (sine/square/sawtooth/triangle)
+never read them at all, and go through the separate short fixed-decay
+`playTone()` path instead (see step 3 in "App architecture" above).
+`updateReedControlsAvailability()` disables the sliders (native `disabled`
+attribute, plus a `.reed-disabled` class toggled on anything marked
+`.reed-only` in the markup, for label dimming) whenever a non-reed instrument
+is selected, and re-enables them when switching back. Not just cosmetic — it
+tells the user these controls are currently inert rather than implying
+they'd do something. (The native `disabled` attribute alone dims/disables
+only the `<input>` itself, not the label text next to it, and browsers don't
+agree on how strongly they dim a disabled range input — the CSS class exists
+to dim the *whole* label row consistently and to force a `not-allowed`
+cursor, rather than relying on `disabled`'s default appearance alone.)
 
 ### Keyboard mapping (computer keys → treble buttons)
 
@@ -247,6 +322,69 @@ value. **The localStorage key is duplicated as a literal string in both
 places** — if it's ever renamed in one, it must be renamed in the other, or
 the pre-paint script silently stops working while `app.js` still functions
 normally (no error, just the flash-of-wrong-theme bug coming back).
+
+The theme tokens also include `--key-cap` (light-on-dark in Night, dark-on-
+light in Day, in all four token blocks) — `.key-cap`'s `color` reads it, so
+the on-button computer-keyboard badge stays legible against the page
+background instead of being a fixed light gray regardless of theme.
+
+### Hint mode (Default / No hint)
+
+`#hintSelect` offers two choices, stored under `localStorage` key
+`bandoneon-hint-v1`: `"default"` (all markings visible, the original
+behavior) and `"none"` ("No hint" — meant as a practice mode, so a player
+has to recognize notes/positions rather than read them off the button).
+Unlike Theme and unlike Button color (below), this one is a pure CSS class
+toggle: `applyHintMode()` sets/clears `.hints-off` on `#bandoneonContainer`,
+and `styles.css`'s `.hints-off .label-text/.note-text/.key-cap { display:
+none }` rule does the rest — no `renderMapping()` call needed, and the
+hidden state can't drift out of sync with what `renderMapping()` last built
+since it's a container-level class, not per-button markup.
+
+**Two things worth knowing before treating "No hint" as a complete blind
+mode:**
+
+- **It doesn't hide the octave rainbow coloring by itself.** Color is a
+  wholly separate setting (see "Button color" below) — a player who wants
+  *no* visual hints at all needs Hint = "No hint" **and** Button color =
+  "Single color" (or "Piano") set together. There's no single combined
+  "with markings / without markings" switch; the feature ended up as two
+  independent toggles instead.
+- **The hover tooltip still reveals everything, regardless of Hint mode.**
+  `renderMapping()` unconditionally sets each button's `title` attribute to
+  `"{side} • {label} • Close {note} / Open {note}"`, plus `" • Key {keyCap}"`
+  when a key-cap exists — none of that is gated on `hintMode`. So a mouse
+  user in "No hint" mode can still get the exact note/label/key answer by
+  hovering instead of looking. Not fixed as part of this feature; if this
+  matters, the tooltip text would need to move to `aria-label` (kept, for
+  screen readers) and the visible `title` suppressed specifically when
+  `hintMode === 'none'`.
+
+### Button color (Rainbow / Piano / Single color)
+
+`#buttonColorSelect` offers three choices, stored under `localStorage` key
+`bandoneon-button-color-v1`: `"rainbow"` (default — the original per-octave
+HSL formula, `colorForMidi()`/`colorForAccent()`), `"piano"`, and `"mono"`
+("Single color"). Unlike Hint mode, this **can't** be a pure CSS toggle —
+`colorForButton(note)` computes each button's actual background/border
+color per mode, so a change goes through a full `renderMapping()` (wired via
+`setButtonColorMode()`) to take effect.
+
+- **Piano**: natural (white-key) pitch classes get the ivory
+  `IVORY_BUTTON` color (`#f4f1e8` / border `#c9c2ae`); accidental (black-key)
+  pitch classes get `PIANO_ACCIDENTAL_BUTTON` (`#1c1c1c` / border `#3a3a3a`)
+  and are flagged `needsLightText: true`, which `renderMapping()` turns into
+  a `.dark-bg` class on that button — `styles.css`'s `.dark-bg` rule
+  overrides `.label-text`/`.note-text`/`.key-cap` to a light color for just
+  those buttons, independent of the page's own Day/Night theme (a black
+  Piano button needs light text even on an otherwise-light Day page).
+- **Single color ("mono")**: every button gets the same `IVORY_BUTTON`
+  color as Piano's naturals. Chosen deliberately, not an arbitrary pick —
+  meant to evoke a real bandoneon's light wood/bone buttons against a dark
+  case, per the user's own description of a real instrument (see
+  `IVORY_BUTTON`'s comment in `app.js`).
+- **Rainbow**: unchanged from the original per-octave formula (Decision Log
+  #4) — still the only mode with no manual per-note overrides.
 
 ## Data provenance (why the note data should be trusted, and how much)
 
@@ -405,7 +543,12 @@ knowing before "simplifying" something back to the naive version.
    everything currently active, not just visually.
 
 4. **Button color is now `colorForMidi(note)` — a pure computed HSL
-   formula — and nothing else.** Originally `findButtonColor()` checked
+   formula — and nothing else.** (Later extended, not reverted: see #15 —
+   `colorForButton()` now dispatches to this formula only under "Rainbow"
+   mode; Piano/Single-color use fixed palettes instead. The point standing
+   here is narrower than it originally read: no *per-note/per-button
+   manual override* layer was reintroduced, not that no other mode exists.)
+   Originally `findButtonColor()` checked
    four fallback layers (per-note override → per-button override →
    `color-ranges.js` lookup table → an undefined-in-any-file
    `defaultButtonColors` array → the formula). That undefined variable was
@@ -579,6 +722,51 @@ knowing before "simplifying" something back to the naive version.
     `navigator.keyboard.getLayoutMap()`, which is Chromium-only and
     permission-gated — left as a known gap rather than solved.
 
+15. **Hint (Default/No hint) and Button color (Rainbow/Piano/Single color)
+    were added as two independent toggles, not one combined "with markings
+    / without markings" mode**, because they need fundamentally different
+    mechanisms: Hint is purely presentational (a container CSS class can
+    hide/show existing DOM, see `.hints-off` in styles.css) while Button
+    color changes the actual computed background/border per button (needs
+    `colorForButton()` + a `renderMapping()` pass). Splitting them keeps
+    Hint's toggle free of any re-render cost, at the cost of there being no
+    single switch for "show me nothing" — a fully blind practice mode needs
+    both set together (Hint: No hint, Button color: Single color). See
+    "Hint mode" and "Button color" above for the full behavior, including
+    the known gap that the hover tooltip leaks the answer regardless of
+    Hint mode.
+
+16. **Reed synthesis rewritten from a generic 2-oscillator model to a
+    4-voice, measured-timbre model, and a 4th instrument (Musette) added.**
+    The original design (two detuned `sawtooth` oscillators as a symmetric
+    wet pair, no dry reed, plus one `triangle` sub-oscillator) was a
+    reasonable first pass but didn't reflect how a real free-reed instrument
+    is actually voiced (a true in-tune `M` reed plus separately-switchable
+    `M-`/`M+` tremolo partners and an `L` bass reed), and used a generic
+    waveform everywhere rather than anything measured from a real
+    instrument. Replaced with the model described in "Reed synthesis" above:
+    4 always-built oscillator slots (`M-`/`M`/`M+`/`L`) individually
+    gain-gated per preset, each trying a real-timbre `PeriodicWave` built
+    from `reed-harmonics.js`'s Fourier-analyzed accordion recordings
+    (`getReedPeriodicWave()`, nearest-sampled-key snapping, cached per
+    `register:sampleNote`) before falling back to a plain
+    `sawtooth`/`triangle` if that data isn't available. `REED_PRESETS` grew a
+    4th instrument, Musette (full `M-`+`M`+`M+` wet trio, no bass reed), and
+    each preset's `voiceMflat`/`voiceM`/`voiceMsharp`/`harmMix` fields
+    replace what used to be an implicit "always 2 mid + 1 sub" structure.
+    Headroom compensation (`0.75 / sqrt(activeVoices)`) was added at the same
+    time since up to 4 summed oscillators (vs. 2 before) pushed some presets
+    noticeably louder than others. **Net effect on the "Open items" wet-reed
+    recording work below**: the harmonic-*timbre* measurements
+    (`accordion_analysis/results.json` → `reed-harmonics.js`) are now wired
+    into `app.js` via this rewrite — that item should no longer be read as
+    "not yet wired in." The separate *velocity-layered* (loud/weak) recording
+    analysis remains unwired, since that work was inconclusive (see its own
+    "Open items" entry) — don't conflate the two: one measures how the
+    harmonic *spectrum* differs per note/register (done, wired in), the other
+    would measure how the spectrum differs per *velocity* at a fixed note
+    (attempted, inconclusive, not wired in).
+
 ## Testing
 
 `bandoneon-utils.test.js` and `keyboard-mapping.test.js` cover the project's
@@ -625,6 +813,12 @@ refactor.
 
 ## Open items / natural next steps
 
+- **"No hint" mode's hover tooltip still reveals the answer.** See Decision
+  Log #15 / the "Hint mode" section above — `renderMapping()`'s `title`
+  attribute isn't gated on hint mode, so a mouse user can hover instead of
+  looking. If this is meant as a real practice/quiz mode, worth moving that
+  text to `aria-label` (for screen readers) and suppressing the visible
+  `title` when Hint = "No hint".
 - **`i18n.js`'s 8 translation dictionaries need a native-speaker review.**
   See the "Internationalization" section's caveat above — they were written
   by the assistant, not verified by anyone fluent in the target languages.
@@ -724,40 +918,16 @@ refactor.
   `reinterpret_registers.py`'s docstring for the derivation. Redo agreed
   with the user: **one note per file** (not a passage), held **5-8
   seconds**, **3-4 notes** across the range is enough. Once that lands, both
-  scripts above are ready to reprocess it as-is.
-- **This accordion's actual stop names, mapped to reed combos** (from the
-  user, not derivable from the audio) — useful for tying the measured
-  `registers/*.wav` files to real-world stop labels, and for spotting which
-  combos this instrument doesn't even wire up:
-  - **VIOLIN = M&M+** — the 2-reed wet voice, matches the `M&M+ *.wav`
-    files used for the `accordion` preset's `detune: 7→16` fix. The
-    `accordion` preset's voice flags (`voiceMflat:0, voiceM:1,
-    voiceMsharp:1`) are really modeling VIOLIN specifically, not some
-    generic "accordion" average.
-  - **MUSETTE = M-&M&M+** — the 3-reed wet voice, matches the
-    `M-&M&M+ *.wav` files (the asymmetric 3.13/4.84Hz beat data) and the
-    `musette` preset's flags (`voiceMflat:1, voiceM:1, voiceMsharp:1`).
-  - **No M-&M+ stop exists on this instrument** — plausibly because, without
-    the dry M reed, that combo has no stationary reference and is just two
-    detuned reeds beating symmetrically against each other with no clean
-    unison anchor; consistent with the beating-physics reasoning already in
-    `ACCORDION_REED_ACOUSTICS_NOTES.md` §2.
-  - **SAX = L&M-&M+&H** — a 4-reed combo, uncommon on most accordions, that
-    spans 3 octaves and includes *both* wet mid reeds but skips the dry M
-    entirely, so there's no pure unison in it at all. Not represented by any
-    current preset; if a SAX preset is ever wanted, the voice flags are
-    already known (L on, M off, M- and M+ on, H on) and no new measurement
-    is needed, since M- and M+ are already characterized.
-  - **CELESTE = L&M+&H** — also uncommon, and mechanically different from
-    the other stops: only *one* detuned mid reed and no dry M, so there's no
-    second mid reed for M+ to beat against directly. It still likely
-    shimmers, though more subtly, via a harmonic-level beat: L's 2nd
-    harmonic sits at the same frequency a dry M would (an octave-down reed's
-    2nd harmonic = unison — the same "weak fundamental, strong upper
-    harmonics" property documented in
-    `ACCORDION_REED_ACOUSTICS_NOTES.md` §1), so it beats against M+'s
-    fundamental the way a real dry M would; similarly M+'s own 2nd harmonic
-    sits near H's fundamental, giving a second, related beat an octave
-    higher. Unverified against real measurements (would need per-key L/H
-    harmonic-strength ratios to size the effect) — a plausible mechanism,
-    not a confirmed one.
+  scripts above are ready to reprocess it as-is. **Separate from, and not to
+  be confused with, the harmonic-timbre measurements below** — this item is
+  specifically about measuring the *beat rate/cents* of wet reed pairs, which
+  is still open regardless of the timbre work being wired in.
+- **Accordion harmonic-timbre measurements are wired into `app.js`.**
+  `accordion_analysis/results.json`'s per-note Fourier analysis (harmonics
+  1-10, per reed rank, at 7 sampled keys) was exported to `reed-harmonics.js`
+  and is now read live by `startReedVoice()`/`getReedPeriodicWave()` — see
+  Decision Log #16 and "Reed synthesis" above. Only the `low`/`mid` registers
+  are actually used; the file's `hi` table is measured and present but not
+  yet wired to a third oscillator rank. This is distinct from the
+  *velocity-layered* (loud/weak) recordings described next, which remain
+  unwired.

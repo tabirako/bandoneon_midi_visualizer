@@ -27,7 +27,7 @@ the same buttons from your computer keyboard.
 
 ### How to use it
 
-1. **Open the app:** https://kei-c.com/bandoneon_midi_visualizer/
+1. **Open the app:** [bandoneon.kei-c.com](https://bandoneon.kei-c.com/)
 2. **Choose a layout** &mdash; 142-tone (Rheinische) or 144-tone (Einheits)
    &mdash; from the *Layout* menu.
 3. **Pick how you want to play:**

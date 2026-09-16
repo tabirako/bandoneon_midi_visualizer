@@ -20,7 +20,6 @@
   --panel-grad-2: rgba(255, 255, 255, 0.01);
   --panel-border: rgba(255, 255, 255, 0.03);
   --circle-border: rgba(255, 255, 255, 0.18);
-  --key-cap: #e6eef6;
 }
 
 @media (prefers-color-scheme: light) {
@@ -36,7 +35,6 @@
     --panel-grad-2: rgba(0, 0, 0, 0.01);
     --panel-border: rgba(0, 0, 0, 0.06);
     --circle-border: rgba(0, 0, 0, 0.15);
-    --key-cap: #182430;
   }
 }
 
@@ -52,7 +50,6 @@
   --panel-grad-2: rgba(0, 0, 0, 0.01);
   --panel-border: rgba(0, 0, 0, 0.06);
   --circle-border: rgba(0, 0, 0, 0.15);
-  --key-cap: #182430;
 }
 
 :root[data-theme="dark"] {
@@ -67,7 +64,6 @@
   --panel-grad-2: rgba(255, 255, 255, 0.01);
   --panel-border: rgba(255, 255, 255, 0.03);
   --circle-border: rgba(255, 255, 255, 0.18);
-  --key-cap: #e6eef6;
 }
 
 /* ========== Base / Global Styles ========== */
@@ -356,6 +352,15 @@ input[type="file"] {
 }
 
 /* ========== Keyboard Key Caps ========== */
+/* Fixed dark, matching .label-text/.note-text just below — deliberately NOT
+   a --theme-token. All three sit on the button's own background (rainbow
+   HSL, Piano's ivory/black, or Single-color's ivory — see colorForButton()
+   in app.js), which never depends on the page's own Day/Night theme, so
+   tying this color to the theme instead (as an earlier version did) went
+   invisible on Piano/Single-color's light ivory buttons under Night theme:
+   both landed on the same near-white. The one background dark enough to
+   need light text instead is Piano's black accidental buttons, handled by
+   the .dark-bg override below. */
 .key-cap {
   position: absolute;
   top: 2px;
@@ -364,7 +369,7 @@ input[type="file"] {
   font-weight: bold;
   opacity: 0.85;
   pointer-events: none;
-  color: var(--key-cap);
+  color: #0f1722;
 }
 
 /* Piano button-color mode's accidental (black) buttons: .label-text/
