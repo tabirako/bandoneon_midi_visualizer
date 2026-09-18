@@ -17,7 +17,7 @@ parsing; everything else is hand-written.
 | `app.js` | All application logic: rendering, audio synthesis, MIDI I/O, i18n, theme. Keyboard-mapping *logic* now lives in `keyboard-mapping.js`; `app.js` just applies its result to its own state (`assignKeyboardKeys()`). |
 | `i18n.js` | `window.translations` (one dictionary per language code) and `window.languageNames` (native-script display names for the switcher). Pure data, no logic — `app.js`'s `t()`/`applyTranslations()` read it. See "Internationalization" below. |
 | `bandoneon-utils.js` | `window.bandoneonUtils` — `normalizeMapping()` and `findMatchingButtons()`. Small, shared, deliberately dependency-free (no DOM access) so it's easy to unit-test — see `bandoneon-utils.test.js`. |
-| `keyboard-mapping.js` | `window.keyboardMapping` — `selectKeysForRow()` and `computeKeyAssignments()`, the pure logic that turns a layout's `row`/`order` data into computer-keyboard key caps. Extracted out of `app.js` specifically so it's unit-testable (see `keyboard-mapping.test.js`) and so adding a new fingering system's row-length data doesn't require touching DOM-coupled code. |
+| `keyboard-mapping.js` | `window.keyboardMapping` — `selectKeysForRow()`, `computeKeyAssignments()` (treble), and `computeBassKeyAssignments()`/`computeBassFunctionKeyAssignments()` (left hand, Caps Lock), the pure logic that turns a layout's `row`/`order` data into computer-keyboard key caps. Extracted out of `app.js` specifically so it's unit-testable (see `keyboard-mapping.test.js`) and so adding a new fingering system's row-length data doesn't require touching DOM-coupled code. |
 | `mappings.js` | `window.defaultMappings` — the actual button/note layout data for each supported system. This is the file most likely to be wrong in some small way; see "Data provenance" below before trusting any single note blindly. |
 | `reed-harmonics.js` | `window.reedHarmonics` — auto-generated (`accordion_analysis/generate_periodic_waves.py`) linear harmonic-amplitude tables (harmonics 1-10) measured from real accordion recordings, per reed rank (`low`/`mid`/`hi`) and 7 sampled MIDI keys. `app.js`'s `getReedPeriodicWave()` reads `low` and `mid` to build real-timbre `PeriodicWave`s for the reed synth — see "Reed synthesis" below. **`hi` is present in the data but currently unused by `app.js`** (only `low`/`mid` are read) — not a bug, just harmonic data that hasn't been wired to a third oscillator rank yet. |
 | `bandoneon-harmonics.js` | `window.bandoneonHarmonics` — auto-generated (`accordion_analysis/generate_bandoneon_waves.py`) harmonic-amplitude tables measured from a real bandoneon, keyed by bellows direction (`open`/`close`) / side (`left`/`right`) / note name, plus per-note `measured_f0_hz`/`beat_hz`/`beat_reliable`. **Not `<script>`-loaded by `index.html` and not read anywhere in `app.js`** — generated data waiting for a real bandoneon voice to be built; see "Open items" below. |
@@ -203,9 +203,10 @@ agree on how strongly they dim a disabled range input — the CSS class exists
 to dim the *whole* label row consistently and to force a `not-allowed`
 cursor, rather than relying on `disabled`'s default appearance alone.)
 
-### Keyboard mapping (computer keys → treble buttons)
+### Keyboard mapping (computer keys → treble buttons, and bass via Caps Lock)
 
-Deliberately scoped to **the lower 4 rows of the treble side only** — the
+Deliberately scoped to **the lower 4 rows of each side** (bass: see "Left
+hand (bass)" at the end of this section) — the
 full 6-row (or 5-row, depending on system) hex grid can't map cleanly onto a
 flat QWERTY keyboard without badly distorting relative finger positions, and
 the upper rows are the least reachable/most decorative ones anyway. This was
@@ -244,6 +245,58 @@ flipping direction while a note is already sounding doesn't retroactively
 change it). `heldKeyNotes` (Map of key → note) makes sure the *correct*
 note gets released even if bellows direction changed while the key was
 held, and guards against OS key-repeat re-triggering.
+
+#### Left hand (bass) — Caps Lock
+
+The same 4 letter rows play the **bass** side while **Caps Lock is on**.
+Decided with the user (2026-09); goal is to mimic two-handed playing on
+both a desktop and a laptop keyboard.
+
+- **Why Caps Lock:** Space is already the bellows; Tab would break keyboard
+  focus navigation of the page's controls; Shift trips Windows' Sticky Keys
+  prompt when tapped repeatedly. The page can't stop the OS toggling Caps
+  Lock, so the mode isn't a separate flag at all — `syncHandMode()` re-reads
+  `event.getModifierState('CapsLock')` on every key and pointer event. The
+  keyboard's Caps Lock light is the mode indicator and can never disagree
+  with the page. Accepted side effect: leaving the page in bass mode leaves
+  Caps Lock on in other apps.
+- **Placement** (`BASS_ROW_ANCHORS` in `keyboard-mapping.js`), chosen by a
+  least-squares fit of ANSI key centers against the buttons' real `x`
+  coordinates over every candidate slice — ~0.26 key-widths average error,
+  about half the next best:
+
+  ```
+              F8  F9                ← row 1: 𝄌/id4, 0/0/id5
+         4 5 6 7 8 9 0              ← row 2 (7)
+          R T Y U I O [P]           ← row 3 (142: 6, 144 adds P)
+           D F G H J K L [;]        ← row 4 (142: 7, 144 adds ;)
+            X C V B N M , .         ← row 5 (8)
+  ```
+
+  Bass rows **grow rightward** past the anchor, unlike treble: 144's extra
+  button in rows 3/4 is appended at the right end with every other button
+  at the same `x` (see "Data provenance"), so growing right keeps every
+  shared button on the same key in both layouts.
+- **F keys follow their side, like the letters** (user's call): F4 (treble
+  C4, above) plays only with Caps Lock off, F8/F9 (bass row 1) only with it
+  on — they live in `trebleCodeMap`/`bassCodeMap` like every other key, and
+  dim with their side. Bass row 1's other three buttons (2/2, 3/3, 4/4) have no key —
+  F5 reloads, F6 focuses the address bar, F7 opens a caret-browsing prompt
+  in Chrome and Firefox. On laptops whose F row sends media keys unless Fn
+  is held (Mac F8 = play/pause), F8/F9 never reach the page — same
+  graceful degradation as F4.
+- **Hand is committed at key-down**, like bellows direction: a note held
+  through a Caps Lock flip still releases correctly (`heldKeyNotes` stores
+  the note, not the button).
+- **Key labels menu** (`#keyCapSelect`, `localStorage`
+  `bandoneon-keycaps-v1`): `"dim"` (default — fades every cap, F keys
+  included, on the side the keyboard isn't currently playing), `"on"`,
+  `"off"`. Pure container classes (`.keycaps-dim`/`.keycaps-off`, plus
+  `.bass-keys-active` from `syncHandMode()`), so neither the menu nor a Caps
+  Lock flip re-renders. Dimming is opacity only — **key-cap text color must keep following the
+  button's own background, never the page theme** (fixed dark, light only
+  via `.dark-bg` on Piano's black buttons). An earlier theme-driven color
+  went invisible on Piano/Single-color's ivory buttons under Night theme.
 
 ### MIDI transport (upload/play/stop/seek)
 
@@ -812,6 +865,14 @@ refactor.
   to you.
 
 ## Open items / natural next steps
+
+- **Bass F9: 0/0 or 4/4? (unconfirmed, user, 2026-09.)** F8 is fixed on
+  bass row 1's 𝄌 (id4). Its F-key partner is 0/0 (id5, F9) for now,
+  because that pairing fits the geometry better (~0.26 vs ~0.52 key-widths
+  average error). The user isn't sure whether real players use 4/4 or 0/0
+  more. If it turns out to be 4/4, change `BASS_FUNCTION_KEYS` in
+  `keyboard-mapping.js` to F8 → order 3, F9 → order 4, and update the
+  matching test in `keyboard-mapping.test.js`. A one-line data change.
 
 - **"No hint" mode's hover tooltip still reveals the answer.** See Decision
   Log #15 / the "Hint mode" section above — `renderMapping()`'s `title`

@@ -128,4 +128,71 @@ test('computeKeyAssignments: reproduces the real Rheinische/Einheits row layouts
   assert.ok(einheitsKeys.includes('z')); // the 9-button bottom row extends to include Z
 });
 
+// ---- Bass (left hand, Caps Lock) -----------------------------------------
+
+const { computeBassKeyAssignments, computeBassFunctionKeyAssignments } = window.keyboardMapping;
+
+// Real bass row lengths (mappings.js): 142 = [5,7,6,7,8], 144 = [5,7,7,8,8].
+function bassButtons(rowLengths) {
+  const out = [];
+  rowLengths.forEach((count, i) => {
+    for (let o = 1; o <= count; o++) out.push(makeButton('r' + (i + 1) + '-' + o, i + 1, o));
+  });
+  return out;
+}
+
+function keysByRow(assignments) {
+  const rows = {};
+  assignments
+    .slice()
+    .sort((a, b) => a.button.row - b.button.row || a.button.order - b.button.order)
+    .forEach((a) => { rows[a.button.row] = (rows[a.button.row] || '') + a.key; });
+  return rows;
+}
+
+test('computeBassKeyAssignments: reproduces the agreed 142-rheinische bass layout (regression guard)', () => {
+  assert.deepStrictEqual(keysByRow(computeBassKeyAssignments(bassButtons([5, 7, 6, 7, 8]))), {
+    2: '4567890',
+    3: 'rtyuio',
+    4: 'dfghjkl',
+    5: 'xcvbnm,.'
+  });
+});
+
+test('computeBassKeyAssignments: reproduces the agreed 144-einheits bass layout (regression guard)', () => {
+  assert.deepStrictEqual(keysByRow(computeBassKeyAssignments(bassButtons([5, 7, 7, 8, 8]))), {
+    2: '4567890',
+    3: 'rtyuiop',
+    4: 'dfghjkl;',
+    5: 'xcvbnm,.'
+  });
+});
+
+test('computeBassKeyAssignments: rows longer in 144 grow RIGHT, so shared buttons keep their key across layouts', () => {
+  // 144's extra button in rows 3/4 is appended at the right end of the row
+  // (same x for every other button), so every button both systems share
+  // must land on the same key in both.
+  const k142 = computeBassKeyAssignments(bassButtons([5, 7, 6, 7, 8]));
+  const k144 = Object.fromEntries(
+    computeBassKeyAssignments(bassButtons([5, 7, 7, 8, 8])).map((a) => [a.button.id, a.key])
+  );
+  k142.forEach((a) => assert.strictEqual(k144[a.button.id], a.key, a.button.id));
+});
+
+test('computeBassKeyAssignments: bass row 1 gets no letter key (only F8/F9)', () => {
+  const rows = keysByRow(computeBassKeyAssignments(bassButtons([5, 7, 7, 8, 8])));
+  assert.strictEqual(rows[1], undefined);
+});
+
+test('computeBassFunctionKeyAssignments: F8 = row 1 order 4 (𝄌 on 142), F9 = order 5', () => {
+  const byKey = Object.fromEntries(
+    computeBassFunctionKeyAssignments(bassButtons([5, 7, 6, 7, 8])).map((a) => [a.key, a.button.id])
+  );
+  assert.deepStrictEqual(byKey, { F8: 'r1-4', F9: 'r1-5' });
+});
+
+test('treble anchors are unaffected by the bass ones (still grow LEFT: X-. gains Z)', () => {
+  assert.deepStrictEqual(selectKeysForRow(3, 9), ['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.']);
+});
+
 summary('keyboard-mapping.test.js');

@@ -384,6 +384,21 @@ input[type="file"] {
   color: #f0f0f0;
 }
 
+/* Key labels menu (#keyCapSelect). "Dim inactive side" fades the letter
+   caps of whichever hand the letter keys aren't playing right now (bass
+   while Caps Lock is off, treble while it's on — .bass-keys-active, set
+   by app.js's syncHandMode()); F-key caps included, since F4 is treble-only
+   and F8/F9 bass-only. Opacity only: the text color stays whatever the
+   button's own background calls for (see .key-cap above). */
+.keycaps-dim:not(.bass-keys-active) .panel-bass .key-cap,
+.keycaps-dim.bass-keys-active .panel-treble .key-cap {
+  opacity: 0.3;
+}
+
+.keycaps-off .key-cap {
+  display: none;
+}
+
 /* "No hint" mode: hides every marking that gives away which note a button
    plays (its label, computed note name, keyboard key-cap badge), leaving
    just the colored, positioned, clickable circle. Toggled via a class on

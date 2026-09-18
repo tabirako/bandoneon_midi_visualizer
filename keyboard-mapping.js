@@ -1,9 +1,13 @@
-// Computer-keyboard mapping for the lower 4 rows of the treble (right) side.
+// Computer-keyboard mapping for the lower 4 rows of each side: treble
+// (right) normally, bass (left) while Caps Lock is on — see app.js.
 // Exposes window.keyboardMapping with:
-// - PHYSICAL_KEYBOARD_ROWS, PHYSICAL_KEYBOARD_CODES, DEFAULT_ROW_ANCHORS (data)
-// - selectKeysForRow(rowIndex, neededLength)
-// - selectCodesForRow(rowIndex, neededLength)
+// - PHYSICAL_KEYBOARD_ROWS, PHYSICAL_KEYBOARD_CODES, DEFAULT_ROW_ANCHORS,
+//   BASS_ROW_ANCHORS, BASS_FUNCTION_KEYS (data)
+// - selectKeysForRow(rowIndex, neededLength)   (treble anchors)
+// - selectCodesForRow(rowIndex, neededLength)  (treble anchors)
 // - computeKeyAssignments(rightSideButtons) -> [{ key, code, button }]
+// - computeBassKeyAssignments(leftSideButtons) -> [{ key, code, button }]
+// - computeBassFunctionKeyAssignments(leftSideButtons) -> same shape
 //
 // Pulled out of app.js (which still does the actual DOM/state wiring via
 // assignKeyboardKeys()) so this logic is pure and unit-testable — see
@@ -62,65 +66,133 @@
     { start: 1, length: 8 }  // 'x'-'.'
   ];
 
+  // Bass (left side) counterpart of DEFAULT_ROW_ANCHORS, used while Caps
+  // Lock is on (see app.js). Bass rows 2-5 go on the same 4 physical rows;
+  // bass row 1 (5 buttons) has no 5th letter row to go to, so only two of
+  // its buttons get keys, via BASS_FUNCTION_KEYS below.
+  //
+  // Chosen by least-squares fit of physical ANSI key centers against the
+  // buttons' real x coordinates (mappings.js), over every candidate slice:
+  // this set, with the bottom row on X-., averages ~0.26 key-widths from
+  // where each button actually sits — about half the error of the next
+  // best (bottom row on Z-, 0.48, or C-/ 0.50).
+  //
+  // Unlike treble, bass rows GROW RIGHTWARD past the anchor: the two rows
+  // whose length differs between systems (row 3: 6 in 142 vs 7 in 144;
+  // row 4: 7 vs 8) differ by one button appended at the RIGHT end, every
+  // other button shared at the same x (see handoff.md's data provenance
+  // notes). Growing right keeps every shared button on the same key in
+  // both layouts; 144's extra one just takes the next key over.
+  var BASS_ROW_ANCHORS = [
+    { start: 3, length: 7 }, // '4'-'0'  (bass row 2)
+    { start: 3, length: 6 }, // 'r'-'o'  (bass row 3; 144's 7th -> 'p')
+    { start: 2, length: 7 }, // 'd'-'l'  (bass row 4; 144's 8th -> ';')
+    { start: 1, length: 8 }  // 'x'-'.'  (bass row 5)
+  ];
+
+  // Bass row 1's keyed buttons, by row/order (identical on both systems).
+  // Like the letter keys, these play only in bass mode (Caps Lock on).
+  //
+  // OPEN QUESTION (user, 2026-09): whether real players reach for 4/4 or
+  // 0/0 more often is unconfirmed. The 𝄌 button (order 4) is the fixed
+  // one; its F-key partner is either 0/0 (order 5, current) or 4/4
+  // (order 3). Current choice follows the geometry fit (~0.26 vs ~0.52
+  // key-widths average error). To switch to 4/4, change these to
+  // F8 -> order 3 and F9 -> order 4.
+  var BASS_FUNCTION_KEYS = [
+    { key: 'F8', code: 'F8', row: 1, order: 4 }, // 142: 𝄌, 144: 4
+    { key: 'F9', code: 'F9', row: 1, order: 5 }  // 142: 0/0, 144: 5
+  ];
+
   // Picks `neededLength` keys from physical row `rowIndex`. Matches the
-  // default anchor when possible; when more keys are needed, extends toward
-  // the outer edge of the row (lower index first) so the "standard" keys
-  // (e.g. X-.) stay in place and only gain a neighbor (Z) rather than
-  // shifting.
-  // Shared by selectKeysForRow()/selectCodesForRow() so the `key` and `code`
-  // rows above (which are index-parallel) always pick the same slice.
-  function selectIndicesForRow(rowIndex, neededLength) {
+  // anchor when possible; when more keys are needed, extends from the
+  // anchor so its own keys stay in place and only gain a neighbor rather
+  // than shifting — toward the lower index (treble: X-. gains Z) unless
+  // `growRight` (bass: R-O gains P).
+  // Shared by the key/code selectors so the `key` and `code` rows above
+  // (which are index-parallel) always pick the same slice.
+  function selectIndicesForRow(rowIndex, neededLength, anchors, growRight) {
     var physicalRow = PHYSICAL_KEYBOARD_ROWS[rowIndex];
-    var anchor = DEFAULT_ROW_ANCHORS[rowIndex];
+    var anchor = anchors[rowIndex];
     var start = anchor.start;
     var length = Math.min(neededLength, anchor.length);
     if (neededLength > anchor.length) {
-      var extra = neededLength - anchor.length;
-      start = Math.max(0, anchor.start - extra);
+      if (!growRight) {
+        var extra = neededLength - anchor.length;
+        start = Math.max(0, anchor.start - extra);
+      }
       length = Math.min(neededLength, physicalRow.length - start);
     }
     return { start: start, length: length };
   }
 
   function selectKeysForRow(rowIndex, neededLength) {
-    var idx = selectIndicesForRow(rowIndex, neededLength);
+    var idx = selectIndicesForRow(rowIndex, neededLength, DEFAULT_ROW_ANCHORS, false);
     return PHYSICAL_KEYBOARD_ROWS[rowIndex].slice(idx.start, idx.start + idx.length);
   }
 
   function selectCodesForRow(rowIndex, neededLength) {
-    var idx = selectIndicesForRow(rowIndex, neededLength);
+    var idx = selectIndicesForRow(rowIndex, neededLength, DEFAULT_ROW_ANCHORS, false);
     return PHYSICAL_KEYBOARD_CODES[rowIndex].slice(idx.start, idx.start + idx.length);
+  }
+
+  // Shared core of computeKeyAssignments()/computeBassKeyAssignments().
+  // Maps the lower 4 rows of `sideButtons` (relative to its highest row
+  // number) onto the 4 physical rows.
+  function assignLowerRows(sideButtons, anchors, growRight) {
+    var maxRow = sideButtons.reduce(function (max, b) {
+      return Math.max(max, b.row || 0);
+    }, 0);
+    var keyboardRowStart = Math.max(1, maxRow - PHYSICAL_KEYBOARD_ROWS.length + 1);
+    var assignments = []; // { key, code, button }
+
+    for (var i = 0; i < PHYSICAL_KEYBOARD_ROWS.length; i++) {
+      var rowNumber = keyboardRowStart + i;
+      var rowButtons = sideButtons
+        .filter(function (b) { return b.row === rowNumber; })
+        .sort(function (a, b) { return a.order - b.order; });
+      var idx = selectIndicesForRow(i, rowButtons.length, anchors, growRight);
+      var keys = PHYSICAL_KEYBOARD_ROWS[i].slice(idx.start, idx.start + idx.length);
+      var codes = PHYSICAL_KEYBOARD_CODES[i].slice(idx.start, idx.start + idx.length);
+      rowButtons.forEach(function (button, j) {
+        var key = keys[j];
+        if (!key) return;
+        assignments.push({ key: key, code: codes[j], button: button });
+      });
+    }
+    return assignments;
   }
 
   // Pure: takes the treble ("right" side) buttons and returns the
   // key/code -> button assignments for the lower 4 rows, without touching
   // any button, Map, or other state. Caller (assignKeyboardKeys() in
-  // app.js) applies the result to keyboardCodeMap / button.keyCap.
+  // app.js) applies the result to its code maps / button.keyCap.
   //
   // `rightSideButtons` items need `row` (1-indexed, top row = 1), `order`
   // (1-indexed position within the row, left-to-right), and whatever the
   // caller wants back on the assignment (typically the button object
   // itself).
   function computeKeyAssignments(rightSideButtons) {
-    var maxRow = rightSideButtons.reduce(function (max, b) {
-      return Math.max(max, b.row || 0);
-    }, 0);
-    var keyboardRowStart = Math.max(1, maxRow - PHYSICAL_KEYBOARD_ROWS.length + 1);
-    var assignments = []; // { key, button }
+    return assignLowerRows(rightSideButtons, DEFAULT_ROW_ANCHORS, false);
+  }
 
-    for (var i = 0; i < PHYSICAL_KEYBOARD_ROWS.length; i++) {
-      var rowNumber = keyboardRowStart + i;
-      var rowButtons = rightSideButtons
-        .filter(function (b) { return b.row === rowNumber; })
-        .sort(function (a, b) { return a.order - b.order; });
-      var keys = selectKeysForRow(i, rowButtons.length);
-      var codes = selectCodesForRow(i, rowButtons.length);
-      rowButtons.forEach(function (button, idx) {
-        var key = keys[idx];
-        if (!key) return;
-        assignments.push({ key: key, code: codes[idx], button: button });
+  // Same as computeKeyAssignments(), for the bass ("left" side) buttons'
+  // lower 4 rows, using BASS_ROW_ANCHORS.
+  function computeBassKeyAssignments(leftSideButtons) {
+    return assignLowerRows(leftSideButtons, BASS_ROW_ANCHORS, true);
+  }
+
+  // Bass row 1's F-key assignments (BASS_FUNCTION_KEYS), same
+  // { key, code, button } shape. A binding whose button doesn't exist in
+  // this layout is just skipped.
+  function computeBassFunctionKeyAssignments(leftSideButtons) {
+    var assignments = [];
+    BASS_FUNCTION_KEYS.forEach(function (fk) {
+      var button = leftSideButtons.find(function (b) {
+        return b.row === fk.row && b.order === fk.order;
       });
-    }
+      if (button) assignments.push({ key: fk.key, code: fk.code, button: button });
+    });
     return assignments;
   }
 
@@ -128,8 +200,12 @@
     PHYSICAL_KEYBOARD_ROWS: PHYSICAL_KEYBOARD_ROWS,
     PHYSICAL_KEYBOARD_CODES: PHYSICAL_KEYBOARD_CODES,
     DEFAULT_ROW_ANCHORS: DEFAULT_ROW_ANCHORS,
+    BASS_ROW_ANCHORS: BASS_ROW_ANCHORS,
+    BASS_FUNCTION_KEYS: BASS_FUNCTION_KEYS,
     selectKeysForRow: selectKeysForRow,
     selectCodesForRow: selectCodesForRow,
-    computeKeyAssignments: computeKeyAssignments
+    computeKeyAssignments: computeKeyAssignments,
+    computeBassKeyAssignments: computeBassKeyAssignments,
+    computeBassFunctionKeyAssignments: computeBassFunctionKeyAssignments
   };
 })();

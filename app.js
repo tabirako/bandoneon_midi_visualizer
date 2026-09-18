@@ -219,10 +219,10 @@ function setButtonColorMode(mode) {
   renderMapping();
 }
 
-// Computer-keyboard mapping for the lower 4 rows of the treble (right) side.
+// Computer-keyboard mapping for the lower 4 rows of each side.
 // The row-selection logic itself lives in keyboard-mapping.js (pure,
 // unit-tested — see keyboard-mapping.test.js); this just applies its result
-// to this app's own state (keyboardCodeMap, button.keyCap).
+// to this app's own state (the code maps below, button.keyCap).
 //
 // Matching happens on KeyboardEvent.code (physical key position, e.g.
 // 'KeyA'/'Semicolon'/'Digit1'), not .key (the character produced) — code is
@@ -234,17 +234,39 @@ function setButtonColorMode(mode) {
 // relabeling it per actual layout would need navigator.keyboard.getLayoutMap(),
 // which is Chromium-only and permission-gated, so it's left as a known
 // limitation for non-QWERTY players rather than solved here.
-let keyboardCodeMap = new Map(); // KeyboardEvent.code -> button
+//
+// Left hand: the same letter keys play the bass side instead while Caps
+// Lock is ON (see syncHandMode below). The F keys follow their own side
+// like the letters do: F4 (treble) plays only in treble mode, F8/F9
+// (bass) only in bass mode.
+let trebleCodeMap = new Map(); // KeyboardEvent.code -> treble button (Caps Lock off)
+let bassCodeMap = new Map();   // KeyboardEvent.code -> bass button (Caps Lock on)
 const heldKeyNotes = new Map(); // KeyboardEvent.code -> note currently sounding for it
 
 function assignKeyboardKeys() {
-  keyboardCodeMap = new Map();
+  trebleCodeMap = new Map();
+  bassCodeMap = new Map();
   mapping.forEach((button) => { button.keyCap = undefined; });
 
   const right = mapping.filter((b) => b.side === 'right');
   window.keyboardMapping.computeKeyAssignments(right).forEach(({ key, code, button }) => {
-    keyboardCodeMap.set(code, button);
+    trebleCodeMap.set(code, button);
     button.keyCap = key.toUpperCase();
+  });
+
+  const left = mapping.filter((b) => b.side === 'left');
+  window.keyboardMapping.computeBassKeyAssignments(left).forEach(({ key, code, button }) => {
+    bassCodeMap.set(code, button);
+    button.keyCap = key.toUpperCase();
+  });
+  // Bass row 1's 𝄌/id4 and its neighbor (see BASS_FUNCTION_KEYS in
+  // keyboard-mapping.js — including the open 4/4-vs-0/0 question). F8/F9
+  // have no default action in mainstream browsers; on laptops that send
+  // media keys unless Fn is held, they just never arrive — same graceful
+  // degradation as F4 below.
+  window.keyboardMapping.computeBassFunctionKeyAssignments(left).forEach(({ key, code, button }) => {
+    bassCodeMap.set(code, button);
+    button.keyCap = key;
   });
 
   // C4/C#4 (id 38 on 142-rheinische, id 36 on 144-einheits -- found by note
@@ -262,9 +284,64 @@ function assignKeyboardKeys() {
   // detectable or worth branching on in code.
   const centerButton = right.find((b) => b.open?.note === 61 && b.close?.note === 60);
   if (centerButton) {
-    keyboardCodeMap.set('F4', centerButton);
+    trebleCodeMap.set('F4', centerButton);
     if (!centerButton.keyCap) centerButton.keyCap = 'F4';
   }
+}
+
+// ---- Hand switch (Caps Lock) -------------------------------------------
+// Caps Lock ON = letter keys play bass. The page can't stop the OS from
+// toggling Caps Lock (preventDefault has no effect on it), so rather than
+// keep a separate on/off flag that could drift from the real lock state,
+// the mode IS the lock state: re-read via getModifierState() on every key
+// and pointer event. The keyboard's own Caps Lock light doubles as the
+// mode indicator, and a page loaded (or returned to) with Caps Lock
+// already on is correct from the first key/mouse event. Accepted side
+// effect: leaving the page in bass mode leaves Caps Lock on elsewhere.
+let bassKeysActive = false;
+
+function syncHandMode(event) {
+  if (typeof event.getModifierState !== 'function') return;
+  const bass = event.getModifierState('CapsLock');
+  if (bass === bassKeysActive) return;
+  bassKeysActive = bass;
+  container.classList.toggle('bass-keys-active', bass);
+}
+
+// ---- Key labels (Dim inactive / Always on / Always off) ----------------
+// Which on-button key-cap badges show. "dim" (default) fades every cap
+// (letters and F keys alike) on the side the keyboard is NOT currently
+// playing. Container-level classes
+// like Hint mode, so neither this nor a Caps Lock flip needs a re-render.
+// Dimming is opacity only, so the cap keeps its background-driven text
+// color (dark on light buttons, light on Piano's black ones — never the
+// page theme; see styles.css's .key-cap).
+const persistedKeyCapKey = 'bandoneon-keycaps-v1';
+const keyCapSelect = document.getElementById('keyCapSelect');
+
+function detectInitialKeyCapMode() {
+  try {
+    const saved = localStorage.getItem(persistedKeyCapKey);
+    if (saved === 'dim' || saved === 'on' || saved === 'off') return saved;
+  } catch (err) {
+    // localStorage unavailable — fall through to the default
+  }
+  return 'dim';
+}
+
+function applyKeyCapMode(mode) {
+  container.classList.toggle('keycaps-dim', mode === 'dim');
+  container.classList.toggle('keycaps-off', mode === 'off');
+}
+
+function setKeyCapMode(mode) {
+  const valid = (mode === 'on' || mode === 'off') ? mode : 'dim';
+  try {
+    localStorage.setItem(persistedKeyCapKey, valid);
+  } catch (err) {
+    // ignore — choice just won't persist across reloads
+  }
+  applyKeyCapMode(valid);
 }
 
 // Free-reed instrument character presets. Each instrument is built from up
@@ -445,7 +522,7 @@ function renderMapping() {
   }
 
   const leftPanel = document.createElement('section');
-  leftPanel.className = 'panel';
+  leftPanel.className = 'panel panel-bass';
   const leftTitle = document.createElement('h2');
   leftTitle.textContent = t('leftSideBass');
   leftPanel.appendChild(leftTitle);
@@ -454,7 +531,7 @@ function renderMapping() {
   leftPanel.appendChild(leftLayout);
 
   const rightPanel = document.createElement('section');
-  rightPanel.className = 'panel';
+  rightPanel.className = 'panel panel-treble';
   const rightTitle = document.createElement('h2');
   rightTitle.textContent = t('rightSideTreble');
   rightPanel.appendChild(rightTitle);
@@ -980,6 +1057,7 @@ function isTypingIntoControl() {
 }
 
 window.addEventListener('keydown', (event) => {
+  syncHandMode(event);
   if (isTypingIntoControl()) return;
 
   if (event.code === 'Space') {
@@ -990,7 +1068,10 @@ window.addEventListener('keydown', (event) => {
 
   const code = event.code;
   if (heldKeyNotes.has(code)) return; // ignore OS key-repeat while already held
-  const button = keyboardCodeMap.get(code);
+  // Hand is committed at attack like bellows direction: a note held
+  // through a Caps Lock flip still releases correctly, since
+  // heldKeyNotes remembers the note itself, not the button.
+  const button = (bassKeysActive ? bassCodeMap : trebleCodeMap).get(code);
   if (!button) return;
 
   event.preventDefault();
@@ -1005,12 +1086,21 @@ window.addEventListener('keydown', (event) => {
 });
 
 window.addEventListener('keyup', (event) => {
+  // Caps Lock's own keyup is where its new state is reliably settled on
+  // every OS/browser (macOS fires keydown on lock and keyup on unlock).
+  syncHandMode(event);
   const code = event.code;
   if (!heldKeyNotes.has(code)) return;
   const note = heldKeyNotes.get(code);
   heldKeyNotes.delete(code);
   handleNoteOff(note);
 });
+
+// Mouse events carry modifier state too, so the key-label dimming catches
+// up as soon as the pointer moves after returning to the page with Caps
+// Lock changed elsewhere — no need to wait for the first key press.
+window.addEventListener('pointermove', syncHandMode);
+window.addEventListener('pointerdown', syncHandMode);
 
 mappingFileInput?.addEventListener('change', (event) => {
   const file = event.target.files[0];
@@ -1192,6 +1282,10 @@ if (buttonColorSelect) {
   buttonColorSelect.addEventListener('change', () => setButtonColorMode(buttonColorSelect.value));
 }
 
+if (keyCapSelect) {
+  keyCapSelect.addEventListener('change', () => setKeyCapMode(keyCapSelect.value));
+}
+
 // Set before the first loadMappingForLayout() (which triggers the first
 // renderMapping()) rather than after, so a saved non-default choice is
 // correct on first paint instead of only from the next re-render on.
@@ -1211,6 +1305,10 @@ applyTheme(initialTheme);
 const initialHint = detectInitialHint();
 if (hintSelect) hintSelect.value = initialHint;
 applyHintMode(initialHint);
+
+const initialKeyCapMode = detectInitialKeyCapMode();
+if (keyCapSelect) keyCapSelect.value = initialKeyCapMode;
+applyKeyCapMode(initialKeyCapMode);
 
 window._bandoneon = {
   setOpenState,
