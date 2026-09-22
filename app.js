@@ -364,18 +364,26 @@ function setKeyCapMode(mode) {
 // is the full wet trio (M-, M, M+ all on) with no bass reed, for the lush
 // chorus/beating sound; Harmonica is the same dry-plus-sharp mid pair as
 // accordion but without the bass reed.
-// vibrato: peak cents-deviation of the LFO on the M-oscillators' pitch.
-// accordion's value (45) is measured (accordion_analysis/results.json --
-// real sustained-note vibrato peaked ~26-71c, occasionally more); the other
-// three presets aren't recordings we have, so they keep their original
-// *proportion relative to accordion* (0.75x/1.5x/1.25x) rather than being
-// re-guessed from nothing. #reedVibrato's slider range was widened to match
-// (was 0-15, which couldn't even reach the low end of the measured range).
+// vibrato: peak cents-deviation of the LFO on the M-oscillators' pitch,
+// applied constantly (5.2Hz, full depth from note-on, no ramp) for as long
+// as the note sounds -- see the LFO wiring in startReedVoice() below.
+// accordion's value used to be 45, taken from accordion_analysis/results.json
+// (real sustained-note vibrato peaked ~26-71c) -- but that figure measured
+// peaks across real recordings, which likely include deliberate expressive
+// bellows-shake moments, not the ambient wobble present on an ordinary
+// held note. Applying an expressive-gesture peak as a *constant, always-on*
+// depth reads as an unnatural nonstop warble rather than a real player's
+// occasional vibrato -- confirmed by ear (too aggressive below ~20c) and
+// dropped to 15. The other three presets aren't recordings we have, so they
+// keep their original *proportion relative to accordion*'s old 45
+// (0.75x/1.5x/1.25x) rather than being re-guessed from nothing.
+// #reedVibrato's slider range was widened to match (was 0-15, which
+// couldn't even reach the low end of the originally measured range).
 const REED_PRESETS = {
-  bandoneon: { voiceMflat: 0, voiceM: 1, voiceMsharp: 0, detune: 0, breath: 5,  vibrato: 34, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 },
-  accordion: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 16, breath: 8,  vibrato: 45, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
-  harmonica: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 3, breath: 18, vibrato: 68, filterFreq: 3200, filterQ: 3.5, harmMix: 0 },
-  musette:   { voiceMflat: 1, voiceM: 1, voiceMsharp: 1, detune: 9, breath: 10, vibrato: 56, filterFreq: 2600, filterQ: 1.4, harmMix: 0 }
+  bandoneon: { voiceMflat: 0, voiceM: 1, voiceMsharp: 0, detune: 0, breath: 5,  vibrato: 11, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 },
+  accordion: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 16, breath: 8,  vibrato: 15, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
+  harmonica: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 3, breath: 18, vibrato: 23, filterFreq: 3200, filterQ: 3.5, harmMix: 0 },
+  musette:   { voiceMflat: 1, voiceM: 1, voiceMsharp: 1, detune: 9, breath: 10, vibrato: 19, filterFreq: 2600, filterQ: 1.4, harmMix: 0 }
 };
 
 function isReedInstrument(name) {
