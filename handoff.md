@@ -19,7 +19,7 @@ parsing; everything else is hand-written.
 | `bandoneon-utils.js` | `window.bandoneonUtils` — `normalizeMapping()` and `findMatchingButtons()`. Small, shared, deliberately dependency-free (no DOM access) so it's easy to unit-test — see `bandoneon-utils.test.js`. |
 | `keyboard-mapping.js` | `window.keyboardMapping` — `selectKeysForRow()`, `computeKeyAssignments()` (treble), and `computeBassKeyAssignments()`/`computeBassFunctionKeyAssignments()` (left hand, Caps Lock), the pure logic that turns a layout's `row`/`order` data into computer-keyboard key caps. Extracted out of `app.js` specifically so it's unit-testable (see `keyboard-mapping.test.js`) and so adding a new fingering system's row-length data doesn't require touching DOM-coupled code. |
 | `mappings.js` | `window.defaultMappings` — the actual button/note layout data for each supported system. This is the file most likely to be wrong in some small way; see "Data provenance" below before trusting any single note blindly. |
-| `reed-harmonics.js` | `window.reedHarmonics` — auto-generated (`accordion_analysis/generate_periodic_waves.py`) linear harmonic-amplitude tables (harmonics 1-10) measured from real accordion recordings, per reed rank (`low`/`mid`/`hi`) and 7 sampled MIDI keys. `app.js`'s `getReedPeriodicWave()` reads `low` and `mid` to build real-timbre `PeriodicWave`s for the reed synth — see "Reed synthesis" below. **`hi` is present in the data but currently unused by `app.js`** (only `low`/`mid` are read) — not a bug, just harmonic data that hasn't been wired to a third oscillator rank yet. |
+| `accordion-harmonics.js` | `window.accordionHarmonics` — auto-generated (`accordion_analysis/generate_periodic_waves.py`) linear harmonic-amplitude tables (harmonics 1-10) measured from real accordion recordings, per reed rank (`low`/`mid`/`hi`) and 7 sampled MIDI keys. `app.js`'s `getReedPeriodicWave()` reads `low` and `mid` to build real-timbre `PeriodicWave`s for the reed synth — see "Reed synthesis" below. **`hi` is present in the data but currently unused by `app.js`** (only `low`/`mid` are read) — not a bug, just harmonic data that hasn't been wired to a third oscillator rank yet. |
 | `bandoneon-harmonics.js` | `window.bandoneonHarmonics` — auto-generated (`accordion_analysis/generate_bandoneon_waves.py`) harmonic-amplitude tables measured from a real bandoneon, keyed by bellows direction (`open`/`close`) / side (`left`/`right`) / note name, plus per-note `measured_f0_hz`/`beat_hz`/`beat_reliable`. **Not `<script>`-loaded by `index.html` and not read anywhere in `app.js`** — generated data waiting for a real bandoneon voice to be built; see "Open items" below. |
 | `color-ranges.js` | **Deleted.** Used to be dead code (see Decision Log #4 — nothing read `window.buttonColorRanges` even while it was loaded); has since been removed from the repo entirely, and its `<script>` tag in `index.html` was removed to match (it had gone stale, still pointing at the deleted file). No trace of it should remain in either file going forward. |
 | `add_row_order.js` | One-time migration script (already run) that added `row`/`order` fields to the Rheinische data. Kept for reference/history, not part of the runtime app. Not referenced by `index.html`. |
@@ -138,10 +138,10 @@ Per note, the signal chain is:
   Harmonica and Musette (no bass reed on those real instruments), nonzero for
   Accordion/Bandoneon.
 - **Real timbre, not a generic waveform, where data exists**: `oscMflat`/
-  `oscM`/`oscMsharp` try to use a `PeriodicWave` built from `reed-harmonics.js`'s
+  `oscM`/`oscMsharp` try to use a `PeriodicWave` built from `accordion-harmonics.js`'s
   `mid` table (`getReedPeriodicWave(ctx, 'mid', note)`); `oscSub` tries the
   same table's `low` register. Each falls back to a plain `sawtooth`/`triangle`
-  oscillator type if `window.reedHarmonics` didn't load or has no table for
+  oscillator type if `window.accordionHarmonics` didn't load or has no table for
   that register. The measured tables are keyed by 7 sampled MIDI notes only
   (`sampleNotes: [53, 60, 65, 72, 77, 84, 93]`) — every played note snaps to
   its *nearest* sampled key's harmonic table (`nearestSampleNote()`) rather
@@ -297,6 +297,50 @@ both a desktop and a laptop keyboard.
   button's own background, never the page theme** (fixed dark, light only
   via `.dark-bg` on Piano's black buttons). An earlier theme-driven color
   went invisible on Piano/Single-color's ivory buttons under Night theme.
+
+### Panels & touch input (phone / tablet)
+
+Two side-by-side panels don't fit a phone: each button falls to its 40px
+minimum with only ~46px of spacing and 9-10px labels. **Panels**
+(`#panelSelect`, `localStorage` `bandoneon-panels-v1`) shows one side at a
+time so it gets the container's full width: `"both"`, `"left"`, `"right"`.
+Two devices (or a phone plus a laptop) cover both hands — which is also the
+*only* way to play bass on touch, since there's no Caps Lock there.
+
+- **Detection sets the default only.** `NARROW_OR_TOUCH` =
+  `(max-width: 900px), (pointer: coarse)` picks `"right"` (treble: the
+  melody side, and the one with the fuller keyboard mapping) when nothing
+  is saved. An explicit choice is stored and always wins, so a misread
+  device costs one dropdown change rather than trapping anyone. While no
+  choice is saved, `watchPanelDefault()` keeps following the screen live
+  (rotating a tablet, dragging a window narrow); it stops the moment the
+  user picks something.
+- **`pointer: coarse`, deliberately not `any-pointer: coarse`** — the
+  former asks whether the *primary* input is a finger, so a desktop with a
+  touch monitor attached stays on "both". A stylus/Wacom pen counts as
+  `fine` under either, so neither matches those.
+- **Rendering is unchanged** — `applyPanelMode()` only sets `data-panels`
+  on `#bandoneonContainer` and CSS hides the other panel, so switching
+  needs no re-render and the hidden side's buttons still exist for
+  MIDI-driven highlighting. Single-panel mode also bumps the button size
+  (`clamp(44px, 9vw, 64px)`), since one panel has twice the width.
+- **Press-and-hold replaced the old click blip** (`pointerdown`/`pointerup`
+  /`pointercancel` in `renderMapping()`; `pointerHeldNotes` keyed by
+  `pointerId`). A note now sounds for as long as it's held, on mouse *and*
+  touch, instead of a fixed 220ms. Per-pointer tracking means several
+  fingers = a real chord. `setPointerCapture` keeps the release event
+  coming even if the finger slides off the button.
+  - `renderMapping()` calls `releaseAllPointerNotes()` first: it destroys
+    every button element, and with it any pointer capture, so a note held
+    across a re-render (e.g. someone taps the Bellows button with a second
+    finger, which re-renders) would otherwise sound forever.
+  - Keyboard activation of a focused button (Enter) arrives as a click with
+    `detail === 0` and no press/release to follow, so **that** path keeps
+    the old fixed 220ms blip.
+  - `styles.css`'s "Touch Input" block (`touch-action: none`,
+    `-webkit-tap-highlight-color`, `user-select`, `-webkit-touch-callout`)
+    stops the browser claiming the gesture as a scroll/pinch, or adding the
+    long-press selection, callout menu and grey tap flash.
 
 ### MIDI transport (upload/play/stop/seek)
 
@@ -570,6 +614,67 @@ transcription.
   are unaffected by this — see the `144-einheits` provenance entry above,
   which is about pitch data, not labels.
 
+### The harmonic tables are meant to outlive this app
+
+`accordion-harmonics.js` (accordion) and `bandoneon-harmonics.js` exist partly
+**as a reusable measured-data asset for the user's other projects** — e.g. a
+separate static accordion chord-practice site — not only to feed this app's
+reed synth (user, 2026-09). Two consequences worth respecting:
+
+- **Keep them standalone and framework-free.** Both are plain
+  `window.<name> = {...}` data files with a generator-script header, no
+  imports, no dependency on anything else here. Another static site should
+  be able to drop in the file and use it with one `<script>` tag. Don't
+  fold them into `app.js`, and don't reshape them to suit this app's
+  internals alone.
+- **The file was renamed for exactly this reason** (2026-09): it used to be
+  `reed-harmonics.js` / `window.reedHarmonics`, which read as if it covered
+  every free reed when it's accordion-only. Done while this repo was still
+  the sole consumer, specifically so the chord-practice project starts from
+  the honest name. **The generator script that writes it
+  (`accordion_analysis/generate_periodic_waves.py`) is not in this repo** —
+  only its notes and plots are — so it still emits the old name and global.
+  Rename them there before regenerating, or you'll get an unreferenced
+  `reed-harmonics.js` dropped alongside this one and no error to tell you.
+
+**What the data actually shows** (analysis run 2026-09; 7 sampled keys ×
+3 registers for accordion, 25 measured notes for bandoneon):
+
+- **Brightness falls with pitch — the one pattern strong enough to build
+  on.** Accordion's `low` register is perfectly monotonic across all 7
+  keys: spectral tilt +0.4 dB/oct at MIDI 53 down to −15.9 dB/oct at 93,
+  centroid 5.64 → 1.23. Bandoneon agrees independently at r = −0.878
+  (tilt vs log f0, n = 25). Physically expected, and consistent across two
+  different instruments and two separate recording sessions.
+- **High notes go nearly pure**: harmonics above 0.1 amplitude drop from
+  10 to 2–3 by the top of the range. The odd/even ratio *looks* like it
+  explodes there (up to 26:1), but that's an artifact of everything except
+  the fundamental falling to near-zero — not real odd-harmonic character.
+- **Bandoneon reed beat is ~constant in Hz, not in cents**: 0.58–0.96 Hz,
+  mean 0.84, and **uncorrelated with pitch** (r = 0.006, n = 14 reliable).
+  If a real bandoneon voice is ever built, that argues for modeling detune
+  as a fixed *beat rate* rather than `REED_PRESETS`' fixed `detune` in
+  cents (a constant cents value would make the beat rate climb with pitch).
+
+**What the data is too thin to support** — do not draw these conclusions:
+
+- **Open vs close timbre**: only **4** note pairs overlap between the two
+  bellows directions. Mean tilt difference −1.67 dB/oct, but the spread is
+  −4.9 to +2.3 — the sign flips. Unusable as-is; needs the same notes
+  recorded both directions.
+- **Left vs right side**: fully confounded with pitch (left mean f0 205 Hz
+  vs right 848 Hz), so the apparent side difference is just the
+  brightness-vs-pitch pattern again.
+- **Accordion's `hi` register**: non-monotonic and noisy (tilt jumps back
+  up at keys 77/84), unlike `low`/`mid`. It's also the register nothing
+  reads yet — treat it as unvalidated.
+- **8 of 210 accordion amplitudes sit pinned at exactly 1.9953** = +6.0 dB,
+  a ceiling in the analysis rather than a measurement. All are in `low` at
+  keys 53/60/65 (the loudest notes), so those particular partials are
+  clipped and understate nothing — they *overstate* by saturating.
+- **No repeat takes anywhere**, so there are no error bars. A single bad
+  take is one bad data point with nothing to reveal it.
+
 ## Decision log (with reasoning, in roughly chronological order)
 
 Recording *why*, not just *what*, since a lot of these decisions came from
@@ -800,7 +905,7 @@ knowing before "simplifying" something back to the naive version.
     instrument. Replaced with the model described in "Reed synthesis" above:
     4 always-built oscillator slots (`M-`/`M`/`M+`/`L`) individually
     gain-gated per preset, each trying a real-timbre `PeriodicWave` built
-    from `reed-harmonics.js`'s Fourier-analyzed accordion recordings
+    from `accordion-harmonics.js`'s Fourier-analyzed accordion recordings
     (`getReedPeriodicWave()`, nearest-sampled-key snapping, cached per
     `register:sampleNote`) before falling back to a plain
     `sawtooth`/`triangle` if that data isn't available. `REED_PRESETS` grew a
@@ -811,7 +916,7 @@ knowing before "simplifying" something back to the naive version.
     time since up to 4 summed oscillators (vs. 2 before) pushed some presets
     noticeably louder than others. **Net effect on the "Open items" wet-reed
     recording work below**: the harmonic-*timbre* measurements
-    (`accordion_analysis/results.json` → `reed-harmonics.js`) are now wired
+    (`accordion_analysis/results.json` → `accordion-harmonics.js`) are now wired
     into `app.js` via this rewrite — that item should no longer be read as
     "not yet wired in." The separate *velocity-layered* (loud/weak) recording
     analysis remains unwired, since that work was inconclusive (see its own
@@ -819,6 +924,26 @@ knowing before "simplifying" something back to the naive version.
     harmonic *spectrum* differs per note/register (done, wired in), the other
     would measure how the spectrum differs per *velocity* at a fixed note
     (attempted, inconclusive, not wired in).
+
+17. **`reed-harmonics.js` renamed to `accordion-harmonics.js`** (global
+    `window.reedHarmonics` → `window.accordionHarmonics`), 2026-09. The old
+    name claimed the whole free-reed family while holding accordion-only
+    measurements, which matters more now that the harmonic tables are meant
+    to be reused by the user's other static projects (see "The harmonic
+    tables are meant to outlive this app"). Done at the user's go-ahead
+    precisely *because* this repo was still the only consumer — the cost of
+    renaming rises the moment a second project points at the old name.
+    Touched: the data file's own header and global, `index.html`'s
+    `<script>` tag, `app.js`'s `getReedPeriodicWave()` and two comments, and
+    every mention in this document. Verified by grep that no reference to
+    the old name survives in the repo. **Two things the rename did NOT
+    fix**, both pre-existing and still open:
+    - The generator script is outside this repo and still writes the old
+      name/global (see that section's warning).
+    - Every reed instrument, `bandoneon` included, still sounds from this
+      accordion table. `bandoneon-harmonics.js` remains loaded by nothing.
+      The rename makes that mismatch *visible* rather than fixing it, which
+      was part of the point — the old generic name disguised it.
 
 ## Testing
 
@@ -943,7 +1068,7 @@ refactor.
   directions and both sides, in `samples/bandoneon/{open,close}/{left,right}/`.
   Analyzed by `analyze_bandoneon.py` (harmonics, pitch, reed-beat, attack)
   and exported by `generate_bandoneon_waves.py` into `bandoneon-harmonics.js`
-  (same linear-harmonic-table format as `reed-harmonics.js`, keyed by
+  (same linear-harmonic-table format as `accordion-harmonics.js`, keyed by
   bellows/side/note instead of register/MIDI-key since a bandoneon button is
   one fixed pitch, not a switchable stop) — **generated but not yet wired
   into `app.js`**; that's the natural next step whenever a real bandoneon
@@ -985,7 +1110,7 @@ refactor.
   is still open regardless of the timbre work being wired in.
 - **Accordion harmonic-timbre measurements are wired into `app.js`.**
   `accordion_analysis/results.json`'s per-note Fourier analysis (harmonics
-  1-10, per reed rank, at 7 sampled keys) was exported to `reed-harmonics.js`
+  1-10, per reed rank, at 7 sampled keys) was exported to `accordion-harmonics.js`
   and is now read live by `startReedVoice()`/`getReedPeriodicWave()` — see
   Decision Log #16 and "Reed synthesis" above. Only the `low`/`mid` registers
   are actually used; the file's `hi` table is measured and present but not

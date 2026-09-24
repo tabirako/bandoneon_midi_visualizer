@@ -2,7 +2,16 @@
 // Linear harmonic-amplitude tables (harmonics 1-10, index 0 = fundamental) measured
 // from real accordion recordings, per reed rank (low/mid/hi) and sampled MIDI key.
 // See accordion_analysis/results.json for the full analysis these come from.
-window.reedHarmonics = {
+//
+// RENAMED 2026-09 from reed-harmonics.js / window.reedHarmonics, which read
+// as if it covered every free reed when it is accordion-only (the bandoneon
+// has its own file, bandoneon-harmonics.js). The generator script named
+// above lives OUTSIDE this repo and still emits the old file name and global
+// -- rename them there too, or a regeneration will silently drop an
+// unreferenced reed-harmonics.js next to this one. Standalone on purpose
+// (plain window.<name> = {...}, no imports): it's meant to be reusable in
+// the user's other static projects with a single <script> tag.
+window.accordionHarmonics = {
   sampleNotes: [53, 60, 65, 72, 77, 84, 93],
   low: {
     53: [1.0, 1.8281, 1.9953, 0.9795, 1.9953, 1.9953, 1.9953, 1.9953, 1.9953, 0.6577],

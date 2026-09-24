@@ -439,6 +439,44 @@ input[type="file"] {
   color: var(--muted);
 }
 
+/* ========== Panels (Both / Bass only / Treble only) ========== */
+/* data-panels on #bandoneonContainer, set by app.js's applyPanelMode().
+   Hiding the unused side rather than not rendering it keeps this a pure
+   class/attribute toggle (no re-render), and leaves the hidden side's
+   buttons in place for MIDI-driven highlighting. With only one panel
+   showing it gets the container's full width, which is the whole point on
+   a phone — so the buttons also get a bigger minimum size there. */
+.bandoneon[data-panels="left"] .panel-treble,
+.bandoneon[data-panels="right"] .panel-bass {
+  display: none;
+}
+
+.bandoneon[data-panels="left"] .button-wrapper,
+.bandoneon[data-panels="right"] .button-wrapper {
+  width: clamp(52px, 11vw, 80px);
+  height: clamp(52px, 11vw, 80px);
+}
+
+.bandoneon[data-panels="left"] .button-circle,
+.bandoneon[data-panels="right"] .button-circle {
+  width: clamp(44px, 9vw, 64px);
+  height: clamp(44px, 9vw, 64px);
+}
+
+/* ========== Touch Input ========== */
+/* The buttons are press-and-hold (pointerdown/up in renderMapping()), so
+   the browser must not claim the gesture first: touch-action stops a press
+   becoming a scroll/pinch, and the rest stop the long-press text selection,
+   callout menu and grey tap flash that otherwise make a held note feel
+   broken on a phone. */
+.button-circle {
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 /* ========== Responsive Media Queries ========== */
 @media (max-width: 1000px) {
   .panel .grid {

@@ -308,6 +308,74 @@ function syncHandMode(event) {
   container.classList.toggle('bass-keys-active', bass);
 }
 
+// ---- Panels (Both / Bass only / Treble only) ---------------------------
+// On a phone or tablet, two side-by-side panels leave each button about
+// 46px of room at a 40px minimum size, with 9-10px labels — unreadable and
+// nearly untappable. Showing one side at a time gives it the full width.
+// Two devices (or a phone plus a laptop) can then cover both hands, which
+// is also the only way to play bass on touch at all: there's no Caps Lock
+// to switch hands with.
+//
+// NARROW_OR_TOUCH picks only the *initial* value, and any explicit choice
+// is remembered and always wins — so a misread device costs one dropdown
+// change, once, rather than trapping anyone. `pointer: coarse` asks whether
+// the PRIMARY input is a finger, deliberately not `any-pointer: coarse`,
+// which would also match a desktop with a touch monitor plugged in (a
+// stylus/Wacom pen counts as fine either way, so neither matches those).
+const persistedPanelKey = 'bandoneon-panels-v1';
+const NARROW_OR_TOUCH = '(max-width: 900px), (pointer: coarse)';
+const panelSelect = document.getElementById('panelSelect');
+
+function prefersSinglePanel() {
+  return typeof window.matchMedia === 'function' && window.matchMedia(NARROW_OR_TOUCH).matches;
+}
+
+function savedPanelMode() {
+  try {
+    const saved = localStorage.getItem(persistedPanelKey);
+    if (saved === 'both' || saved === 'left' || saved === 'right') return saved;
+  } catch (err) {
+    // localStorage unavailable — treat as "no choice made yet"
+  }
+  return null;
+}
+
+// Treble by default on a small screen: it's the melody side, and the side
+// with the fuller keyboard mapping.
+function detectInitialPanelMode() {
+  return savedPanelMode() || (prefersSinglePanel() ? 'right' : 'both');
+}
+
+function applyPanelMode(mode) {
+  container.dataset.panels = mode;
+}
+
+function setPanelMode(mode) {
+  const valid = (mode === 'left' || mode === 'right') ? mode : 'both';
+  try {
+    localStorage.setItem(persistedPanelKey, valid);
+  } catch (err) {
+    // ignore — choice just won't persist across reloads
+  }
+  applyPanelMode(valid);
+}
+
+// Until an explicit choice is made, follow the screen live: rotating a
+// tablet or dragging a desktop window narrow re-picks the default. Stops
+// as soon as the user chooses for themselves (savedPanelMode() non-null).
+function watchPanelDefault() {
+  if (typeof window.matchMedia !== 'function') return;
+  const mql = window.matchMedia(NARROW_OR_TOUCH);
+  const onChange = () => {
+    if (savedPanelMode()) return;
+    const mode = prefersSinglePanel() ? 'right' : 'both';
+    if (panelSelect) panelSelect.value = mode;
+    applyPanelMode(mode);
+  };
+  if (mql.addEventListener) mql.addEventListener('change', onChange);
+  else if (mql.addListener) mql.addListener(onChange); // Safari < 14
+}
+
 // ---- Key labels (Dim inactive / Always on / Always off) ----------------
 // Which on-button key-cap badges show. "dim" (default) fades every cap
 // (letters and F keys alike) on the side the keyboard is NOT currently
@@ -523,7 +591,20 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+// Notes currently held down by a mouse button or finger, keyed by
+// pointerId so simultaneous touches each track their own note.
+const pointerHeldNotes = new Map(); // pointerId -> note
+
+function releaseAllPointerNotes() {
+  pointerHeldNotes.forEach((note) => handleNoteOff(note));
+  pointerHeldNotes.clear();
+}
+
 function renderMapping() {
+  // Every button element is about to be destroyed, taking its pointer
+  // capture with it — so anything held by a finger/mouse right now would
+  // never receive its pointerup and would sound forever. Release first.
+  releaseAllPointerNotes();
   container.innerHTML = '';
   if (!mapping.length) {
     return;
@@ -604,13 +685,42 @@ function renderMapping() {
     btn.appendChild(halo);
     wrapper.appendChild(btn);
 
-    btn.addEventListener('click', () => {
+    // Press-and-hold, mouse and touch alike: the note sounds for as long as
+    // the button is held, like a real bellows, rather than the fixed 220ms
+    // blip a plain click used to give. Tracking per pointerId is what makes
+    // several fingers on a touch screen a real chord instead of one note.
+    btn.addEventListener('pointerdown', (event) => {
+      if (pointerHeldNotes.has(event.pointerId)) return;
       const activeNote = activeDef?.note ?? activeDef;
-      const clickState = isOpen;
-      if (activeNote != null) {
-        handleNoteOn(activeNote, SIMULATED_VELOCITY);
-        setTimeout(() => handleNoteOff(activeNote, clickState), 220);
-      }
+      if (activeNote == null) return;
+      // Stops the press turning into a scroll/zoom gesture or a synthesized
+      // mouse click (styles.css's touch-action: none covers the rest).
+      event.preventDefault();
+      // Keeps pointerup/pointercancel coming back here even if the finger
+      // slides off the button before release — otherwise the note sticks.
+      try { btn.setPointerCapture(event.pointerId); } catch (err) { /* unsupported — release still works while the finger stays put */ }
+      pointerHeldNotes.set(event.pointerId, activeNote);
+      handleNoteOn(activeNote, SIMULATED_VELOCITY);
+    });
+
+    const releasePointer = (event) => {
+      const note = pointerHeldNotes.get(event.pointerId);
+      if (note == null) return;
+      pointerHeldNotes.delete(event.pointerId);
+      handleNoteOff(note);
+    };
+    btn.addEventListener('pointerup', releasePointer);
+    btn.addEventListener('pointercancel', releasePointer);
+
+    // Keyboard activation of a focused button (Enter) arrives as a click
+    // with no pointer behind it — detail 0. There's no press/release to
+    // follow there, so that path keeps the old fixed-length blip.
+    btn.addEventListener('click', (event) => {
+      if (event.detail !== 0) return;
+      const activeNote = activeDef?.note ?? activeDef;
+      if (activeNote == null) return;
+      handleNoteOn(activeNote, SIMULATED_VELOCITY);
+      setTimeout(() => handleNoteOff(activeNote), 220);
     });
 
     const layout = button.side === 'right' ? rightLayout : leftLayout;
@@ -807,7 +917,7 @@ function getReedNoiseBuffer(ctx) {
 }
 
 // ---- Measured-timbre PeriodicWaves (see accordion_analysis/) ------------
-// reed-harmonics.js (generated from real accordion recordings' Fourier
+// accordion-harmonics.js (generated from real accordion recordings' Fourier
 // analysis) supplies linear harmonic-1-10 amplitudes per reed rank (low =
 // the M-voices' octave-down partner, mid = the M-voices themselves) at 7
 // sampled keys spanning the range. Every played note snaps to its nearest
@@ -828,11 +938,13 @@ function nearestSampleNote(note, sampleNotes) {
     Math.abs(n - note) < Math.abs(best - note) ? n : best);
 }
 
-// Returns a cached PeriodicWave for `register` (see reed-harmonics.js) at
-// the sampled key nearest `note`, or null if the data file didn't load --
-// callers fall back to a plain oscillator type in that case.
+// Returns a cached PeriodicWave for `register` (see accordion-harmonics.js)
+// at the sampled key nearest `note`, or null if the data file didn't load --
+// callers fall back to a plain oscillator type in that case. NOTE: every
+// reed instrument, the "bandoneon" preset included, currently sounds from
+// this accordion table; bandoneon-harmonics.js exists but is still unwired.
 function getReedPeriodicWave(ctx, register, note) {
-  const table = window.reedHarmonics;
+  const table = window.accordionHarmonics;
   if (!table || !table[register] || !table.sampleNotes) return null;
   const sampleNote = nearestSampleNote(note, table.sampleNotes);
   const cacheKey = register + ':' + sampleNote;
@@ -1294,6 +1406,10 @@ if (keyCapSelect) {
   keyCapSelect.addEventListener('change', () => setKeyCapMode(keyCapSelect.value));
 }
 
+if (panelSelect) {
+  panelSelect.addEventListener('change', () => setPanelMode(panelSelect.value));
+}
+
 // Set before the first loadMappingForLayout() (which triggers the first
 // renderMapping()) rather than after, so a saved non-default choice is
 // correct on first paint instead of only from the next re-render on.
@@ -1317,6 +1433,11 @@ applyHintMode(initialHint);
 const initialKeyCapMode = detectInitialKeyCapMode();
 if (keyCapSelect) keyCapSelect.value = initialKeyCapMode;
 applyKeyCapMode(initialKeyCapMode);
+
+const initialPanelMode = detectInitialPanelMode();
+if (panelSelect) panelSelect.value = initialPanelMode;
+applyPanelMode(initialPanelMode);
+watchPanelDefault();
 
 window._bandoneon = {
   setOpenState,
