@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A static, client-side web app (plain HTML/CSS/vanilla JS, no framework, no build step, no npm dependencies) that visualizes free-reed instrument keyboards (Rheinische 142 and Einheits 144 bandoneon, Anglo 30-button concertina). It lights up buttons from live Web MIDI, uploaded `.mid` files, mouse/touch, or the computer keyboard, and synthesizes audio with Web Audio. Hosted on GitHub Pages (see `CNAME`). `@tonejs/midi` is loaded from a CDN in `index.html`.
+A static, client-side web app (plain HTML/CSS/vanilla JS, no framework, no build step, no npm dependencies) that visualizes free-reed instrument keyboards (Rheinische 142 and Einheits 144 bandoneon, Anglo 30-button concertina in Wheatstone and Jeffries layouts, English 48-button concertina). It lights up buttons from live Web MIDI, uploaded `.mid` files, mouse/touch, or the computer keyboard, and synthesizes audio with Web Audio. Hosted on GitHub Pages (see `CNAME`). `@tonejs/midi` is loaded from a CDN in `index.html`.
 
 [handoff.md](handoff.md) is a long design document (data provenance, decision log, per-feature notes). Read the relevant section before changing reed synthesis, keyboard mapping, i18n, theme, hint mode, or instrument data. Parts of it may lag the code (e.g. its file table), so trust the code where they disagree.
 

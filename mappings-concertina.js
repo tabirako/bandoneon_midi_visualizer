@@ -85,4 +85,75 @@
         open: { note: alt ? alt.open : b.open.note }
       });
     });
+
+  // english-48: standard 48-button English concertina (treble, G3-C7).
+  // UNISONORIC -- a button sounds the same note on push and pull, so
+  // `open` and `close` are equal throughout. The notes of a scale alternate
+  // between the hands (C4 left, D4 right, E4 left...), which is why neither
+  // side is "bass" or "treble". Six accidentals exist on both hands (G#3/Ab3,
+  // D#4/Eb4, G#4/Ab4, D#5/Eb5, G#5/Ab5, D#6/Eb6): 48 buttons, 42 pitches.
+  //
+  // `row` is the instrument's own row -- 4 per hand, drawn as the charts'
+  // columns: accidentals, naturals, naturals, accidentals. `order` runs
+  // low -> high pitch within a row.
+  //
+  // Provenance: two independent charts that agree on every button --
+  // concertina.com's english48-W842H736.gif (all 48 notes, no hand labels,
+  // octaves written with c = middle C) and John Dixon's LEFT/RIGHT charts on
+  // concertina.info (tina.faq/images/finger6.htm), which label the hands and
+  // draw each button on the treble staff, fixing its octave independently.
+  //
+  // x/y are MEASURED: blob-detected button centers from the concertina.com
+  // chart (all 48 found, in a clean 4-column grid per hand), scaled into
+  // [0.15, 0.85] x [0.08, 0.92] with one scale for both hands.
+  window.defaultMappings['english-48'] = [
+    { id: 1, side: "left", label: "1", row: 1, order: 1, x: 0.15, y: 0.871, close: { note: 56 }, open: { note: 56 } }, // Ab3
+    { id: 2, side: "left", label: "2", row: 1, order: 2, x: 0.15, y: 0.731, close: { note: 63 }, open: { note: 63 } }, // Eb4
+    { id: 3, side: "left", label: "3", row: 1, order: 3, x: 0.15, y: 0.591, close: { note: 70 }, open: { note: 70 } }, // Bb4
+    { id: 4, side: "left", label: "4", row: 1, order: 4, x: 0.15, y: 0.451, close: { note: 78 }, open: { note: 78 } }, // F#5
+    { id: 5, side: "left", label: "5", row: 1, order: 5, x: 0.15, y: 0.311, close: { note: 85 }, open: { note: 85 } }, // C#6
+    { id: 6, side: "left", label: "6", row: 1, order: 6, x: 0.15, y: 0.171, close: { note: 92 }, open: { note: 92 } }, // G#6
+    { id: 7, side: "left", label: "7", row: 2, order: 1, x: 0.383, y: 0.871, close: { note: 57 }, open: { note: 57 } }, // A3
+    { id: 8, side: "left", label: "8", row: 2, order: 2, x: 0.383, y: 0.729, close: { note: 64 }, open: { note: 64 } }, // E4
+    { id: 9, side: "left", label: "9", row: 2, order: 3, x: 0.383, y: 0.591, close: { note: 71 }, open: { note: 71 } }, // B4
+    { id: 10, side: "left", label: "10", row: 2, order: 4, x: 0.383, y: 0.451, close: { note: 77 }, open: { note: 77 } }, // F5
+    { id: 11, side: "left", label: "11", row: 2, order: 5, x: 0.383, y: 0.311, close: { note: 84 }, open: { note: 84 } }, // C6
+    { id: 12, side: "left", label: "12", row: 2, order: 6, x: 0.383, y: 0.171, close: { note: 91 }, open: { note: 91 } }, // G6
+    { id: 13, side: "left", label: "13", row: 3, order: 1, x: 0.617, y: 0.782, close: { note: 60 }, open: { note: 60 } }, // C4
+    { id: 14, side: "left", label: "14", row: 3, order: 2, x: 0.617, y: 0.642, close: { note: 67 }, open: { note: 67 } }, // G4
+    { id: 15, side: "left", label: "15", row: 3, order: 3, x: 0.617, y: 0.503, close: { note: 74 }, open: { note: 74 } }, // D5
+    { id: 16, side: "left", label: "16", row: 3, order: 4, x: 0.617, y: 0.364, close: { note: 81 }, open: { note: 81 } }, // A5
+    { id: 17, side: "left", label: "17", row: 3, order: 5, x: 0.617, y: 0.223, close: { note: 88 }, open: { note: 88 } }, // E6
+    { id: 18, side: "left", label: "18", row: 3, order: 6, x: 0.617, y: 0.084, close: { note: 95 }, open: { note: 95 } }, // B6
+    { id: 19, side: "left", label: "19", row: 4, order: 1, x: 0.85, y: 0.784, close: { note: 61 }, open: { note: 61 } }, // C#4
+    { id: 20, side: "left", label: "20", row: 4, order: 2, x: 0.85, y: 0.643, close: { note: 68 }, open: { note: 68 } }, // G#4
+    { id: 21, side: "left", label: "21", row: 4, order: 3, x: 0.85, y: 0.503, close: { note: 75 }, open: { note: 75 } }, // D#5
+    { id: 22, side: "left", label: "22", row: 4, order: 4, x: 0.85, y: 0.364, close: { note: 80 }, open: { note: 80 } }, // Ab5
+    { id: 23, side: "left", label: "23", row: 4, order: 5, x: 0.85, y: 0.223, close: { note: 87 }, open: { note: 87 } }, // Eb6
+    { id: 24, side: "left", label: "24", row: 4, order: 6, x: 0.85, y: 0.084, close: { note: 94 }, open: { note: 94 } }, // Bb6
+    { id: 25, side: "right", label: "25", row: 1, order: 1, x: 0.15, y: 0.92, close: { note: 56 }, open: { note: 56 } }, // G#3
+    { id: 26, side: "right", label: "26", row: 1, order: 2, x: 0.15, y: 0.78, close: { note: 63 }, open: { note: 63 } }, // D#4
+    { id: 27, side: "right", label: "27", row: 1, order: 3, x: 0.15, y: 0.64, close: { note: 68 }, open: { note: 68 } }, // Ab4
+    { id: 28, side: "right", label: "28", row: 1, order: 4, x: 0.15, y: 0.5, close: { note: 75 }, open: { note: 75 } }, // Eb5
+    { id: 29, side: "right", label: "29", row: 1, order: 5, x: 0.15, y: 0.36, close: { note: 82 }, open: { note: 82 } }, // Bb5
+    { id: 30, side: "right", label: "30", row: 1, order: 6, x: 0.15, y: 0.22, close: { note: 90 }, open: { note: 90 } }, // F#6
+    { id: 31, side: "right", label: "31", row: 2, order: 1, x: 0.383, y: 0.92, close: { note: 55 }, open: { note: 55 } }, // G3
+    { id: 32, side: "right", label: "32", row: 2, order: 2, x: 0.383, y: 0.78, close: { note: 62 }, open: { note: 62 } }, // D4
+    { id: 33, side: "right", label: "33", row: 2, order: 3, x: 0.383, y: 0.638, close: { note: 69 }, open: { note: 69 } }, // A4
+    { id: 34, side: "right", label: "34", row: 2, order: 4, x: 0.383, y: 0.5, close: { note: 76 }, open: { note: 76 } }, // E5
+    { id: 35, side: "right", label: "35", row: 2, order: 5, x: 0.383, y: 0.36, close: { note: 83 }, open: { note: 83 } }, // B5
+    { id: 36, side: "right", label: "36", row: 2, order: 6, x: 0.383, y: 0.22, close: { note: 89 }, open: { note: 89 } }, // F6
+    { id: 37, side: "right", label: "37", row: 2, order: 7, x: 0.383, y: 0.08, close: { note: 96 }, open: { note: 96 } }, // C7
+    { id: 38, side: "right", label: "38", row: 3, order: 1, x: 0.617, y: 0.864, close: { note: 59 }, open: { note: 59 } }, // B3
+    { id: 39, side: "right", label: "39", row: 3, order: 2, x: 0.617, y: 0.722, close: { note: 65 }, open: { note: 65 } }, // F4
+    { id: 40, side: "right", label: "40", row: 3, order: 3, x: 0.617, y: 0.582, close: { note: 72 }, open: { note: 72 } }, // C5
+    { id: 41, side: "right", label: "41", row: 3, order: 4, x: 0.617, y: 0.444, close: { note: 79 }, open: { note: 79 } }, // G5
+    { id: 42, side: "right", label: "42", row: 3, order: 5, x: 0.617, y: 0.304, close: { note: 86 }, open: { note: 86 } }, // D6
+    { id: 43, side: "right", label: "43", row: 3, order: 6, x: 0.617, y: 0.164, close: { note: 93 }, open: { note: 93 } }, // A6
+    { id: 44, side: "right", label: "44", row: 4, order: 1, x: 0.85, y: 0.864, close: { note: 58 }, open: { note: 58 } }, // Bb3
+    { id: 45, side: "right", label: "45", row: 4, order: 2, x: 0.85, y: 0.724, close: { note: 66 }, open: { note: 66 } }, // F#4
+    { id: 46, side: "right", label: "46", row: 4, order: 3, x: 0.85, y: 0.584, close: { note: 73 }, open: { note: 73 } }, // C#5
+    { id: 47, side: "right", label: "47", row: 4, order: 4, x: 0.85, y: 0.444, close: { note: 80 }, open: { note: 80 } }, // G#5
+    { id: 48, side: "right", label: "48", row: 4, order: 5, x: 0.85, y: 0.304, close: { note: 87 }, open: { note: 87 } } // D#6
+  ];
 })();

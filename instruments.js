@@ -98,6 +98,24 @@
       keyboard: { left: 'angloLeft', right: 'angloRight' },
       handSwitch: 'none',
       fallbackButtonCount: 30
+    },
+
+    // Standard 48-button English (treble, G3-C7) — the first unisonoric
+    // system, so the bellows control, its Space key and the push/pull
+    // legend all hide. Data in mappings-concertina.js.
+    'english-48': {
+      family: 'english',
+      name: 'English 48-button',
+      bisonoric: false,
+      // Scale notes alternate between the hands, so neither is bass/treble.
+      sideLabels: { left: 'Left hand', right: 'Right hand' },
+      // Both hands at once, since every scale step changes hands. One
+      // finger per instrument row, up keyboard columns (option 3). To
+      // switch back to the row layout (option 1), use 'englishRowsLeft' /
+      // 'englishRowsRight'. Provisional; see keyboard-mapping.js.
+      keyboard: { left: 'englishColumnsLeft', right: 'englishColumnsRight' },
+      handSwitch: 'none',
+      fallbackButtonCount: 48
     }
   };
 
@@ -106,6 +124,7 @@
   // it looks today). i18nKey optional, same rule as above.
   window.instrumentFamilies = {
     bandoneon: { name: 'Bandoneon' },
-    anglo: { name: 'Anglo concertina' }
+    anglo: { name: 'Anglo concertina' },
+    english: { name: 'English concertina' }
   };
 })();

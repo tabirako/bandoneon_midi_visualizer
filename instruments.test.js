@@ -163,6 +163,65 @@ test('anglo-30-cg-jeffries differs from Wheatstone only in the right-hand accide
   assert.strictEqual(wheat[15].close.note, 73, 'Wheatstone data was mutated');
 });
 
+test('english-48: G3-C7 chromatic, naturals alternate hands, six accidentals on both hands', () => {
+  // The transcription's cross-checks (see mappings-concertina.js).
+  const buttons = window.defaultMappings['english-48'];
+  assert.strictEqual(buttons.filter((b) => b.side === 'left').length, 24);
+  assert.strictEqual(buttons.filter((b) => b.side === 'right').length, 24);
+  const notes = buttons.map((b) => b.close.note);
+  const pitches = [...new Set(notes)].sort((a, b) => a - b);
+  assert.deepStrictEqual(pitches, Array.from({ length: 42 }, (_, i) => 55 + i), 'every semitone G3-C7 exactly once or twice');
+  const doubled = pitches.filter((n) => notes.filter((m) => m === n).length === 2);
+  assert.deepStrictEqual(doubled, [56, 63, 68, 75, 80, 87], 'G#/Ab and D#/Eb in each octave');
+  doubled.forEach((n) => {
+    const sides = buttons.filter((b) => b.close.note === n).map((b) => b.side).sort();
+    assert.deepStrictEqual(sides, ['left', 'right'], 'duplicate ' + n + ' should be one per hand');
+  });
+  // White notes step hand to hand: G3 R, A3 L, B3 R, C4 L, D4 R ...
+  const naturals = pitches.filter((n) => [0, 2, 4, 5, 7, 9, 11].includes(n % 12));
+  naturals.forEach((n, i) => {
+    const side = buttons.find((b) => b.close.note === n).side;
+    assert.strictEqual(side, i % 2 === 0 ? 'right' : 'left', 'natural ' + n + ' on the wrong hand');
+  });
+});
+
+// Both English keyboard layouts (the provisional choice may flip back, see
+// keyboard-mapping.js): the one in use, and the one kept for switching.
+[['englishColumns', 32, 81, 'G3-A5'],  // option 3, in use
+ ['englishRows', 40, 88, 'G3-E6']      // option 1, kept
+].forEach(([set, keyCount, top, range]) => test('english-48 ' + set + ': both hands share the keyboard without collisions, covering ' + range, () => {
+  const buttons = window.defaultMappings['english-48'];
+  const codes = new Map();
+  ['Left', 'Right'].forEach((hand) => {
+    window.keyboardMapping.computeAssignmentsFor(buttons.filter((b) => b.side === hand.toLowerCase()), set + hand)
+      .forEach(({ code, button }) => {
+        assert.ok(!codes.has(code), code + ' assigned twice (hands collide)');
+        codes.set(code, button);
+      });
+  });
+  assert.strictEqual(codes.size, keyCount);
+  const keyed = new Set([...codes.values()].map((b) => b.close.note));
+  for (let n = 55; n <= top; n++) assert.ok(keyed.has(n), 'no key for MIDI ' + n);
+}));
+
+test('english-48 uses the column layout, lowest note of each row on the bottom key', () => {
+  const sys = systems['english-48'];
+  assert.deepStrictEqual(sys.keyboard, { left: 'englishColumnsLeft', right: 'englishColumnsRight' });
+  const buttons = window.defaultMappings['english-48'];
+  const keyOf = (note) => {
+    const b = buttons.find((x) => x.close.note === note && x.side === (note === 60 || note === 57 ? 'left' : 'right'));
+    const a = window.keyboardMapping.computeAssignmentsFor(buttons.filter((x) => x.side === b.side), sys.keyboard[b.side])
+      .find((x) => x.button === b);
+    return a && a.code;
+  };
+  // C4 is the left hand's middle-finger row bottom; A3 its ring-finger row bottom.
+  assert.strictEqual(keyOf(60), 'KeyC');
+  assert.strictEqual(keyOf(57), 'KeyX');
+  // G3 is the right hand's middle-finger row bottom; D4 one up.
+  assert.strictEqual(keyOf(55), 'Comma');
+  assert.strictEqual(keyOf(62), 'KeyK');
+});
+
 test('the two original bandoneon ids are unchanged (saved mappings depend on them)', () => {
   // localStorage key is 'bandoneon-mapping-v1-' + id, so renaming either of
   // these would orphan a user's saved custom mapping.

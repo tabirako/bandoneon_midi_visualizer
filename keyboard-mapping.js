@@ -111,12 +111,15 @@
   // `growRight` (bass: R-O gains P).
   // Shared by the key/code selectors so the `key` and `code` rows above
   // (which are index-parallel) always pick the same slice.
-  function selectIndicesForRow(rowIndex, neededLength, anchors, growRight) {
+  // `fixed` never extends past the anchor: a longer row's extra (highest-
+  // order) buttons just get no key. Needed when two hands share one
+  // keyboard row, where growing would steal the other hand's keys.
+  function selectIndicesForRow(rowIndex, neededLength, anchors, growRight, fixed) {
     var physicalRow = PHYSICAL_KEYBOARD_ROWS[rowIndex];
     var anchor = anchors[rowIndex];
     var start = anchor.start;
     var length = Math.min(neededLength, anchor.length);
-    if (neededLength > anchor.length) {
+    if (neededLength > anchor.length && !fixed) {
       if (!growRight) {
         var extra = neededLength - anchor.length;
         start = Math.max(0, anchor.start - extra);
@@ -145,7 +148,7 @@
   // least comfortable row on the keyboard. A 3-row Anglo passes offset 1 to
   // sit on QWERTY/ASDF/ZXCV instead. `anchors` is indexed by PHYSICAL row,
   // so a set using an offset leaves the skipped entries null.
-  function assignLowerRows(sideButtons, anchors, growRight, rowOffset) {
+  function assignLowerRows(sideButtons, anchors, growRight, rowOffset, fixed) {
     var offset = rowOffset || 0;
     var usableRows = PHYSICAL_KEYBOARD_ROWS.length - offset;
     var maxRow = sideButtons.reduce(function (max, b) {
@@ -160,7 +163,7 @@
       var rowButtons = sideButtons
         .filter(function (b) { return b.row === rowNumber; })
         .sort(function (a, b) { return a.order - b.order; });
-      var idx = selectIndicesForRow(physicalRow, rowButtons.length, anchors, growRight);
+      var idx = selectIndicesForRow(physicalRow, rowButtons.length, anchors, growRight, fixed);
       var keys = PHYSICAL_KEYBOARD_ROWS[physicalRow].slice(idx.start, idx.start + idx.length);
       var codes = PHYSICAL_KEYBOARD_CODES[physicalRow].slice(idx.start, idx.start + idx.length);
       rowButtons.forEach(function (button, j) {
@@ -242,11 +245,76 @@
     { start: 5, length: 5 }  // n-/
   ];
 
+  // English 48 (24 buttons a hand in 4 rows of 5-7): too many for 40 keys,
+  // and its scales alternate hands on every note, so a Caps Lock hand
+  // switch would make even a scale unplayable. Both hands share the
+  // keyboard (handSwitch: 'none'). Two layouts exist; instruments.js picks
+  // one by name.
+  // PROVISIONAL (user, 2026-09): the choice might change again after
+  // discussing it with a real English concertina player. See handoff.md's
+  // Open items for the reasoning behind each option.
+  //
+  // IN USE -- englishColumns (option 3): one finger per instrument row, as
+  // on the real instrument (Lachenal's diagram: each finger lies along one
+  // row, the hand over its lower part). A typing finger's natural line is a
+  // keyboard COLUMN, so each row runs up one column, lowest note on the
+  // bottom (Z) row. Only each row's lowest 4 buttons get a key: 32 keys,
+  // G3-A5 chromatic.
+  //   left  pinky..index = rows 1-4:  1QAZ 2WSX 3EDC 4RFV
+  //   right index..pinky = rows 1-4:  7UJM 8IK, 9OL. 0P;/
+  var ENGLISH_LEFT_COLUMNS = [0, 1, 2, 3];
+  var ENGLISH_RIGHT_COLUMNS = [6, 7, 8, 9];
+  //
+  // KEPT FOR SWITCHING BACK -- englishRows (option 1): each instrument row
+  // on a keyboard row, 5 keys a hand, pitch rising left to right, with
+  // `fixed` so a 6-7 button row stops at its own 5 keys instead of spilling
+  // into the other hand's half. Widest range (40 keys, G3-E6), but it is
+  // the on-screen drawing turned 90 degrees.
+  //   1 2 3 4 5 | 6 7 8 9 0   accidental row
+  //   Q W E R T | Y U I O P   natural row
+  //   A S D F G | H J K L ;   natural row
+  //   Z X C V B | N M , . /   accidental row
+  var HALF_LEFT_ANCHORS = [
+    { start: 0, length: 5 },
+    { start: 0, length: 5 },
+    { start: 0, length: 5 },
+    { start: 0, length: 5 }
+  ];
+  var HALF_RIGHT_ANCHORS = [
+    { start: 5, length: 5 },
+    { start: 5, length: 5 },
+    { start: 5, length: 5 },
+    { start: 5, length: 5 }
+  ];
+
+  // Column mode: data row i goes up physical column columns[i-1], order 1
+  // on the bottom keyboard row. Buttons past the keyboard's 4 rows get no
+  // key (the highest-order ones, since order runs low -> high).
+  function assignColumns(sideButtons, columns) {
+    var bottom = PHYSICAL_KEYBOARD_ROWS.length - 1;
+    var assignments = [];
+    sideButtons.forEach(function (button) {
+      var col = columns[button.row - 1];
+      var physicalRow = bottom - (button.order - 1);
+      if (col === undefined || physicalRow < 0) return;
+      assignments.push({
+        key: PHYSICAL_KEYBOARD_ROWS[physicalRow][col],
+        code: PHYSICAL_KEYBOARD_CODES[physicalRow][col],
+        button: button
+      });
+    });
+    return assignments;
+  }
+
   var ANCHOR_SETS = {
     bandoneonTreble: { anchors: DEFAULT_ROW_ANCHORS, growRight: false },
     bandoneonBass: { anchors: BASS_ROW_ANCHORS, growRight: true, functionKeys: BASS_FUNCTION_KEYS },
     angloLeft: { anchors: ANGLO_LEFT_ANCHORS, growRight: true, rowOffset: 1 },
-    angloRight: { anchors: ANGLO_RIGHT_ANCHORS, growRight: true, rowOffset: 1 }
+    angloRight: { anchors: ANGLO_RIGHT_ANCHORS, growRight: true, rowOffset: 1 },
+    englishColumnsLeft: { columns: ENGLISH_LEFT_COLUMNS },
+    englishColumnsRight: { columns: ENGLISH_RIGHT_COLUMNS },
+    englishRowsLeft: { anchors: HALF_LEFT_ANCHORS, fixed: true },
+    englishRowsRight: { anchors: HALF_RIGHT_ANCHORS, fixed: true }
   };
 
   // Both return [] for an unknown/absent set name rather than throwing, so
@@ -255,7 +323,8 @@
   function computeAssignmentsFor(sideButtons, setName) {
     var set = ANCHOR_SETS[setName];
     if (!set) return [];
-    return assignLowerRows(sideButtons, set.anchors, !!set.growRight, set.rowOffset);
+    if (set.columns) return assignColumns(sideButtons, set.columns);
+    return assignLowerRows(sideButtons, set.anchors, !!set.growRight, set.rowOffset, !!set.fixed);
   }
 
   function computeFunctionKeyAssignmentsFor(sideButtons, setName) {

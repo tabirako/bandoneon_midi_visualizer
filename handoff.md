@@ -19,7 +19,7 @@ parsing; everything else is hand-written.
 | `bandoneon-utils.js` | `window.bandoneonUtils` — `normalizeMapping()` and `findMatchingButtons()`. Small, shared, deliberately dependency-free (no DOM access) so it's easy to unit-test — see `bandoneon-utils.test.js`. |
 | `keyboard-mapping.js` | `window.keyboardMapping` — `selectKeysForRow()`, `computeKeyAssignments()` (treble), and `computeBassKeyAssignments()`/`computeBassFunctionKeyAssignments()` (left hand, Caps Lock), the pure logic that turns a layout's `row`/`order` data into computer-keyboard key caps. Extracted out of `app.js` specifically so it's unit-testable (see `keyboard-mapping.test.js`) and so adding a new fingering system's row-length data doesn't require touching DOM-coupled code. |
 | `mappings.js` | `window.defaultMappings` — the actual button/note layout data for each supported system. This is the file most likely to be wrong in some small way; see "Data provenance" below before trusting any single note blindly. |
-| `mappings-concertina.js` | Concertina button data, merged into the same `window.defaultMappings` object as `mappings.js` (must load after it). Currently `anglo-30-cg` (Wheatstone) and `anglo-30-cg-jeffries`. Kept separate so each family's note tables stay readable; see "Data provenance". |
+| `mappings-concertina.js` | Concertina button data, merged into the same `window.defaultMappings` object as `mappings.js` (must load after it). Currently `anglo-30-cg` (Wheatstone), `anglo-30-cg-jeffries` and `english-48`. Kept separate so each family's note tables stay readable; see "Data provenance". |
 | `instruments.js` | `window.instrumentSystems` (one small spec sheet per selectable system, keyed by the **same id** as `mappings.js`) and `window.instrumentFamilies` (optgroup display names). This is what `app.js` builds the layout dropdown from, so adding an instrument needs no HTML edit. See "Instrument systems" below. |
 | `accordion-harmonics.js` | `window.accordionHarmonics` — auto-generated (`accordion_analysis/generate_periodic_waves.py`) linear harmonic-amplitude tables (harmonics 1-10) measured from real accordion recordings, per reed rank (`low`/`mid`/`hi`) and 7 sampled MIDI keys. `app.js`'s `getReedPeriodicWave()` reads `low` and `mid` to build real-timbre `PeriodicWave`s for the reed synth — see "Reed synthesis" below. **`hi` is present in the data but currently unused by `app.js`** (only `low`/`mid` are read) — not a bug, just harmonic data that hasn't been wired to a third oscillator rank yet. |
 | `bandoneon-harmonics.js` | `window.bandoneonHarmonics` — auto-generated (`accordion_analysis/generate_bandoneon_waves.py`) harmonic-amplitude tables measured from a real bandoneon, keyed by bellows direction (`open`/`close`) / side (`left`/`right`) / note name, plus per-note `measured_f0_hz`/`beat_hz`/`beat_reliable`. Loaded by `index.html` and read by `app.js`'s `getBandoneonPeriodicWave()` for the Bandoneon preset only, pooled by pitch (see "Bandoneon voice" in the Decision Log, #22). |
@@ -832,6 +832,71 @@ What each part rests on:
 `anglo-30-cg`'s display name gained "Wheatstone" at the same time; its id
 is unchanged (ids are permanent).
 
+### `english-48` (standard 48-button English concertina, treble)
+
+Added 2026-09. **The first unisonoric system**: `open` equals `close` on
+every button, `bisonoric: false`, so the bellows control hides (see
+"Unisonoric systems").
+
+Checked against **two independent charts that agree on all 48 buttons**:
+
+- **concertina.com**'s `fingering/images/english48-W842H736.gif`: every
+  note, but no hand labels. Its octave marks use **c = middle C** (capital
+  `G`/`A` for the bottom notes), not the ICA's c' = middle C. That's an
+  easy trap when comparing the two sites.
+- **John Dixon's LEFT/RIGHT charts** on concertina.info (`finger6.htm`):
+  labels the hands, and draws each button on a treble staff, which fixes
+  its octave independently of any lettering convention.
+
+`instruments.test.js` pins the structural facts that make the
+transcription self-checking:
+
+- **Range:** G3–C7, 42 pitches on 48 buttons.
+- **Duplicates:** exactly six pitches appear on both hands (G#/Ab and
+  D#/Eb in each octave), one per hand.
+- **Alternation:** the naturals step hand to hand all the way up
+  (G3 right, A3 left, B3 right, C4 left...).
+
+**Two more charts later agreed on every button (user-supplied, 2026-09)**,
+making four sources:
+
+- **Lachenal & Co.'s "Diagram of a 4 Octave Concertina"** (56 keys, with
+  the 48-key range G to C marked). It draws the hands on the ends, and
+  states the rule "all notes on the lines are on the left side, those in
+  the spaces are on the right side", which is exactly the alternation the
+  test checks.
+- **A Japanese keyboard chart (イングリッシュ・コンサーティーナ 鍵盤図)**
+  with the 48-button region outlined inside the 56.
+
+Both draw the rows vertically with pitch rising away from the wrist, the
+same orientation as the app's drawing.
+
+**`row` is the instrument's own row** (4 per hand; the charts draw them
+as columns): accidentals, naturals, naturals, accidentals. `order` is
+low → high pitch. **`x`/`y` are measured**: button centers were
+blob-detected in the concertina.com chart (exactly 48 found, in a clean
+4-column grid per hand) and scaled with one scale for both hands. The
+right hand's natural row really has 7 buttons (C7 sits on top of it), and
+its inner accidental row has 5.
+
+**Keyboard: both hands at once** (`handSwitch: 'none'`), because every
+scale step changes hands. A Caps Lock switch would make even a C-major
+scale take 7 switches. **The layout is provisional** (see Open items).
+The one in use is **option 3, one finger per instrument row**
+(`englishColumnsLeft`/`englishColumnsRight`): each row runs up one keyboard
+column, lowest note on the Z row. That gives 32 keys, G3–A5 chromatic.
+The first version, **option 1**, put each row on a keyboard row
+(`englishRowsLeft`/`englishRowsRight`, 40 keys, G3–E6, using the anchor
+sets' `fixed` flag). It is kept in `keyboard-mapping.js`, so switching
+back is a one-line change in `instruments.js`. `instruments.test.js` tests
+both layouts.
+
+**Rendered and checked in headless Chrome** (48 buttons, 40 key caps,
+bellows hidden, "Left hand"/"Right hand" titles; the 40 key caps were
+option 1, and option 3 shows 32). **Not checked**: what it
+sounds like. The reed presets are modelled on the accordion and bandoneon,
+and there's no English concertina timbre data.
+
 ### The harmonic tables are meant to outlive this app
 
 `accordion-harmonics.js` (accordion) and `bandoneon-harmonics.js` exist partly
@@ -1320,7 +1385,7 @@ refactor.
 ## Open items / natural next steps
 
 - **More concertina systems** (Phases 1-4 done — see Decision Log #18-21;
-  `anglo-30-cg` and `anglo-30-cg-jeffries` ship). Each further system
+  `anglo-30-cg`, `anglo-30-cg-jeffries` and `english-48` ship). Each further system
   should now be mostly data:
   - **Anglo G/D (Wheatstone): researched 2026-09, held back.** The sources
     don't agree well enough to ship it.
@@ -1342,7 +1407,46 @@ refactor.
       leaves the accidental row as the only question.
     - Terry Knight's chart may be a different maker's variant rather than
       an error. "Contemporary" suggests a modern maker's layout.
-  - **English concertina (48)** — the one that exercises Phase 3's
+  - **English concertina (48): done** (`english-48`, see "Data
+    provenance"). The original note is kept below for its reasoning.
+  - **English 48: computer-keyboard layout is provisional (user,
+    2026-09). The user might redo it after discussing it with a real
+    English concertina player.** 48 buttons can't all fit on 40 keys, so
+    some choice is forced. The user's working assumption: **the lower part
+    of the range matters most** (like a small synth keyboard, where the
+    middle gets used and the extremes rarely do). **Option 3 is in use
+    (switched from option 1, 2026-09); option 1 is kept in code.**
+    1. **Each instrument row → one keyboard row** (kept, not in use:
+       `englishRowsLeft`/`englishRowsRight`). 5 keys a hand, pitch rising
+       left to right, **G3–E6** chromatic on 40 keys, the widest range.
+       The catch, noticed by the user: the drawing shows the rows
+       vertically, so the keyboard is the picture **turned 90°**. It only
+       lines up visually if you imagine the keyboard sideways.
+    2. **Rotate the on-screen drawing** so the rows run horizontally to
+       match option 1's keys. Not built. Screen and keyboard would agree,
+       but the drawing would no longer match any published chart. All
+       four sources draw the rows vertically.
+    3. **One finger per row, up a keyboard column** (IN USE:
+       `englishColumnsLeft`/`englishColumnsRight`, a new `columns` mode in
+       `keyboard-mapping.js`). On Lachenal's diagram each finger lies along
+       one row, and the hand covers the lower part. A typing finger's
+       natural line is a keyboard column, so:
+       - left pinky→index on `1QAZ 2WSX 3EDC 4RFV` (rows 1–4);
+       - right index→pinky on `7UJM 8IK, 9OL. 0P;/`;
+       - lowest note on the bottom (Z-row) key, rising away from you as on
+         the instrument;
+       - only each row's lowest 4 buttons get a key: 32 keys, **G3–A5**
+         chromatic.
+
+       Screen and keyboard line up with no mental rotation: each drawn
+       column reads straight up one keyboard column. This was checked in
+       headless Chrome.
+
+    **To switch back to option 1**, change `keyboard` in `instruments.js`'s
+    `english-48` entry to `englishRowsLeft`/`englishRowsRight`, and update
+    the test pinning the choice ("english-48 uses the column layout").
+    Both layouts' range tests stay as they are.
+  - *(original note)* **English concertina (48)** — the one that exercises Phase 3's
     unisonoric path for real. Note its notes alternate between hands, so
     `sideLabels` shouldn't say "bass"/"treble", and its 4 staggered rows
     will want their own anchor set.
