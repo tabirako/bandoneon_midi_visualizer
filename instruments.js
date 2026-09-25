@@ -100,6 +100,22 @@
       fallbackButtonCount: 30
     },
 
+    // Uhlig's original 20-button system: the Anglo 30 without its
+    // accidental row. "Anglo-German" because "German concertina" means this
+    // instrument in English but the big square Chemnitzer/Carlsfelder in
+    // German; the i18n label says "kleine deutsche Konzertina" for German
+    // readers. Data in mappings-concertina.js.
+    'anglo-german-20-cg': {
+      family: 'anglo',
+      i18nKey: 'layoutAngloGerman20',
+      name: 'Anglo-German 20-button (C/G)',
+      bisonoric: true,
+      sideLabels: { left: 'Left hand', right: 'Right hand' },
+      keyboard: { left: 'angloGerman20Left', right: 'angloGerman20Right' },
+      handSwitch: 'none',
+      fallbackButtonCount: 20
+    },
+
     // Standard 48-button English (treble, G3-C7) — the first unisonoric
     // system, so the bellows control, its Space key and the push/pull
     // legend all hide. Data in mappings-concertina.js.

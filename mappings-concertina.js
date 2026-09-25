@@ -86,6 +86,35 @@
       });
     });
 
+  // anglo-german-20-cg: Uhlig's original 20-button system (1834), called
+  // the "German concertina" in English and the "kleine deutsche Konzertina"
+  // in German. The 30-button Anglo grew out of it by adding an accidental
+  // row, so this is anglo-30-cg with row 1 removed: C row and G row, 5
+  // buttons a hand each. Rows renumbered 1-2, ids 1-20, and y shifted up
+  // to close the gap the missing row leaves.
+  //
+  // Provenance: concertina.com's anglo20 chart (with octaves) and
+  // akkordeonblog's "Griffbrett-Diagramm fuer deutsche Konzertina und
+  // 30-Tasten Anglo-Concertina" agree with these 20 notes exactly. ONE
+  // BUTTON IS DISPUTED: the left G row's lowest (id 6 here) is B3/A3 in
+  // those two, but G3/D4 in Terry Knight's 20-button chart and in a 19th-
+  // century "Diagram of the German Concertina with 20 keys" (Wikimedia).
+  // B3/A3 was chosen by the user (2026-09) to match the verified 30-button
+  // data; see handoff.md.
+  window.defaultMappings['anglo-german-20-cg'] =
+    window.defaultMappings['anglo-30-cg']
+      .filter(function (b) { return b.row !== 1; })
+      .map(function (b, i) {
+        return Object.assign({}, b, {
+          id: i + 1,
+          label: String(i + 1),
+          row: b.row - 1,
+          y: Math.round((b.y - 0.12) * 100) / 100,
+          close: { note: b.close.note },
+          open: { note: b.open.note }
+        });
+      });
+
   // english-48: standard 48-button English concertina (treble, G3-C7).
   // UNISONORIC -- a button sounds the same note on push and pull, so
   // `open` and `close` are equal throughout. The notes of a scale alternate

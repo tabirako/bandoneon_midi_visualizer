@@ -311,6 +311,11 @@
     bandoneonBass: { anchors: BASS_ROW_ANCHORS, growRight: true, functionKeys: BASS_FUNCTION_KEYS },
     angloLeft: { anchors: ANGLO_LEFT_ANCHORS, growRight: true, rowOffset: 1 },
     angloRight: { anchors: ANGLO_RIGHT_ANCHORS, growRight: true, rowOffset: 1 },
+    // The 20-button Anglo-German is the Anglo 30 minus its accidental row.
+    // rowOffset 2 puts its C and G rows on ASDF/ZXCV, the same keys those
+    // rows have on the 30-button, so moving between the two keeps the keys.
+    angloGerman20Left: { anchors: ANGLO_LEFT_ANCHORS, growRight: true, rowOffset: 2 },
+    angloGerman20Right: { anchors: ANGLO_RIGHT_ANCHORS, growRight: true, rowOffset: 2 },
     englishColumnsLeft: { columns: ENGLISH_LEFT_COLUMNS },
     englishColumnsRight: { columns: ENGLISH_RIGHT_COLUMNS },
     englishRowsLeft: { anchors: HALF_LEFT_ANCHORS, fixed: true },

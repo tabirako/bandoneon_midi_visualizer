@@ -163,6 +163,28 @@ test('anglo-30-cg-jeffries differs from Wheatstone only in the right-hand accide
   assert.strictEqual(wheat[15].close.note, 73, 'Wheatstone data was mutated');
 });
 
+test('anglo-german-20-cg is anglo-30-cg without its accidental row, on the same keys', () => {
+  const a30 = window.defaultMappings['anglo-30-cg'];
+  const g20 = window.defaultMappings['anglo-german-20-cg'];
+  const sys30 = systems['anglo-30-cg'];
+  const sys20 = systems['anglo-german-20-cg'];
+  const lower = a30.filter((b) => b.row !== 1);
+  assert.strictEqual(g20.length, 20);
+  const codeOf = (buttons, sys, b) => window.keyboardMapping
+    .computeAssignmentsFor(buttons.filter((x) => x.side === b.side), sys.keyboard[b.side])
+    .find((x) => x.button === b).code;
+  g20.forEach((b, i) => {
+    const w = lower[i];
+    assert.deepStrictEqual([b.side, b.row, b.order, b.x, b.close.note, b.open.note],
+      [w.side, w.row - 1, w.order, w.x, w.close.note, w.open.note], 'button ' + b.id);
+    assert.strictEqual(codeOf(g20, sys20, b), codeOf(a30, sys30, w), 'button ' + b.id + ' should keep its 30-button key');
+  });
+  // The disputed button (see mappings-concertina.js): B3 push / A3 pull.
+  const low = g20.find((b) => b.side === 'left' && b.row === 2 && b.order === 1);
+  assert.deepStrictEqual([low.close.note, low.open.note], [59, 57]);
+  assert.strictEqual(a30[0].close.note, 52, 'deriving must not mutate anglo-30-cg');
+});
+
 test('english-48: G3-C7 chromatic, naturals alternate hands, six accidentals on both hands', () => {
   // The transcription's cross-checks (see mappings-concertina.js).
   const buttons = window.defaultMappings['english-48'];

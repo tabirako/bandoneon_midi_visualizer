@@ -19,7 +19,7 @@ parsing; everything else is hand-written.
 | `bandoneon-utils.js` | `window.bandoneonUtils` — `normalizeMapping()` and `findMatchingButtons()`. Small, shared, deliberately dependency-free (no DOM access) so it's easy to unit-test — see `bandoneon-utils.test.js`. |
 | `keyboard-mapping.js` | `window.keyboardMapping` — `selectKeysForRow()`, `computeKeyAssignments()` (treble), and `computeBassKeyAssignments()`/`computeBassFunctionKeyAssignments()` (left hand, Caps Lock), the pure logic that turns a layout's `row`/`order` data into computer-keyboard key caps. Extracted out of `app.js` specifically so it's unit-testable (see `keyboard-mapping.test.js`) and so adding a new fingering system's row-length data doesn't require touching DOM-coupled code. |
 | `mappings.js` | `window.defaultMappings` — the actual button/note layout data for each supported system. This is the file most likely to be wrong in some small way; see "Data provenance" below before trusting any single note blindly. |
-| `mappings-concertina.js` | Concertina button data, merged into the same `window.defaultMappings` object as `mappings.js` (must load after it). Currently `anglo-30-cg` (Wheatstone), `anglo-30-cg-jeffries` and `english-48`. Kept separate so each family's note tables stay readable; see "Data provenance". |
+| `mappings-concertina.js` | Concertina button data, merged into the same `window.defaultMappings` object as `mappings.js` (must load after it). Currently `anglo-30-cg` (Wheatstone), `anglo-30-cg-jeffries`, `anglo-german-20-cg` and `english-48`. Kept separate so each family's note tables stay readable; see "Data provenance". |
 | `instruments.js` | `window.instrumentSystems` (one small spec sheet per selectable system, keyed by the **same id** as `mappings.js`) and `window.instrumentFamilies` (optgroup display names). This is what `app.js` builds the layout dropdown from, so adding an instrument needs no HTML edit. See "Instrument systems" below. |
 | `accordion-harmonics.js` | `window.accordionHarmonics` — auto-generated (`accordion_analysis/generate_periodic_waves.py`) linear harmonic-amplitude tables (harmonics 1-10) measured from real accordion recordings, per reed rank (`low`/`mid`/`hi`) and 7 sampled MIDI keys. `app.js`'s `getReedPeriodicWave()` reads `low` and `mid` to build real-timbre `PeriodicWave`s for the reed synth — see "Reed synthesis" below. **`hi` is present in the data but currently unused by `app.js`** (only `low`/`mid` are read) — not a bug, just harmonic data that hasn't been wired to a third oscillator rank yet. |
 | `bandoneon-harmonics.js` | `window.bandoneonHarmonics` — auto-generated (`accordion_analysis/generate_bandoneon_waves.py`) harmonic-amplitude tables measured from a real bandoneon, keyed by bellows direction (`open`/`close`) / side (`left`/`right`) / note name, plus per-note `measured_f0_hz`/`beat_hz`/`beat_reliable`. Loaded by `index.html` and read by `app.js`'s `getBandoneonPeriodicWave()` for the Bandoneon preset only, pooled by pitch (see "Bandoneon voice" in the Decision Log, #22). |
@@ -832,6 +832,56 @@ What each part rests on:
 `anglo-30-cg`'s display name gained "Wheatstone" at the same time; its id
 is unchanged (ids are permanent).
 
+### `anglo-german-20-cg` (Uhlig's 20-button system, C/G)
+
+Added 2026-09. **It's the original "German concertina"** (Uhlig, 1834),
+the ancestor of the Anglo, Chemnitzer, Carlsfelder and bandoneon. The
+30-button Anglo is this with an accidental row added, so the data is
+**derived from `anglo-30-cg` minus row 1** (rows renumbered 1–2, ids 1–20,
+y shifted up). Keys are the same `ASDFG|HJKL;` / `ZXCVB|NM,./` the Anglo 30
+gives these two rows (`angloGerman20*` anchor sets, `rowOffset: 2`).
+`instruments.test.js` pins both the derivation and the keys.
+
+**Naming (user's choice, 2026-09): "Anglo-German".** The German-language
+research turned up a real trap:
+
+- In English, "German concertina" means this 20-button instrument.
+- In German, "Konzertina" or "deutsche Konzertina" on its own usually
+  means the big square Chemnitzer/Carlsfelder. That was standardised in
+  1924 as a 64-button / 128-tone *Einheitskonzertina*, a parallel to the
+  Einheits bandoneon. German Wikipedia even calls Uhlig's 1834 design a
+  "Chemnitzer Konzertina".
+
+"Anglo-German" is the term both communities recognise for the 20-button
+system, and it's the title of the Wikimedia diagram. It sits in the Anglo
+group. Its German label (`layoutAngloGerman20`) reads "Kleine deutsche
+Konzertina (Anglo-German), 20 Tasten", using the German name for the
+small instrument. This is the first concertina with an `i18nKey`. The
+other languages keep "Anglo-German" as a proper name. Like all of
+`i18n.js`, it needs a native-speaker check.
+
+**Sources, and ONE DISPUTED BUTTON.** The left hand's lowest G-row button
+(id 6) is the problem:
+
+| Source | That button (push/pull) | Rest |
+|---|---|---|
+| concertina.com `anglo20-W1000H300.gif` (octave marks) | **B3/A3** | matches |
+| akkordeonblog "Griffbrett-Diagramm für deutsche Konzertina und 30-Tasten Anglo-Concertina" (German notation, `H` = B) | **B3/A3** | matches |
+| Terry Knight `20btn0gc.gif` ("Standard Contemporary Layout") | G3/D4 | matches on notes, but its **right-hand G row octaves are drawn one octave too high** (G6… where every other chart and the C row's interleaving put G5…) |
+| Wikimedia "Diagram of the German Concertina with 20 keys" (19th century) | G3/D4 | not transcribed in full |
+
+It's 2 vs 2. **B3/A3 was chosen by the user**, to match the verified
+30-button data (the irishtunebook PDF also mentions Wheatstone variants
+"without a low A" on this very button, so both exist). If a real player
+says otherwise, change only `close`/`open` of that one button. A test
+names it explicitly.
+
+**Side finding about `anglo-30-cg`, not acted on.** The akkordeonblog
+chart draws the Wheatstone 30's last right-hand accidental (id 20) as
+**F push / A pull**. Our data has A6/F6 (push/pull), and so do three
+other charts (ICA, concertina.info, irishtunebook). So it's probably that
+chart's error. Recorded here in case it turns up again.
+
 ### `english-48` (standard 48-button English concertina, treble)
 
 Added 2026-09. **The first unisonoric system**: `open` equals `close` on
@@ -1385,7 +1435,7 @@ refactor.
 ## Open items / natural next steps
 
 - **More concertina systems** (Phases 1-4 done — see Decision Log #18-21;
-  `anglo-30-cg`, `anglo-30-cg-jeffries` and `english-48` ship). Each further system
+  `anglo-30-cg`, `anglo-30-cg-jeffries`, `anglo-german-20-cg` and `english-48` ship). Each further system
   should now be mostly data:
   - **Anglo G/D (Wheatstone): researched 2026-09, held back.** The sources
     don't agree well enough to ship it.
@@ -1442,6 +1492,20 @@ refactor.
        column reads straight up one keyboard column. This was checked in
        headless Chrome.
 
+    **Idea, not built (user, 2026-09): put two more notes on F8/F9.** These
+    are the two consecutive function keys that are safe to press (no
+    browser action on a bare F8/F9; the bandoneon bass already uses them,
+    see `BASS_FUNCTION_KEYS`). The notes are **Bb5 + B5** (confirmed by
+    the user), both right hand (ids 29 and 35, order 5 of rows 1 and 2).
+    They are exactly the next two notes above option 3's top (A5), so the
+    keyed range would run on unbroken to **G3–B5**. They also sit at the
+    top of the index/middle-finger columns (`7`, `8`), roughly under
+    F8/F9. It's waiting, like the rest of this entry, on a real English
+    concertina player. It would
+    be a row/order-addressed `functionKeys` list on `englishColumnsRight`,
+    the same mechanism as the bandoneon bass. Mind the `fixed`/`columns`
+    path: `computeFunctionKeyAssignmentsFor()` already works per set.
+
     **To switch back to option 1**, change `keyboard` in `instruments.js`'s
     `english-48` entry to `englishRowsLeft`/`englishRowsRight`, and update
     the test pinning the choice ("english-48 uses the column layout").
@@ -1450,8 +1514,30 @@ refactor.
     unisonoric path for real. Note its notes alternate between hands, so
     `sideLabels` shouldn't say "bass"/"treble", and its 4 staggered rows
     will want their own anchor set.
-  - **Chemnitzer (52/side)** — closest relative of the bandoneon, and big
-    enough to need the Caps Lock hand switch rather than `handSwitch: 'none'`.
+  - **Chemnitzer: researched 2026-09, next up after the 20-button.**
+    (This entry used to say "52/side", which was wrong: 52 is the total.)
+    - **Two different instruments share the name.** The *American*
+      Chemnitzer has 52 buttons: 24 left in rows of 5-6-7-6, 28 right in
+      rows of 9-10-9. The *German* Chemnitzer/Carlsfelder standard (1924)
+      has 64 buttons / 128 tones. Decide which before transcribing.
+      American 52 is the one with usable charts.
+    - **Sources for the American 52:** Terry Knight
+      `korbo.com/piedcrow/diagrams/amchm052.gif`, with octave marks and
+      bandoneon-style button numbers (`1/0`, `2/3`…), so labels are real.
+      Also the Chicago Concertina Club's 104-key chart, via
+      germanconcertina.blogspot.com's "Chemnitzer Concertina Button
+      Layout" post. That's two independent sources, but 104 values read by
+      eye. Compare them zoomed, note by note, and show disagreements to
+      the user before writing data.
+    - **Decided: Caps Lock hand switch** (like the bandoneon), not both
+      hands at once.
+    - **Open, user to decide: drawing orientation.** Terry Knight draws it
+      as vertical columns from the player's view (and draws the bandoneon
+      the same way in `lrg_germ00.gif`). This app draws the bandoneon with
+      horizontal rows. So either match the app's bandoneon (rotate when
+      measuring) or match the chart. The user asked to see the charts
+      first.
+    - Positions: blob-detect from Terry's GIF, as for `english-48`.
   - **A caution learned in Phase 4:** these charts are images and reading
     them at 1:1 is not reliable — one button was transcribed wrongly from a
     low-resolution JPEG and only caught by cross-checking a second chart
