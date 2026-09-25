@@ -19,7 +19,7 @@ parsing; everything else is hand-written.
 | `bandoneon-utils.js` | `window.bandoneonUtils` — `normalizeMapping()` and `findMatchingButtons()`. Small, shared, deliberately dependency-free (no DOM access) so it's easy to unit-test — see `bandoneon-utils.test.js`. |
 | `keyboard-mapping.js` | `window.keyboardMapping` — `selectKeysForRow()`, `computeKeyAssignments()` (treble), and `computeBassKeyAssignments()`/`computeBassFunctionKeyAssignments()` (left hand, Caps Lock), the pure logic that turns a layout's `row`/`order` data into computer-keyboard key caps. Extracted out of `app.js` specifically so it's unit-testable (see `keyboard-mapping.test.js`) and so adding a new fingering system's row-length data doesn't require touching DOM-coupled code. |
 | `mappings.js` | `window.defaultMappings` — the actual button/note layout data for each supported system. This is the file most likely to be wrong in some small way; see "Data provenance" below before trusting any single note blindly. |
-| `mappings-concertina.js` | Concertina button data, merged into the same `window.defaultMappings` object as `mappings.js` (must load after it). Currently `anglo-30-cg` only. Kept separate so each family's note tables stay readable; see "Data provenance". |
+| `mappings-concertina.js` | Concertina button data, merged into the same `window.defaultMappings` object as `mappings.js` (must load after it). Currently `anglo-30-cg` (Wheatstone) and `anglo-30-cg-jeffries`. Kept separate so each family's note tables stay readable; see "Data provenance". |
 | `instruments.js` | `window.instrumentSystems` (one small spec sheet per selectable system, keyed by the **same id** as `mappings.js`) and `window.instrumentFamilies` (optgroup display names). This is what `app.js` builds the layout dropdown from, so adding an instrument needs no HTML edit. See "Instrument systems" below. |
 | `accordion-harmonics.js` | `window.accordionHarmonics` — auto-generated (`accordion_analysis/generate_periodic_waves.py`) linear harmonic-amplitude tables (harmonics 1-10) measured from real accordion recordings, per reed rank (`low`/`mid`/`hi`) and 7 sampled MIDI keys. `app.js`'s `getReedPeriodicWave()` reads `low` and `mid` to build real-timbre `PeriodicWave`s for the reed synth — see "Reed synthesis" below. **`hi` is present in the data but currently unused by `app.js`** (only `low`/`mid` are read) — not a bug, just harmonic data that hasn't been wired to a third oscillator rank yet. |
 | `bandoneon-harmonics.js` | `window.bandoneonHarmonics` — auto-generated (`accordion_analysis/generate_bandoneon_waves.py`) harmonic-amplitude tables measured from a real bandoneon, keyed by bellows direction (`open`/`close`) / side (`left`/`right`) / note name, plus per-note `measured_f0_hz`/`beat_hz`/`beat_reliable`. **Not `<script>`-loaded by `index.html` and not read anywhere in `app.js`** — generated data waiting for a real bandoneon voice to be built; see "Open items" below. |
@@ -793,6 +793,43 @@ This is also the first system to use an anchor set's `rowOffset`: with only
 push the instrument onto the number row. Offset 1 drops it to
 QWERTY/ASDF/ZXCV instead.
 
+**A third chart later confirmed this data too**: irishtunebook.com's
+*Wheatstone/Lachenal and Jeffries Standard Layouts* PDF, whose note names
+are extractable text rather than an image. It agrees on all 30 buttons.
+
+### `anglo-30-cg-jeffries` (30-button Anglo, C/G, Jeffries layout)
+
+Added 2026-09. **It differs from Wheatstone only in the right-hand
+accidental row** (ids 16-20). The left hand and both diatonic rows are
+identical, so `mappings-concertina.js` derives it from the `anglo-30-cg`
+table plus that one row instead of retyping all 30 buttons.
+`instruments.test.js` pins both halves of that claim.
+
+Checked against three charts:
+
+- the **ICA chart**, the same image as Wheatstone's (it draws both layouts
+  side by side) and the only one of the three with octave marks;
+- **concertina.info**'s `c_g_30_jeffries.jpg`;
+- the **irishtunebook.com PDF** above (text, not an image).
+
+What each part rests on:
+
+- **Accidental row (push/pull): D#5/C#5, C#5/D#5, G#5/G5, C#6/Bb5, A5/D6.**
+  All three charts agree on the note names. C#5 sounds on both push and
+  pull, which is the usual one-line description of how Jeffries differs.
+- **Octaves come from the ICA chart alone**, as they do for Wheatstone.
+  The last button (a''/d''', MIDI 81/86) is the least cross-checked value:
+  no second chart gives its octave. Its position does make musical sense.
+  It adds a push A5 and a pull D6, which the rest of the right hand lacks.
+- **The ICA chart has a misprint.** It prints the right G row's last button
+  as `f'''/f#'''`. The other two charts both say B/F#, the same as
+  Wheatstone, so the data uses B6/F#6. This is the second time a single
+  chart turned out to be wrong on a single button (see `anglo-30-cg`
+  above). The two-source rule keeps paying for itself.
+
+`anglo-30-cg`'s display name gained "Wheatstone" at the same time; its id
+is unchanged (ids are permanent).
+
 ### The harmonic tables are meant to outlive this app
 
 `accordion-harmonics.js` (accordion) and `bandoneon-harmonics.js` exist partly
@@ -1234,14 +1271,28 @@ refactor.
 ## Open items / natural next steps
 
 - **More concertina systems** (Phases 1-4 done — see Decision Log #18-21;
-  `anglo-30-cg` ships). Each further system should now be mostly data:
-  - **Anglo 30-button C/G *Jeffries*** — the cheapest next one by far: same
-    30 buttons, same geometry, same anchor sets, differing only in the
-    accidental row (mainly where C♯ sits). Copy `anglo-30-cg`, change one
-    row, add an entry. The ICA chart already has both layouts side by side.
-  - **Anglo G/D** — the same layout transposed; could be *generated* from
-    the C/G data by subtracting 5 semitones rather than transcribed, though
-    check the accidental rows rather than assuming.
+  `anglo-30-cg` and `anglo-30-cg-jeffries` ship). Each further system
+  should now be mostly data:
+  - **Anglo G/D (Wheatstone): researched 2026-09, held back.** The sources
+    don't agree well enough to ship it.
+    - *What agrees:* 25 of 30 buttons. That's the whole left hand and both
+      diatonic rows on the right. Both charts found match the C/G data
+      transposed down 5 semitones exactly.
+    - *What doesn't agree:* the right-hand accidental row, read
+      inner→outer as push/pull.
+      - concertina.info's `g_d_30_wheatstone.jpg` (hand-lettered, no
+        octaves): G#/Bb, E/D, D#/F, G#/Bb, **C/E**.
+      - Terry Knight's `korbo.com/piedcrow/diagrams/30btn0dg.gif`
+        ("Standard Contemporary Layout", has octave marks): g#/bb, **d/c**,
+        **c#/eb**, g#/bb, **c/d**.
+      - Neither matches plain transposition, which would give E/C for the
+        last button.
+      - The ICA chart covers C/G only.
+    - *To unblock:* find a third G/D chart that has octaves. Or ship only
+      what agrees: the 25 buttons can be generated as `C/G − 5`, which
+      leaves the accidental row as the only question.
+    - Terry Knight's chart may be a different maker's variant rather than
+      an error. "Contemporary" suggests a modern maker's layout.
   - **English concertina (48)** — the one that exercises Phase 3's
     unisonoric path for real. Note its notes alternate between hands, so
     `sideLabels` shouldn't say "bass"/"treble", and its 4 staggered rows

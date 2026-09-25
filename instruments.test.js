@@ -119,11 +119,11 @@ test('every system: unique button ids, one button per side/row/order, notes in M
   });
 });
 
-test('anglo-30-cg: all 30 buttons reach a key, and the rows spell ascending arpeggios', () => {
+['anglo-30-cg', 'anglo-30-cg-jeffries'].forEach((anglo) => test(anglo + ': all 30 buttons reach a key, and the rows spell ascending arpeggios', () => {
   // Guards the rowOffset path: without it a 3-row instrument is pushed up
   // onto the number row and the bottom row silently loses its keys.
-  const sys = systems['anglo-30-cg'];
-  const buttons = window.defaultMappings['anglo-30-cg'];
+  const sys = systems[anglo];
+  const buttons = window.defaultMappings[anglo];
   let keyed = 0;
   ['left', 'right'].forEach((side) => {
     const mine = buttons.filter((b) => b.side === side);
@@ -143,6 +143,24 @@ test('anglo-30-cg: all 30 buttons reach a key, and the rows spell ascending arpe
       .map((b) => b.close.note);
     assert.deepStrictEqual(push, expected, 'row ' + row + ' push notes');
   });
+}));
+
+test('anglo-30-cg-jeffries differs from Wheatstone only in the right-hand accidental row', () => {
+  // Three charts agree on this; see mappings-concertina.js.
+  const wheat = window.defaultMappings['anglo-30-cg'];
+  const jeff = window.defaultMappings['anglo-30-cg-jeffries'];
+  assert.strictEqual(jeff.length, wheat.length);
+  const accidentals = [];
+  jeff.forEach((b, i) => {
+    const w = wheat[i];
+    assert.deepStrictEqual([b.id, b.side, b.row, b.order, b.x, b.y], [w.id, w.side, w.row, w.order, w.x, w.y]);
+    if (b.side === 'right' && b.row === 1) accidentals.push([b.close.note, b.open.note]);
+    else assert.deepStrictEqual([b.close.note, b.open.note], [w.close.note, w.open.note], 'button ' + b.id + ' should match Wheatstone');
+  });
+  //                 D#/C#     C#/D#     G#/G      C#/Bb     A/D
+  assert.deepStrictEqual(accidentals, [[75, 73], [73, 75], [80, 79], [85, 82], [81, 86]]);
+  // Deriving must not alias the Wheatstone objects.
+  assert.strictEqual(wheat[15].close.note, 73, 'Wheatstone data was mutated');
 });
 
 test('the two original bandoneon ids are unchanged (saved mappings depend on them)', () => {

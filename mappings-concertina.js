@@ -15,7 +15,8 @@
 // therefore come from the ICA chart alone, though they also match the
 // arpeggio each row's push notes spell out (C row: C3 G3 C4 E4 G4 C5 E5
 // G5 C6 E6; G row: B3 D4 G4 B4 D5 G5 B5 D6 G6 B6).
-// Range C3-B6 (MIDI 48-95); see instruments.test.js.
+// Range C3-B6 (MIDI 48-95); see instruments.test.js. A third chart,
+// irishtunebook.com's (see anglo-30-cg-jeffries below), also agrees.
 //
 // x/y are COMPUTED, not measured: unlike the bandoneon's irregular
 // diagonal packing, an Anglo's rows are regular, so three rows of five on
@@ -55,4 +56,33 @@
     { id: 29, side: "right", label: "29", row: 3, order: 4, x: 0.69, y: 0.73, close: { note: 91 }, open: { note: 88 } },
     { id: 30, side: "right", label: "30", row: 3, order: 5, x: 0.88, y: 0.7, close: { note: 95 }, open: { note: 90 } }
   ];
+
+  // anglo-30-cg-jeffries: the same instrument in the Jeffries layout.
+  // Differs from Wheatstone ONLY in the right-hand accidental row (ids
+  // 16-20) -- left hand and both diatonic rows are identical -- so it is
+  // derived from the table above plus that one row rather than retyped.
+  //
+  // Provenance: three charts. Note names agree across all three -- the ICA
+  // chart above (which draws both layouts side by side), concertina.info's
+  // c_g_30_jeffries.jpg, and irishtunebook.com's "Wheatstone/Lachenal and
+  // Jeffries Standard Layouts" PDF (text-extractable, not just an image).
+  // One exception: the ICA chart prints the right G row's last button as
+  // f'''/f#'''; the other two both say B/F#, same as Wheatstone, so B/F#
+  // it is. Octaves come from the ICA chart alone, as for Wheatstone.
+  // C#5 is on both push (id 17) and pull (id 16) -- the Jeffries trait.
+  var JEFFRIES_ACCIDENTALS = {
+    16: { close: 75, open: 73 }, // d#''/c#''
+    17: { close: 73, open: 75 }, // c#''/d#''
+    18: { close: 80, open: 79 }, // g#''/g''
+    19: { close: 85, open: 82 }, // c#'''/bb''
+    20: { close: 81, open: 86 }  // a''/d'''
+  };
+  window.defaultMappings['anglo-30-cg-jeffries'] =
+    window.defaultMappings['anglo-30-cg'].map(function (b) {
+      var alt = JEFFRIES_ACCIDENTALS[b.id];
+      return Object.assign({}, b, {
+        close: { note: alt ? alt.close : b.close.note },
+        open: { note: alt ? alt.open : b.open.note }
+      });
+    });
 })();

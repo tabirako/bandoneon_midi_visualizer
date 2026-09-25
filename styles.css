@@ -389,9 +389,13 @@ input[type="file"] {
    while Caps Lock is off, treble while it's on — .bass-keys-active, set
    by app.js's syncHandMode()); F-key caps included, since F4 is treble-only
    and F8/F9 bass-only. Opacity only: the text color stays whatever the
-   button's own background calls for (see .key-cap above). */
-.keycaps-dim:not(.bass-keys-active) .panel-bass .key-cap,
-.keycaps-dim.bass-keys-active .panel-treble .key-cap {
+   button's own background calls for (see .key-cap above).
+   Gated on body:not(.no-hand-switch) so a both-hands system (Anglo) never
+   dims at all. That's gated here rather than overridden later because
+   :not() adds its argument's weight: this selector scores 4 classes, which
+   out-ranked the old body.no-hand-switch override (3 classes + 1 type). */
+body:not(.no-hand-switch) .keycaps-dim:not(.bass-keys-active) .panel-bass .key-cap,
+body:not(.no-hand-switch) .keycaps-dim.bass-keys-active .panel-treble .key-cap {
   opacity: 0.3;
 }
 
@@ -548,9 +552,10 @@ input[type="file"] {
 /* Systems where both hands play at once (handSwitch: 'none' — a 30-button
    Anglo fits 15 buttons a hand on one keyboard). There's no inactive side,
    so the Caps Lock hint, the muted-title/⌨ marker and the dimmed key caps
-   all have nothing to say. Selectors are deliberately more specific than
-   the rules they override (body + .bandoneon adds the type/class weight
-   those single-class rules lack). */
+   all have nothing to say. The title selectors below are deliberately
+   more specific than the rules they override (body + .bandoneon adds the
+   type/class weight those rules lack). Key-cap dimming isn't overridden
+   here; its own rule (under #keyCapSelect above) excludes these systems. */
 body.no-hand-switch .caps-hint {
   display: none;
 }
@@ -562,10 +567,6 @@ body.no-hand-switch .bandoneon .panel-treble h2 {
 
 body.no-hand-switch .bandoneon .panel h2::before {
   content: none;
-}
-
-body.no-hand-switch .bandoneon .key-cap {
-  opacity: 0.85;
 }
 
 /* ========== Touch Input ========== */

@@ -75,7 +75,8 @@
       family: 'anglo',
       // No i18nKey: a system can ship before anyone translates it, and
       // sideLabels/name fall through t() as literal text.
-      name: 'Anglo 30-button (C/G)',
+      // "Wheatstone" added once Jeffries shipped; the id stays as-is.
+      name: 'Anglo 30-button (C/G, Wheatstone)',
       bisonoric: true,
       // Not "bass"/"treble": an Anglo's left hand is the low half of the
       // same diatonic rows, not a separate bass keyboard.
@@ -83,6 +84,18 @@
       keyboard: { left: 'angloLeft', right: 'angloRight' },
       // 15 buttons a hand fit on one keyboard side by side, so both hands
       // play at once and there's nothing for Caps Lock to switch between.
+      handSwitch: 'none',
+      fallbackButtonCount: 30
+    },
+
+    // Same 30 buttons, geometry and keys as above; only the right-hand
+    // accidental row differs. Data in mappings-concertina.js.
+    'anglo-30-cg-jeffries': {
+      family: 'anglo',
+      name: 'Anglo 30-button (C/G, Jeffries)',
+      bisonoric: true,
+      sideLabels: { left: 'Left hand', right: 'Right hand' },
+      keyboard: { left: 'angloLeft', right: 'angloRight' },
       handSwitch: 'none',
       fallbackButtonCount: 30
     }
