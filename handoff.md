@@ -221,9 +221,26 @@ Fields, and who reads them:
 |---|---|
 | `family` | dropdown `<optgroup>` grouping |
 | `i18nKey` / `name` | the option's label — translation if there is one, else the plain `name`, so an untranslated new system still reads correctly |
-| `bisonoric` | **not yet read** — for hiding the bellows control on unisonoric systems (English concertina, duets) |
-| `sideLabels` | **not yet read** — for replacing the hardcoded "Bass"/"Treble" panel titles |
+| `bisonoric` | `false` hides the bellows control, its Space hint and the push/pull legend, and makes Space a no-op — see "Unisonoric systems" below. Defaults to bisonoric when absent |
+| `sideLabels` | the two panel headings, in `renderMapping()` |
+| `keyboard` | `{ left, right }` naming which anchor set in `keyboard-mapping.js` maps that side's rows onto the computer keyboard |
+| `bonusKeys` | extra bindings addressed **by note pair** (bandoneon's F4 → C4/C#4). Row/order-addressed extras live with the anchor set instead — see below |
 | `fallbackButtonCount` | `normalizeMapping()`'s placeholder size when a system's data is missing/empty |
+
+**`sideLabels` values may be an i18n key OR literal text.** `t()` returns
+its argument unchanged when no translation exists, so `'leftSideBass'`
+translates while `'Left hand'` passes straight through — a new system needs
+no `i18n.js` edit to get readable headings.
+
+**Two kinds of extra key binding, split by how they address a button:**
+
+- **Row/order-addressed** → lives in the anchor set (`ANCHOR_SETS` in
+  `keyboard-mapping.js`), because it's a property of that keyboard *shape*.
+  `bandoneonBass`'s F8/F9 are this kind.
+- **Note-pair-addressed** → lives in the system's `bonusKeys`, because it's
+  a property of that *instrument*. Bandoneon's F4 is this kind, matched by
+  note rather than id since the ids differ between the two systems
+  (38 vs 36).
 
 **Adding a system**: add its button array to `mappings.js` (or its own
 `mappings-*.js`) plus an entry here under the same key. `index.html` needs
@@ -241,6 +258,64 @@ option, which is how the old hardcoded markup behaved).
 **Grouping is conditional**: `<optgroup>`s appear only once more than one
 `family` exists. With today's two bandoneons the dropdown stays flat, which
 is exactly how it looked before this refactor.
+
+### Help panel (collapsible legend)
+
+The legend is a native `<details id="helpPanel">`, open by default, with the
+collapsed/expanded choice stored under `localStorage` key
+`bandoneon-help-v1`. Rationale: the three lines are what a first-time
+visitor needs, and dead weight once you know them.
+
+- **Native `<details>`, not a JS accordion** — the disclosure triangle,
+  keyboard operation and screen-reader semantics all come free, and it
+  still opens/closes with JavaScript disabled. Only the *remembering*
+  needs JS, which is the right thing to lose in that case.
+- **A small inline `<script>` sits immediately after the element**, not in
+  `app.js`, and removes `open` when the saved value is `'closed'`. Same
+  reasoning as the theme's pre-paint script in `<head>`: `app.js` runs at
+  the end of `<body>` and can be late enough to paint the panel open and
+  then snap it shut. The element doesn't exist yet during `<head>`, so the
+  script goes right after it instead. **Its hardcoded key must stay in
+  sync with `persistedHelpKey` in `app.js`** — same coupling the theme
+  script has.
+- `app.js` only listens for `toggle`, which fires in both directions and
+  for keyboard and programmatic opens too, so there's no click handler to
+  keep in sync.
+- The `<summary>` is styled as a control (pointer cursor, `--text-bright`,
+  hover underline, visible focus ring) rather than another line of prose,
+  since once collapsed it's the only part still on screen.
+
+### Unisonoric systems (`bisonoric: false`)
+
+Bisonoric instruments (bandoneon, Anglo, Chemnitzer) sound a different note
+on push vs pull, so bellows direction is real state. Unisonoric ones
+(English concertina, **all** duets) sound the same note either way, so the
+bellows controls describe something that does nothing. `isBisonoric()`
+reads the flag; `applyBellowsAvailability()` (called from
+`loadMappingForLayout()`) puts `.no-bellows` on `<body>`, and CSS does the
+rest:
+
+- `.bellows-only` — the bellows button, its "(Space to toggle)" hint, and
+  `legendLine3`'s push/pull notation: hidden.
+- `.no-bellows-only` — `legendColorsOnly` ("Colors are by octave."), shown
+  in place of `legendLine1`, whose second half tells the reader to press
+  Space to switch Open/Close. Swapping the whole line in CSS avoided
+  rewriting eight existing translations; the replacement reuses each
+  language's own first sentence from `legendLine1`, so the wording matches.
+- **Space falls through without `preventDefault()`** rather than being
+  swallowed, so it keeps ordinary browser behavior.
+- `isOpen` is pinned to `true` — both directions give the same note, but
+  this keeps the variable deterministic rather than inheriting whatever the
+  last bisonoric system left behind.
+- Button tooltips drop to a single note number, since `"Close 60 / Open 60"`
+  would print the same number twice under labels for a hidden control.
+
+`instruments.test.js` asserts that a system declaring `bisonoric: false`
+has `open === close` on **every** button. Nothing is unisonoric yet so it
+passes vacuously today, but it's the guard that catches English/duet data
+whose notes still differ per direction — which would otherwise hide the
+bellows control over data that still needed it, making some notes
+unreachable. Verified against a deliberately broken fake system.
 
 ### Keyboard mapping (computer keys → treble buttons, and bass via Caps Lock)
 
@@ -327,6 +402,22 @@ both a desktop and a laptop keyboard.
 - **Hand is committed at key-down**, like bellows direction: a note held
   through a Caps Lock flip still releases correctly (`heldKeyNotes` stores
   the note, not the button).
+- **Active-hand indicator** (`styles.css`, "Active-hand Indicator"): the
+  active side's panel title keeps `--panel-title` and gains a `⌨` marker;
+  the inactive side's drops to `--muted`. Added because the dimmed key caps
+  were the *only* in-app signal and they exist solely in the "Dim inactive
+  hand" setting — under "Always on"/"Always off" the page showed nothing
+  and the player had to glance at the Caps Lock light (which plenty of
+  keyboards don't have). Deliberately **not** gated on `#keyCapSelect`:
+  that menu is about labels, this is about which hand is live. Two signals
+  rather than one because a colour shift alone is easy to miss and
+  unreliable for a colorblind reader. Pure CSS on classes `syncHandMode()`
+  already sets, so no re-render. The marker's space is reserved on both
+  titles (`visibility`, not `display`) so a Caps Lock flip doesn't shift
+  the headings. Known cosmetic edge: it still shows on a touch device,
+  where there's no Caps Lock to flip — harmless, and left alone rather than
+  gated on `pointer: coarse`, which would wrongly hide it from a tablet
+  with a real keyboard attached.
 - **Key labels menu** (`#keyCapSelect`, `localStorage`
   `bandoneon-keycaps-v1`): `"dim"` (default — fades every cap, F keys
   included, on the side the keyboard isn't currently playing), `"on"`,
@@ -1004,6 +1095,35 @@ knowing before "simplifying" something back to the naive version.
     are populated but read by nothing yet.
     The remaining concertina blockers are written up under "Open items".
 
+19. **Phase 2: panel titles and keyboard anchors made data-driven, 2026-09.**
+    `renderMapping()` reads `sideLabels`; `assignKeyboardKeys()` reads
+    `keyboard` (named anchor sets) and `bonusKeys` instead of calling
+    `computeKeyAssignments`/`computeBassKeyAssignments` directly and
+    note-searching for C4/C#4 inline. `keyboard-mapping.js` gained
+    `ANCHOR_SETS` plus `computeAssignmentsFor()`/
+    `computeFunctionKeyAssignmentsFor()`; the three bandoneon-specific
+    wrappers stayed, as the readable shorthand the unit tests use and as
+    the documented meaning of each set.
+    **Verified behavior-preserving by diffing the two code paths**: the old
+    hardcoded logic and the new metadata-driven one produce *identical*
+    bindings on both systems — 33 on 142-rheinische, 36 on 144-einheits,
+    same key → same button id throughout, F4 landing on id 38/36
+    respectively. An unknown or absent anchor-set name yields no keys for
+    that side rather than throwing, so a half-specified system degrades
+    instead of borrowing bandoneon row shapes by accident;
+    `instruments.test.js` guards against the typo that would cause it.
+
+20. **Phase 3: unisonoric support, 2026-09.** See "Unisonoric systems"
+    above for the mechanism. Built before any unisonoric data exists,
+    deliberately: the English concertina is the system whose *shape* most
+    challenges this app's assumptions (unisonoric, and notes alternate
+    between hands so neither side is bass or treble), and finding that out
+    while also entering 48 buttons of data would have confused two kinds of
+    failure. Both bandoneons are untouched — `bisonoric` defaults to true
+    when a system omits it. Verified with fake systems rather than real
+    data: a valid unisonoric one passes the new data guard, a deliberately
+    mislabelled bisonoric one fails it.
+
 ## Testing
 
 `bandoneon-utils.test.js` and `keyboard-mapping.test.js` cover the project's
@@ -1050,17 +1170,8 @@ refactor.
 
 ## Open items / natural next steps
 
-- **Concertina support, phases 2-4** (Phase 1 done — see Decision Log #18).
-  Agreed sequencing with the user, each phase verifiable on its own:
-  - **Phase 2 — unhardcode panel titles and keyboard anchors.** Read
-    `sideLabels` in `renderMapping()` instead of the fixed `leftSideBass`/
-    `rightSideTreble`, and let a system name its own row anchors instead of
-    `keyboard-mapping.js`'s bandoneon-calibrated `DEFAULT_ROW_ANCHORS`/
-    `BASS_ROW_ANCHORS`. Still bandoneon-only, still no visible change.
-  - **Phase 3 — unisonoric systems.** English concertina and all duets play
-    the same note both bellows directions, so the bellows button, the Space
-    shortcut and the open/close data all need to no-op when
-    `bisonoric: false`. Testable with a fake entry before any real data.
+- **Concertina support, phase 4** (Phases 1-3 done — see Decision Log
+  #18-20). The engine is ready; what's left is data:
   - **Phase 4 — data entry.** Start with **Anglo 30-button C/G**: bisonoric
     (so it needs no new concepts), the most common concertina, only 30
     buttons. Unlike the bandoneon, concertina rows are *regular*, so `x`/`y`

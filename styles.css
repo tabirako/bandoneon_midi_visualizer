@@ -421,6 +421,37 @@ input[type="file"] {
   color: var(--muted);
 }
 
+/* Collapsible help (<details id="helpPanel">). The summary is the only
+   always-visible part once collapsed, so it's styled as a deliberate
+   control — pointer cursor, slightly brighter than the body text it hides
+   — rather than looking like another line of prose. The native marker is
+   kept: browsers draw the triangle and rotate it on open, and it stays
+   correct for screen readers and keyboard users. */
+.legend > summary {
+  cursor: pointer;
+  color: var(--text-bright);
+  font-size: 13px;
+  padding: 2px 0;
+  width: fit-content;
+}
+
+.legend > summary:hover {
+  text-decoration: underline;
+}
+
+/* Keyboard focus must stay visible — the default outline can sit tight
+   against the triangle and be easy to miss. */
+.legend > summary:focus-visible {
+  outline: 2px solid var(--text-bright);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* No gap above the first line when open (summary already has padding). */
+.legend > p:first-of-type {
+  margin-top: 6px;
+}
+
 /* Hard-caps "Active mapping buttons" at 2 lines so a chord with lots of
    simultaneous notes can't grow this line and push the bandoneon panels
    below it down the page — it just truncates with an ellipsis instead. */
@@ -461,6 +492,57 @@ input[type="file"] {
 .bandoneon[data-panels="right"] .button-circle {
   width: clamp(44px, 9vw, 64px);
   height: clamp(44px, 9vw, 64px);
+}
+
+/* ========== Unisonoric Systems ========== */
+/* `.no-bellows` goes on <body> (app.js's applyBellowsAvailability()) for a
+   system whose entry in instruments.js says `bisonoric: false` — English
+   concertina, all duets. Those sound the same note whichever way the
+   bellows move, so the bellows button, its Space hint and the push/pull
+   legend describe a control that does nothing; legendLine1 is swapped for
+   a version without its "press space" half. A CSS swap rather than JS, so
+   changing instrument needs no extra render pass. */
+.no-bellows-only {
+  display: none;
+}
+
+.no-bellows .bellows-only {
+  display: none;
+}
+
+.no-bellows .no-bellows-only {
+  display: block;
+}
+
+/* ========== Active-hand Indicator ========== */
+/* Which side the computer keyboard is currently playing (Caps Lock on =
+   bass — see syncHandMode() in app.js). Before this, the only in-app clue
+   was the dimmed key caps, which exist ONLY in the "Dim inactive hand"
+   setting — in "Always on"/"Always off" the page said nothing at all and
+   you had to look at the Caps Lock light. This works in all three.
+   Deliberately independent of #keyCapSelect: that menu is about labels,
+   this is about which hand is live.
+
+   Two signals on purpose: the muted title alone is easy to miss ("was that
+   always bluer?") and unreliable for a colorblind reader, so the active
+   side also gets a ⌨ marker. Pure CSS off classes app.js already sets, so
+   a Caps Lock flip needs no re-render. */
+.bandoneon:not(.bass-keys-active) .panel-bass h2,
+.bandoneon.bass-keys-active .panel-treble h2 {
+  color: var(--muted);
+}
+
+/* The marker's space is reserved on BOTH titles and only revealed on the
+   active one, so flipping Caps Lock doesn't shift the headings sideways. */
+.panel h2::before {
+  content: '⌨';
+  margin-right: 6px;
+  visibility: hidden;
+}
+
+.bandoneon:not(.bass-keys-active) .panel-treble h2::before,
+.bandoneon.bass-keys-active .panel-bass h2::before {
+  visibility: visible;
 }
 
 /* ========== Touch Input ========== */

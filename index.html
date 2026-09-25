@@ -128,8 +128,11 @@
         </select>
       </label>
 
-      <button id="toggleOpenClose" data-i18n="bellowsButtonOpen">Bellows: Open</button>
-      <label class="kbd" data-i18n="spaceToggleHint">(Space to toggle)</label>
+      <!-- .bellows-only: hidden on unisonoric systems (English concertina,
+           duets), where a button sounds the same note both directions and
+           there is nothing for a bellows toggle to change. -->
+      <button id="toggleOpenClose" class="bellows-only" data-i18n="bellowsButtonOpen">Bellows: Open</button>
+      <label class="kbd bellows-only" data-i18n="spaceToggleHint">(Space to toggle)</label>
       <label class="kbd" data-i18n="capsLockHint">(Caps Lock: left hand)</label>
       <button id="enableMidi" data-i18n="enableMidi">Enable MIDI Keyboard</button>
 
@@ -192,11 +195,42 @@
 
     <section id="bandoneonContainer" class="bandoneon"></section>
 
-    <section class="legend">
-      <p data-i18n-html="legendLine1">Colors are by octave. Press space to switch between <u>Open</u> and <u>Close</u>.</p>
+    <!--
+      Collapsible help. Open by default so a first-time visitor reads it
+      without hunting; collapsed state is remembered, because the same three
+      lines stop being useful once you know them. A native <details> on
+      purpose: it gives a real disclosure triangle, keyboard operation and
+      correct screen-reader semantics for free, and it still opens and
+      closes with JavaScript disabled — only the remembering needs JS.
+    -->
+    <details class="legend" id="helpPanel" open>
+      <summary data-i18n="helpSummary">How to use / Info</summary>
+      <p class="bellows-only" data-i18n-html="legendLine1">Colors are by octave. Press space to switch between <u>Open</u> and <u>Close</u>.</p>
+      <!-- Stands in for legendLine1 on unisonoric systems: same color note,
+           minus the bellows half, which would be describing a control that
+           isn't there. Swapped by CSS, so no JS and no re-render. -->
+      <p class="no-bellows-only" data-i18n="legendColorsOnly">Colors are by octave.</p>
       <p data-i18n-html="legendLine2">Click any visual button OR pressed the <u>Enable MIDI Keyboard</u> button above to simulate press.</p>
-      <p data-i18n-html="legendLine3">V = open/pull bellows, ⊓ = close/push bellows (standard squeezebox notation).</p>
-    </section>
+      <p class="bellows-only" data-i18n-html="legendLine3">V = open/pull bellows, ⊓ = close/push bellows (standard squeezebox notation).</p>
+    </details>
+    <!--
+      Runs immediately after the element above so a remembered "collapsed"
+      is applied before this part of the page is painted — app.js, at the
+      end of <body>, can be late enough to show the panel open and then
+      snap it shut. Same reasoning as the theme script in <head>, and the
+      same rule: this localStorage key must stay in sync with
+      persistedHelpKey in app.js.
+    -->
+    <script>
+      (function () {
+        var saved = null;
+        try { saved = localStorage.getItem('bandoneon-help-v1'); } catch (e) {}
+        if (saved === 'closed') {
+          var panel = document.getElementById('helpPanel');
+          if (panel) panel.removeAttribute('open');
+        }
+      })();
+    </script>
   </main>
 
   <script src="i18n.js"></script>

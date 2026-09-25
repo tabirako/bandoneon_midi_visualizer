@@ -14,6 +14,7 @@ const { test, summary } = require('./test-helpers.js');
 
 global.window = global;
 require('./mappings.js');
+require('./keyboard-mapping.js');
 require('./instruments.js');
 
 const systems = window.instrumentSystems;
@@ -52,6 +53,50 @@ test('every button array in mappings.js is reachable from the dropdown', () => {
 test('every family used by a system has a display entry', () => {
   ids.forEach((id) => {
     assert.ok(families[systems[id].family], systems[id].family + ': no entry in instrumentFamilies');
+  });
+});
+
+test('every keyboard anchor name resolves to a real set in keyboard-mapping.js', () => {
+  // A typo here wouldn't throw — computeAssignmentsFor() returns [] for an
+  // unknown set — so the instrument would just silently have no keys.
+  ids.forEach((id) => {
+    const kb = systems[id].keyboard || {};
+    Object.keys(kb).forEach((side) => {
+      assert.ok(
+        window.keyboardMapping.ANCHOR_SETS[kb[side]],
+        id + '.' + side + ': unknown anchor set "' + kb[side] + '"'
+      );
+    });
+  });
+});
+
+test('every bonusKey names a button that actually exists in that system', () => {
+  ids.forEach((id) => {
+    (systems[id].bonusKeys || []).forEach((bonus) => {
+      assert.ok(bonus.code, id + ': bonusKey needs a code');
+      const side = bonus.side === 'left' ? 'left' : 'right';
+      const found = window.defaultMappings[id].some((b) =>
+        (b.side === 'left' ? 'left' : 'right') === side &&
+        (b.open && b.open.note) === bonus.open &&
+        (b.close && b.close.note) === bonus.close);
+      assert.ok(found, id + ': no ' + side + ' button with close ' + bonus.close + '/open ' + bonus.open);
+    });
+  });
+});
+
+test('a unisonoric system\'s buttons must sound the same note both directions', () => {
+  // The whole point of bisonoric: false is that bellows direction doesn't
+  // change the note. If a future English/duet data file has differing
+  // open/close notes, the app would hide the bellows control while the data
+  // still behaved bisonorically — a note you could never reach. No system
+  // is unisonoric yet, so today this passes vacuously and stands guard for
+  // when one lands.
+  ids.filter((id) => systems[id].bisonoric === false).forEach((id) => {
+    window.defaultMappings[id].forEach((b) => {
+      const open = b.open && b.open.note !== undefined ? b.open.note : b.open;
+      const close = b.close && b.close.note !== undefined ? b.close.note : b.close;
+      assert.strictEqual(open, close, id + ' button ' + b.id + ': unisonoric but open ' + open + ' != close ' + close);
+    });
   });
 });
 

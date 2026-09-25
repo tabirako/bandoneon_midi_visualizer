@@ -182,18 +182,54 @@
     return assignLowerRows(leftSideButtons, BASS_ROW_ANCHORS, true);
   }
 
-  // Bass row 1's F-key assignments (BASS_FUNCTION_KEYS), same
-  // { key, code, button } shape. A binding whose button doesn't exist in
-  // this layout is just skipped.
-  function computeBassFunctionKeyAssignments(leftSideButtons) {
+  // Matches row/order-addressed extra bindings (e.g. BASS_FUNCTION_KEYS)
+  // against a side's buttons, same { key, code, button } shape. A binding
+  // whose button doesn't exist in this layout is just skipped.
+  function matchFunctionKeys(sideButtons, functionKeys) {
     var assignments = [];
-    BASS_FUNCTION_KEYS.forEach(function (fk) {
-      var button = leftSideButtons.find(function (b) {
+    functionKeys.forEach(function (fk) {
+      var button = sideButtons.find(function (b) {
         return b.row === fk.row && b.order === fk.order;
       });
       if (button) assignments.push({ key: fk.key, code: fk.code, button: button });
     });
     return assignments;
+  }
+
+  function computeBassFunctionKeyAssignments(leftSideButtons) {
+    return matchFunctionKeys(leftSideButtons, BASS_FUNCTION_KEYS);
+  }
+
+  // ---- Anchor sets -------------------------------------------------------
+  // A named bundle of "how does one side's rows map onto the keyboard":
+  // the per-row anchor slices, which way a longer-than-anchor row grows,
+  // and any row/order-addressed extra keys. A system names the set it wants
+  // per side in instruments.js (`keyboard: { left, right }`), instead of
+  // app.js hardcoding the bandoneon's two. A new instrument with a
+  // different row shape adds an entry here and points at it — no changes to
+  // the assignment code itself.
+  //
+  // `growRight` is the difference documented on BASS_ROW_ANCHORS: treble
+  // grows leftward from its anchor (X-. gains Z), bass grows rightward
+  // (R-O gains P) so buttons shared between 142 and 144 keep the same key.
+  var ANCHOR_SETS = {
+    bandoneonTreble: { anchors: DEFAULT_ROW_ANCHORS, growRight: false },
+    bandoneonBass: { anchors: BASS_ROW_ANCHORS, growRight: true, functionKeys: BASS_FUNCTION_KEYS }
+  };
+
+  // Both return [] for an unknown/absent set name rather than throwing, so
+  // a system that names no anchor set for a side (or names a typo'd one)
+  // simply gets no keyboard keys on that side.
+  function computeAssignmentsFor(sideButtons, setName) {
+    var set = ANCHOR_SETS[setName];
+    if (!set) return [];
+    return assignLowerRows(sideButtons, set.anchors, !!set.growRight);
+  }
+
+  function computeFunctionKeyAssignmentsFor(sideButtons, setName) {
+    var set = ANCHOR_SETS[setName];
+    if (!set || !set.functionKeys) return [];
+    return matchFunctionKeys(sideButtons, set.functionKeys);
   }
 
   window.keyboardMapping = {
@@ -202,8 +238,14 @@
     DEFAULT_ROW_ANCHORS: DEFAULT_ROW_ANCHORS,
     BASS_ROW_ANCHORS: BASS_ROW_ANCHORS,
     BASS_FUNCTION_KEYS: BASS_FUNCTION_KEYS,
+    ANCHOR_SETS: ANCHOR_SETS,
     selectKeysForRow: selectKeysForRow,
     selectCodesForRow: selectCodesForRow,
+    // Named-set API — what app.js uses now.
+    computeAssignmentsFor: computeAssignmentsFor,
+    computeFunctionKeyAssignmentsFor: computeFunctionKeyAssignmentsFor,
+    // Bandoneon-specific wrappers, kept as the readable shorthand the
+    // tests use and as the documented meaning of each anchor set.
     computeKeyAssignments: computeKeyAssignments,
     computeBassKeyAssignments: computeBassKeyAssignments,
     computeBassFunctionKeyAssignments: computeBassFunctionKeyAssignments

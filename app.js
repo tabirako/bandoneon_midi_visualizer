@@ -248,45 +248,53 @@ function assignKeyboardKeys() {
   bassCodeMap = new Map();
   mapping.forEach((button) => { button.keyCap = undefined; });
 
-  const right = mapping.filter((b) => b.side === 'right');
-  window.keyboardMapping.computeKeyAssignments(right).forEach(({ key, code, button }) => {
-    trebleCodeMap.set(code, button);
-    button.keyCap = key.toUpperCase();
+  // Which anchor set maps each side's rows onto the keyboard now comes from
+  // the system's entry in instruments.js rather than being hardcoded to the
+  // bandoneon's two -- a side naming no set (or an unknown one) simply gets
+  // no keys, instead of silently borrowing bandoneon row shapes.
+  const system = systemFor(currentLayout);
+  const anchorNames = system.keyboard || {};
+  const km = window.keyboardMapping;
+  const buttonsBySide = {
+    left: mapping.filter((b) => b.side === 'left'),
+    right: mapping.filter((b) => b.side !== 'left')
+  };
+  const codeMapBySide = { left: bassCodeMap, right: trebleCodeMap };
+
+  ['right', 'left'].forEach((side) => {
+    const buttons = buttonsBySide[side];
+    const setName = anchorNames[side];
+    const codeMap = codeMapBySide[side];
+
+    km.computeAssignmentsFor(buttons, setName).forEach(({ key, code, button }) => {
+      codeMap.set(code, button);
+      button.keyCap = key.toUpperCase();
+    });
+    // Row/order-addressed extras belonging to that anchor set -- for
+    // bandoneonBass, row 1's 𝄌 and its neighbor on F8/F9 (see
+    // BASS_FUNCTION_KEYS, including the open 4/4-vs-0/0 question).
+    km.computeFunctionKeyAssignmentsFor(buttons, setName).forEach(({ key, code, button }) => {
+      codeMap.set(code, button);
+      button.keyCap = key;
+    });
   });
 
-  const left = mapping.filter((b) => b.side === 'left');
-  window.keyboardMapping.computeBassKeyAssignments(left).forEach(({ key, code, button }) => {
-    bassCodeMap.set(code, button);
-    button.keyCap = key.toUpperCase();
+  // Note-pair-addressed extras from instruments.js -- for both bandoneons,
+  // F4 on C4/C#4, which sits in the topmost treble row the lower-4-rows
+  // assignment never reaches. Matched by note rather than id because the
+  // ids differ between systems. No mainstream browser acts on a bare F4
+  // (unlike Alt+F4 or Ctrl+F4, modifier combos this never touches); where
+  // the OS grabs the physical key first (macOS Launchpad, laptop media
+  // rows), the keydown listener simply never fires -- silent, harmless
+  // degradation, not worth branching on.
+  (system.bonusKeys || []).forEach((bonus) => {
+    const side = bonus.side === 'left' ? 'left' : 'right';
+    const button = buttonsBySide[side].find((b) =>
+      (b.open?.note ?? b.open) === bonus.open && (b.close?.note ?? b.close) === bonus.close);
+    if (!button) return;
+    codeMapBySide[side].set(bonus.code, button);
+    if (!button.keyCap) button.keyCap = bonus.key || bonus.code;
   });
-  // Bass row 1's 𝄌/id4 and its neighbor (see BASS_FUNCTION_KEYS in
-  // keyboard-mapping.js — including the open 4/4-vs-0/0 question). F8/F9
-  // have no default action in mainstream browsers; on laptops that send
-  // media keys unless Fn is held, they just never arrive — same graceful
-  // degradation as F4 below.
-  window.keyboardMapping.computeBassFunctionKeyAssignments(left).forEach(({ key, code, button }) => {
-    bassCodeMap.set(code, button);
-    button.keyCap = key;
-  });
-
-  // C4/C#4 (id 38 on 142-rheinische, id 36 on 144-einheits -- found by note
-  // pair rather than id, since ids differ between layouts) sits in the
-  // topmost treble row on both layouts, which computeKeyAssignments()
-  // above never reaches (it only covers the lower 4 rows) -- so this
-  // important, central button otherwise has no keyboard key at all. F4 is
-  // bound to it as a bonus, on top of whatever it already got above: no
-  // mainstream browser has a default action on a bare F4 press (unlike
-  // Alt+F4 or Ctrl+F4, which are modifier combos this never touches), so
-  // there's nothing to conflict with. On platforms where the OS intercepts
-  // the physical F4 key before it ever reaches the browser (e.g. macOS's
-  // default Launchpad binding), the keydown listener below simply never
-  // fires -- silent, harmless graceful degradation, not something
-  // detectable or worth branching on in code.
-  const centerButton = right.find((b) => b.open?.note === 61 && b.close?.note === 60);
-  if (centerButton) {
-    trebleCodeMap.set('F4', centerButton);
-    if (!centerButton.keyCap) centerButton.keyCap = 'F4';
-  }
 }
 
 // ---- Hand switch (Caps Lock) -------------------------------------------
@@ -520,6 +528,46 @@ function systemLabel(entry, fallback) {
   return fallback;
 }
 
+// ---- Help panel (collapsible) ------------------------------------------
+// The <details> in index.html ships open and is closed again pre-paint by
+// the small inline script right after it — that's what avoids a flash of
+// open-then-shut, so the only job left here is recording the user's
+// choice whenever they toggle it. persistedHelpKey MUST match the
+// hardcoded string in that inline script.
+const persistedHelpKey = 'bandoneon-help-v1';
+const helpPanel = document.getElementById('helpPanel');
+
+if (helpPanel) {
+  // 'toggle' fires for both directions, and for keyboard/programmatic
+  // opens too, so there's no separate click handler to keep in sync.
+  helpPanel.addEventListener('toggle', () => {
+    try {
+      localStorage.setItem(persistedHelpKey, helpPanel.open ? 'open' : 'closed');
+    } catch (err) {
+      // ignore — the panel still works, it just won't remember
+    }
+  });
+}
+
+// ---- Bisonoric vs unisonoric -------------------------------------------
+// Bisonoric (bandoneon, Anglo, Chemnitzer): a button sounds a different
+// note on push vs pull, so bellows direction is real state. Unisonoric
+// (English concertina, all duets): same note either way, so there is
+// nothing for the bellows control to change and it's hidden — see
+// styles.css's "Unisonoric Systems". Defaults to bisonoric when a system
+// doesn't say, since that's every instrument the app shipped with.
+function isBisonoric() {
+  return systemFor(currentLayout).bisonoric !== false;
+}
+
+function applyBellowsAvailability() {
+  document.body.classList.toggle('no-bellows', !isBisonoric());
+  // Pin the direction on a unisonoric system rather than leaving whatever
+  // the last bisonoric one was: both directions give the same note, but
+  // this keeps isOpen (and anything reading it) deterministic.
+  if (!isBisonoric()) isOpen = true;
+}
+
 function normalizeMapping(rawMapping, layout) {
   return window.bandoneonUtils.normalizeMapping(
     rawMapping, layout, systemFor(layout).fallbackButtonCount
@@ -550,6 +598,7 @@ function loadMappingForLayout(layout) {
   } else {
     mapping = normalizeMapping([], layout);
   }
+  applyBellowsAvailability();
   assignKeyboardKeys();
   renderMapping();
 }
@@ -635,10 +684,19 @@ function renderMapping() {
     return;
   }
 
+  // Panel headings come from the system's sideLabels (instruments.js), not
+  // fixed "Bass"/"Treble" — wrong for an Anglo concertina, where the left
+  // hand is the low half of the same rows rather than a bass side, and
+  // wrong for an English, where notes alternate between hands so neither
+  // side is either. t() returns its argument unchanged when there's no
+  // translation, so a label can be an i18n key OR literal text.
+  const sideLabels = systemFor(currentLayout).sideLabels || {};
+  const bisonoric = isBisonoric();
+
   const leftPanel = document.createElement('section');
   leftPanel.className = 'panel panel-bass';
   const leftTitle = document.createElement('h2');
-  leftTitle.textContent = t('leftSideBass');
+  leftTitle.textContent = t(sideLabels.left || 'leftSideBass');
   leftPanel.appendChild(leftTitle);
   const leftLayout = document.createElement('div');
   leftLayout.className = 'layout';
@@ -647,7 +705,7 @@ function renderMapping() {
   const rightPanel = document.createElement('section');
   rightPanel.className = 'panel panel-treble';
   const rightTitle = document.createElement('h2');
-  rightTitle.textContent = t('rightSideTreble');
+  rightTitle.textContent = t(sideLabels.right || 'rightSideTreble');
   rightPanel.appendChild(rightTitle);
   const rightLayout = document.createElement('div');
   rightLayout.className = 'layout';
@@ -662,7 +720,15 @@ function renderMapping() {
     btn.dataset.open = button.open?.note ?? button.open;
     btn.dataset.side = button.side;
     btn.dataset.label = button.label;
-    btn.setAttribute('title', `${button.side} • ${button.label} • ${t('stateClose')} ${button.close?.note ?? button.close} / ${t('stateOpen')} ${button.open?.note ?? button.open}`);
+    // "Close 60 / Open 62" only means something when the two differ; on a
+    // unisonoric system it would print the same number twice under two
+    // labels describing a bellows control that isn't shown.
+    const closeNote = button.close?.note ?? button.close;
+    const openNote = button.open?.note ?? button.open;
+    const notePart = bisonoric
+      ? `${t('stateClose')} ${closeNote} / ${t('stateOpen')} ${openNote}`
+      : `${openNote}`;
+    btn.setAttribute('title', `${button.side} • ${button.label} • ${notePart}`);
 
     const activeDef = isOpen ? button.open : button.close;
     const note = activeDef?.note ?? activeDef;
@@ -1206,6 +1272,10 @@ window.addEventListener('keydown', (event) => {
   if (isTypingIntoControl()) return;
 
   if (event.code === 'Space') {
+    // Nothing to toggle on a unisonoric system — fall through without
+    // preventDefault so Space keeps its ordinary browser behavior rather
+    // than being silently swallowed.
+    if (!isBisonoric()) return;
     event.preventDefault();
     setOpenState(!isOpen);
     return;

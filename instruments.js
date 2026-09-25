@@ -30,7 +30,23 @@
       i18nKey: 'layout142',
       name: '142-tone (Rheinische)',
       bisonoric: true,
+      // Panel headings. A value with a matching i18n key is translated;
+      // anything else passes through as literal text, because t() returns
+      // its argument unchanged when no translation exists. So a new system
+      // can just say `left: 'Left hand'` without touching i18n.js.
       sideLabels: { left: 'leftSideBass', right: 'rightSideTreble' },
+      // Which named anchor set in keyboard-mapping.js maps each side's rows
+      // onto the computer keyboard. Omit a side to give it no keys.
+      keyboard: { left: 'bandoneonBass', right: 'bandoneonTreble' },
+      // Extra bindings addressed by NOTE PAIR rather than row/order (that
+      // kind lives with the anchor set, as bandoneonBass's F8/F9 do).
+      // C4/C#4 sits in the topmost treble row, which the lower-4-rows
+      // assignment never reaches, so this important central button would
+      // otherwise have no key at all. Matched by note rather than id
+      // because the ids differ between the two systems (38 vs 36).
+      bonusKeys: [
+        { code: 'F4', key: 'F4', side: 'right', close: 60, open: 61 }
+      ],
       // Historical placeholder size used only when a system's button data
       // is missing/empty (see normalizeMapping). It's the *note* count, not
       // the button count (142 notes = 71 buttons × push/pull) — preserved
@@ -45,6 +61,10 @@
       name: '144-tone (Einheits)',
       bisonoric: true,
       sideLabels: { left: 'leftSideBass', right: 'rightSideTreble' },
+      keyboard: { left: 'bandoneonBass', right: 'bandoneonTreble' },
+      bonusKeys: [
+        { code: 'F4', key: 'F4', side: 'right', close: 60, open: 61 }
+      ],
       fallbackButtonCount: 144
     }
   };
