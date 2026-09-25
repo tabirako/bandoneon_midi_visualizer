@@ -39,10 +39,18 @@
     };
   }
 
-  function normalizeMapping(raw, layout){
+  // `fallbackButtonCount` is the placeholder size to synthesize when a
+  // system's button data is missing or empty. It's passed in (from that
+  // system's entry in instruments.js, via app.js) rather than looked up
+  // here, so this file stays pure and dependency-free — it used to
+  // hardcode `if (layout === '144-einheits')`, which meant every new
+  // instrument had to be named in here too. `layout` is still accepted
+  // for call-site readability but no longer branched on.
+  function normalizeMapping(raw, layout, fallbackButtonCount){
     if(!Array.isArray(raw) || raw.length === 0){
-      if(layout === '144-einheits'){return genDefaultMapping(144);}
-      if(layout === '142-rheinische'){return genDefaultMapping(142);} 
+      if(typeof fallbackButtonCount === 'number' && fallbackButtonCount > 0){
+        return genDefaultMapping(fallbackButtonCount);
+      }
     }
     return raw.map((it, idx) => {
       const x = typeof it.x === 'number'

@@ -19,11 +19,12 @@ parsing; everything else is hand-written.
 | `bandoneon-utils.js` | `window.bandoneonUtils` — `normalizeMapping()` and `findMatchingButtons()`. Small, shared, deliberately dependency-free (no DOM access) so it's easy to unit-test — see `bandoneon-utils.test.js`. |
 | `keyboard-mapping.js` | `window.keyboardMapping` — `selectKeysForRow()`, `computeKeyAssignments()` (treble), and `computeBassKeyAssignments()`/`computeBassFunctionKeyAssignments()` (left hand, Caps Lock), the pure logic that turns a layout's `row`/`order` data into computer-keyboard key caps. Extracted out of `app.js` specifically so it's unit-testable (see `keyboard-mapping.test.js`) and so adding a new fingering system's row-length data doesn't require touching DOM-coupled code. |
 | `mappings.js` | `window.defaultMappings` — the actual button/note layout data for each supported system. This is the file most likely to be wrong in some small way; see "Data provenance" below before trusting any single note blindly. |
+| `instruments.js` | `window.instrumentSystems` (one small spec sheet per selectable system, keyed by the **same id** as `mappings.js`) and `window.instrumentFamilies` (optgroup display names). This is what `app.js` builds the layout dropdown from, so adding an instrument needs no HTML edit. See "Instrument systems" below. |
 | `accordion-harmonics.js` | `window.accordionHarmonics` — auto-generated (`accordion_analysis/generate_periodic_waves.py`) linear harmonic-amplitude tables (harmonics 1-10) measured from real accordion recordings, per reed rank (`low`/`mid`/`hi`) and 7 sampled MIDI keys. `app.js`'s `getReedPeriodicWave()` reads `low` and `mid` to build real-timbre `PeriodicWave`s for the reed synth — see "Reed synthesis" below. **`hi` is present in the data but currently unused by `app.js`** (only `low`/`mid` are read) — not a bug, just harmonic data that hasn't been wired to a third oscillator rank yet. |
 | `bandoneon-harmonics.js` | `window.bandoneonHarmonics` — auto-generated (`accordion_analysis/generate_bandoneon_waves.py`) harmonic-amplitude tables measured from a real bandoneon, keyed by bellows direction (`open`/`close`) / side (`left`/`right`) / note name, plus per-note `measured_f0_hz`/`beat_hz`/`beat_reliable`. **Not `<script>`-loaded by `index.html` and not read anywhere in `app.js`** — generated data waiting for a real bandoneon voice to be built; see "Open items" below. |
 | `color-ranges.js` | **Deleted.** Used to be dead code (see Decision Log #4 — nothing read `window.buttonColorRanges` even while it was loaded); has since been removed from the repo entirely, and its `<script>` tag in `index.html` was removed to match (it had gone stale, still pointing at the deleted file). No trace of it should remain in either file going forward. |
 | `add_row_order.js` | One-time migration script (already run) that added `row`/`order` fields to the Rheinische data. Kept for reference/history, not part of the runtime app. Not referenced by `index.html`. |
-| `test-helpers.js`, `bandoneon-utils.test.js`, `keyboard-mapping.test.js` | Plain Node test files, no framework/dependencies — run with e.g. `node bandoneon-utils.test.js`. See "Testing" below. |
+| `test-helpers.js`, `bandoneon-utils.test.js`, `keyboard-mapping.test.js`, `instruments.test.js` | Plain Node test files, no framework/dependencies — run with e.g. `node bandoneon-utils.test.js`. See "Testing" below. |
 
 ## The domain, briefly
 
@@ -202,6 +203,44 @@ only the `<input>` itself, not the label text next to it, and browsers don't
 agree on how strongly they dim a disabled range input — the CSS class exists
 to dim the *whole* label row consistently and to force a `not-allowed`
 cursor, rather than relying on `disabled`'s default appearance alone.)
+
+### Instrument systems (`instruments.js`)
+
+Each selectable system has a small metadata entry — its "spec sheet" —
+keyed by the same id as its button array in `mappings.js`. The app used to
+know a system only by that id string and pattern-match on it
+(`if (layout === '144-einheits')` lived in `bandoneon-utils.js`), with the
+dropdown options, panel titles and keyboard anchors all hardcoded for
+bandoneon; every new instrument meant another `if` in several files. This
+is the same data-driven shape `i18n.js` already uses, where
+`window.languageNames` drives the language switcher.
+
+Fields, and who reads them:
+
+| Field | Read by |
+|---|---|
+| `family` | dropdown `<optgroup>` grouping |
+| `i18nKey` / `name` | the option's label — translation if there is one, else the plain `name`, so an untranslated new system still reads correctly |
+| `bisonoric` | **not yet read** — for hiding the bellows control on unisonoric systems (English concertina, duets) |
+| `sideLabels` | **not yet read** — for replacing the hardcoded "Bass"/"Treble" panel titles |
+| `fallbackButtonCount` | `normalizeMapping()`'s placeholder size when a system's data is missing/empty |
+
+**Adding a system**: add its button array to `mappings.js` (or its own
+`mappings-*.js`) plus an entry here under the same key. `index.html` needs
+no change. `instruments.test.js` checks the two stay in sync in both
+directions — an id here with no data, or data with no entry here (an
+instrument nobody can select), both fail.
+
+**IDs are permanent.** The saved-custom-mapping `localStorage` key is
+`'bandoneon-mapping-v1-' + id`, so renaming an id orphans that user's saved
+mapping. Change `name`/`i18nKey` to improve what's displayed; leave the key
+alone. `instruments.test.js` pins the two original bandoneon ids for this
+reason, and pins `142-rheinische` as first (the dropdown selects its first
+option, which is how the old hardcoded markup behaved).
+
+**Grouping is conditional**: `<optgroup>`s appear only once more than one
+`family` exists. With today's two bandoneons the dropdown stays flat, which
+is exactly how it looked before this refactor.
 
 ### Keyboard mapping (computer keys → treble buttons, and bass via Caps Lock)
 
@@ -945,6 +984,26 @@ knowing before "simplifying" something back to the naive version.
       The rename makes that mismatch *visible* rather than fixing it, which
       was part of the point — the old generic name disguised it.
 
+18. **Instrument metadata extracted to `instruments.js` (Phase 1 of a
+    planned concertina expansion), 2026-09.** Researched adding Anglo /
+    English / German / Chemnitzer concertinas and found the *variable
+    button count wasn't the obstacle* — the data model already carries
+    explicit `row`/`order`/`x`/`y` per button with no fixed count anywhere,
+    and `keyboard-mapping.js` was built for exactly this. The obstacle was
+    bandoneon assumptions hardcoded across four files. Rather than add a
+    second instrument family on top of that (and pay to touch the same
+    places twice), the metadata layer went in first.
+    **Deliberately a behavior-preserving refactor**: the dropdown renders
+    identically (hence the conditional-`<optgroup>` rule), translations
+    still come from the same `layout142`/`layout144` keys via `data-i18n`,
+    and ids are unchanged so saved mappings survive. If anything *looks*
+    different, that's a bug, not the feature.
+    Still hardcoded, by design, for later phases: panel titles
+    (`leftSideBass`/`rightSideTreble`), the keyboard row anchors, and the
+    bellows control's unconditional presence. `bisonoric` and `sideLabels`
+    are populated but read by nothing yet.
+    The remaining concertina blockers are written up under "Open items".
+
 ## Testing
 
 `bandoneon-utils.test.js` and `keyboard-mapping.test.js` cover the project's
@@ -990,6 +1049,40 @@ refactor.
   to you.
 
 ## Open items / natural next steps
+
+- **Concertina support, phases 2-4** (Phase 1 done — see Decision Log #18).
+  Agreed sequencing with the user, each phase verifiable on its own:
+  - **Phase 2 — unhardcode panel titles and keyboard anchors.** Read
+    `sideLabels` in `renderMapping()` instead of the fixed `leftSideBass`/
+    `rightSideTreble`, and let a system name its own row anchors instead of
+    `keyboard-mapping.js`'s bandoneon-calibrated `DEFAULT_ROW_ANCHORS`/
+    `BASS_ROW_ANCHORS`. Still bandoneon-only, still no visible change.
+  - **Phase 3 — unisonoric systems.** English concertina and all duets play
+    the same note both bellows directions, so the bellows button, the Space
+    shortcut and the open/close data all need to no-op when
+    `bisonoric: false`. Testable with a fake entry before any real data.
+  - **Phase 4 — data entry.** Start with **Anglo 30-button C/G**: bisonoric
+    (so it needs no new concepts), the most common concertina, only 30
+    buttons. Unlike the bandoneon, concertina rows are *regular*, so `x`/`y`
+    can be computed from an arc formula rather than pixel-extracted from a
+    diagram — that was the expensive part of the bandoneon data and it's
+    avoidable here.
+  - Systems worth knowing about, from the research: Anglo (20/30/38/40,
+    bisonoric, 2 diatonic rows a fifth apart + accidental row), English (48/
+    56/64, **unisonoric**, 4 staggered rows, notes *alternate between
+    hands* — so neither side is "bass" or "treble"), German (Uhlig's
+    original 20, bisonoric, ancestor of both Anglo and bandoneon),
+    Chemnitzer (38/39/51/52 **per side**, bisonoric, the bandoneon's
+    closest relative), duets (Maccann/Crane/Hayden, 35-80, unisonoric).
+    Note that count is only one axis: **bisonoric-vs-unisonoric, key
+    (C/G vs G/D), and maker variant (Wheatstone vs Jeffries differ in the
+    accidental row at the *same* button count)** vary independently, which
+    is why ids look like `anglo-30-cg` rather than a bare number.
+  - Chart sources (images/HTML, not machine-readable — hand entry):
+    [concertina.com/fingering](http://www.concertina.com/fingering/index.htm)
+    covers every system including all duet variants;
+    [concertina.info FAQ](https://www.concertina.info/tina.faq/images/finger3.htm)
+    has C/G Anglo and 48-button English charts.
 
 - **Bass F9: 0/0 or 4/4? (unconfirmed, user, 2026-09.)** F8 is fixed on
   bass row 1's 𝄌 (id4). Its F-key partner is 0/0 (id5, F9) for now,

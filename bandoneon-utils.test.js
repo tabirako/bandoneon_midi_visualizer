@@ -19,16 +19,20 @@ console.log('bandoneon-utils.js');
 // data — see handoff.md's "Data provenance" section. These tests pin down
 // its *shape*, not its musical correctness.)
 
-test('normalizeMapping: empty raw + known layout falls back to a full-size placeholder', () => {
-  const result = normalizeMapping([], '144-einheits');
+test('normalizeMapping: empty raw + a fallback count falls back to a full-size placeholder', () => {
+  // The count now comes from the system's instruments.js entry (passed in
+  // by app.js), not from a layout-id check inside normalizeMapping.
+  const result = normalizeMapping([], '144-einheits', 144);
   assert.strictEqual(result.length, 144);
-  const result142 = normalizeMapping(null, '142-rheinische');
+  const result142 = normalizeMapping(null, '142-rheinische', 142);
   assert.strictEqual(result142.length, 142);
 });
 
-test('normalizeMapping: empty raw + unrecognized layout returns an empty mapping, not a crash', () => {
-  const result = normalizeMapping([], 'some-future-layout');
-  assert.deepStrictEqual(result, []);
+test('normalizeMapping: empty raw + no fallback count returns an empty mapping, not a crash', () => {
+  assert.deepStrictEqual(normalizeMapping([], 'some-future-layout'), []);
+  // A system that ships without the field, or with a nonsense value.
+  assert.deepStrictEqual(normalizeMapping([], 'x', 0), []);
+  assert.deepStrictEqual(normalizeMapping([], 'x', 'lots'), []);
 });
 
 // ---- normalizeMapping(): normalizing real button entries ---------------

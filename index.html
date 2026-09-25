@@ -92,10 +92,9 @@
   <main>
     <section class="controls">
       <label><span data-i18n="layoutLabel">Layout:</span>
-        <select id="layoutSelect">
-          <option value="142-rheinische" data-i18n="layout142">142-tone (Rheinische)</option>
-          <option value="144-einheits" data-i18n="layout144">144-tone (Einheits)</option>
-        </select>
+        <!-- Options are built by app.js from window.instrumentSystems
+             (instruments.js), so adding an instrument needs no HTML edit. -->
+        <select id="layoutSelect"></select>
       </label>
 
       <label><span data-i18n="hintLabel">Hint:</span>
@@ -204,6 +203,7 @@
   <script src="bandoneon-utils.js"></script>
   <script src="keyboard-mapping.js"></script>
   <script src="mappings.js"></script>
+  <script src="instruments.js"></script>
   <script src="accordion-harmonics.js"></script>
   <script src="app.js"></script>
 </body>

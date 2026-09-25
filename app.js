@@ -493,12 +493,37 @@ function updateVolumeLabel() {
 }
 
 let midiPlayback = null;
-let currentLayout = '142-rheinische';
+// Set by loadMappingForLayout() during startup, from whichever option
+// populateLayoutSelect() put first — no longer a hardcoded bandoneon id.
+let currentLayout = null;
 const persistedMappingKey = 'bandoneon-mapping-v1';
 
 
+// ---- Instrument systems (instruments.js) -------------------------------
+// window.instrumentSystems holds one small spec sheet per selectable
+// system, keyed by the same id as window.defaultMappings. Everything that
+// used to be hardcoded per-bandoneon reads from here instead. Missing
+// entries fall back to an empty object rather than throwing, so a system
+// whose data file failed to load degrades instead of blanking the page.
+const EMPTY_SYSTEM = {};
+
+function systemFor(layout) {
+  return (window.instrumentSystems && window.instrumentSystems[layout]) || EMPTY_SYSTEM;
+}
+
+// Display text for a system or family: its own translation when one
+// exists, else the plain `name` it ships with (a system added before
+// anyone translates it still reads correctly).
+function systemLabel(entry, fallback) {
+  if (entry && entry.i18nKey) return t(entry.i18nKey);
+  if (entry && entry.name) return entry.name;
+  return fallback;
+}
+
 function normalizeMapping(rawMapping, layout) {
-  return window.bandoneonUtils.normalizeMapping(rawMapping, layout);
+  return window.bandoneonUtils.normalizeMapping(
+    rawMapping, layout, systemFor(layout).fallbackButtonCount
+  );
 }
 
 function findMatchingButtons(note, openState = isOpen) {
@@ -1366,6 +1391,53 @@ midiProgressInput.addEventListener('change', () => {
   }
 });
 
+// Builds the layout dropdown from window.instrumentSystems (instruments.js)
+// rather than hardcoded <option>s, so a new instrument needs no HTML edit —
+// the same thing langSelect already does with window.languageNames.
+// data-i18n on each option lets applyTranslations() re-label them on a
+// language switch, exactly as the old static markup did.
+//
+// Options are grouped into <optgroup>s ONLY when more than one family is
+// present: with today's two bandoneons that would add a lone group heading
+// and change how the dropdown looks, and this step is meant to change
+// nothing visible.
+function populateLayoutSelect() {
+  const systems = window.instrumentSystems || {};
+  const ids = Object.keys(systems);
+  if (!layoutSelect || !ids.length) return;
+
+  const families = [];
+  ids.forEach((id) => {
+    const family = systems[id].family || 'other';
+    if (!families.includes(family)) families.push(family);
+  });
+  const grouped = families.length > 1;
+  const containers = {};
+
+  layoutSelect.innerHTML = '';
+  ids.forEach((id) => {
+    const system = systems[id];
+    const opt = document.createElement('option');
+    opt.value = id;
+    if (system.i18nKey) opt.dataset.i18n = system.i18nKey;
+    opt.textContent = systemLabel(system, id);
+
+    let parent = layoutSelect;
+    if (grouped) {
+      const family = system.family || 'other';
+      if (!containers[family]) {
+        const group = document.createElement('optgroup');
+        const meta = (window.instrumentFamilies || {})[family];
+        group.label = systemLabel(meta, family);
+        layoutSelect.appendChild(group);
+        containers[family] = group;
+      }
+      parent = containers[family];
+    }
+    parent.appendChild(opt);
+  });
+}
+
 layoutSelect.addEventListener('change', () => loadMappingForLayout(layoutSelect.value));
 
 volumeInput.addEventListener('input', updateVolumeLabel);
@@ -1415,6 +1487,10 @@ if (panelSelect) {
 // correct on first paint instead of only from the next re-render on.
 buttonColorMode = detectInitialButtonColor();
 if (buttonColorSelect) buttonColorSelect.value = buttonColorMode;
+
+// Must run before loadMappingForLayout() below reads layoutSelect.value —
+// an empty <select> would report '' and no mapping would load at all.
+populateLayoutSelect();
 
 loadMappingForLayout(layoutSelect.value);
 
