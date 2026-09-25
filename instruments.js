@@ -66,6 +66,25 @@
         { code: 'F4', key: 'F4', side: 'right', close: 60, open: 61 }
       ],
       fallbackButtonCount: 144
+    },
+
+    // Standard 30-button Anglo in C/G, Wheatstone/Lachenal layout — the
+    // common one; Jeffries differs in the accidental row (see Open items).
+    // Button data lives in mappings-concertina.js.
+    'anglo-30-cg': {
+      family: 'anglo',
+      // No i18nKey: a system can ship before anyone translates it, and
+      // sideLabels/name fall through t() as literal text.
+      name: 'Anglo 30-button (C/G)',
+      bisonoric: true,
+      // Not "bass"/"treble": an Anglo's left hand is the low half of the
+      // same diatonic rows, not a separate bass keyboard.
+      sideLabels: { left: 'Left hand', right: 'Right hand' },
+      keyboard: { left: 'angloLeft', right: 'angloRight' },
+      // 15 buttons a hand fit on one keyboard side by side, so both hands
+      // play at once and there's nothing for Caps Lock to switch between.
+      handSwitch: 'none',
+      fallbackButtonCount: 30
     }
   };
 
@@ -73,6 +92,7 @@
   // family exists (with a single family the dropdown stays flat, exactly as
   // it looks today). i18nKey optional, same rule as above.
   window.instrumentFamilies = {
-    bandoneon: { name: 'Bandoneon' }
+    bandoneon: { name: 'Bandoneon' },
+    anglo: { name: 'Anglo concertina' }
   };
 })();

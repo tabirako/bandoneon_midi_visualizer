@@ -545,6 +545,29 @@ input[type="file"] {
   visibility: visible;
 }
 
+/* Systems where both hands play at once (handSwitch: 'none' — a 30-button
+   Anglo fits 15 buttons a hand on one keyboard). There's no inactive side,
+   so the Caps Lock hint, the muted-title/⌨ marker and the dimmed key caps
+   all have nothing to say. Selectors are deliberately more specific than
+   the rules they override (body + .bandoneon adds the type/class weight
+   those single-class rules lack). */
+body.no-hand-switch .caps-hint {
+  display: none;
+}
+
+body.no-hand-switch .bandoneon .panel-bass h2,
+body.no-hand-switch .bandoneon .panel-treble h2 {
+  color: var(--panel-title);
+}
+
+body.no-hand-switch .bandoneon .panel h2::before {
+  content: none;
+}
+
+body.no-hand-switch .bandoneon .key-cap {
+  opacity: 0.85;
+}
+
 /* ========== Touch Input ========== */
 /* The buttons are press-and-hold (pointerdown/up in renderMapping()), so
    the browser must not claim the gesture first: touch-action stops a press

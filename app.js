@@ -259,7 +259,14 @@ function assignKeyboardKeys() {
     left: mapping.filter((b) => b.side === 'left'),
     right: mapping.filter((b) => b.side !== 'left')
   };
-  const codeMapBySide = { left: bassCodeMap, right: trebleCodeMap };
+  // handSwitch 'none': the instrument is small enough that both hands fit
+  // on the keyboard simultaneously (a 30-button Anglo is 15 a hand, one
+  // half of each row), so both sides go into the one always-live map and
+  // Caps Lock has nothing to switch.
+  const singleKeyboard = system.handSwitch === 'none';
+  const codeMapBySide = singleKeyboard
+    ? { left: trebleCodeMap, right: trebleCodeMap }
+    : { left: bassCodeMap, right: trebleCodeMap };
 
   ['right', 'left'].forEach((side) => {
     const buttons = buttonsBySide[side];
@@ -295,6 +302,18 @@ function assignKeyboardKeys() {
     codeMapBySide[side].set(bonus.code, button);
     if (!button.keyCap) button.keyCap = bonus.key || bonus.code;
   });
+
+  // Point both lookups at the same map, so a stray Caps Lock press doesn't
+  // land on an empty bassCodeMap and silently kill the keyboard.
+  if (singleKeyboard) bassCodeMap = trebleCodeMap;
+}
+
+// Hides the Caps Lock hint and the active-hand marker on a system where
+// both hands play at once — there's no inactive side to point at.
+function applyHandSwitchAvailability() {
+  document.body.classList.toggle(
+    'no-hand-switch', systemFor(currentLayout).handSwitch === 'none'
+  );
 }
 
 // ---- Hand switch (Caps Lock) -------------------------------------------
@@ -599,6 +618,7 @@ function loadMappingForLayout(layout) {
     mapping = normalizeMapping([], layout);
   }
   applyBellowsAvailability();
+  applyHandSwitchAvailability();
   assignKeyboardKeys();
   renderMapping();
 }

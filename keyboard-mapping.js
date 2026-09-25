@@ -139,21 +139,30 @@
   // Shared core of computeKeyAssignments()/computeBassKeyAssignments().
   // Maps the lower 4 rows of `sideButtons` (relative to its highest row
   // number) onto the 4 physical rows.
-  function assignLowerRows(sideButtons, anchors, growRight) {
+  // `rowOffset` skips that many physical rows from the top before placing
+  // anything. Without it an instrument with fewer than 4 rows gets pushed
+  // up onto the number row (the clamp below bottoms out at 1), which is the
+  // least comfortable row on the keyboard. A 3-row Anglo passes offset 1 to
+  // sit on QWERTY/ASDF/ZXCV instead. `anchors` is indexed by PHYSICAL row,
+  // so a set using an offset leaves the skipped entries null.
+  function assignLowerRows(sideButtons, anchors, growRight, rowOffset) {
+    var offset = rowOffset || 0;
+    var usableRows = PHYSICAL_KEYBOARD_ROWS.length - offset;
     var maxRow = sideButtons.reduce(function (max, b) {
       return Math.max(max, b.row || 0);
     }, 0);
-    var keyboardRowStart = Math.max(1, maxRow - PHYSICAL_KEYBOARD_ROWS.length + 1);
+    var keyboardRowStart = Math.max(1, maxRow - usableRows + 1);
     var assignments = []; // { key, code, button }
 
-    for (var i = 0; i < PHYSICAL_KEYBOARD_ROWS.length; i++) {
+    for (var i = 0; i < usableRows; i++) {
+      var physicalRow = i + offset;
       var rowNumber = keyboardRowStart + i;
       var rowButtons = sideButtons
         .filter(function (b) { return b.row === rowNumber; })
         .sort(function (a, b) { return a.order - b.order; });
-      var idx = selectIndicesForRow(i, rowButtons.length, anchors, growRight);
-      var keys = PHYSICAL_KEYBOARD_ROWS[i].slice(idx.start, idx.start + idx.length);
-      var codes = PHYSICAL_KEYBOARD_CODES[i].slice(idx.start, idx.start + idx.length);
+      var idx = selectIndicesForRow(physicalRow, rowButtons.length, anchors, growRight);
+      var keys = PHYSICAL_KEYBOARD_ROWS[physicalRow].slice(idx.start, idx.start + idx.length);
+      var codes = PHYSICAL_KEYBOARD_CODES[physicalRow].slice(idx.start, idx.start + idx.length);
       rowButtons.forEach(function (button, j) {
         var key = keys[j];
         if (!key) return;
@@ -212,9 +221,32 @@
   // `growRight` is the difference documented on BASS_ROW_ANCHORS: treble
   // grows leftward from its anchor (X-. gains Z), bass grows rightward
   // (R-O gains P) so buttons shared between 142 and 144 keep the same key.
+  // A 30-button Anglo is 15 buttons a hand — 3 rows of 5 — so BOTH hands fit
+  // on one keyboard at once, left hand on the left half of each row and
+  // right hand on the right half, mirroring how you actually hold the
+  // instrument. That's why anglo systems set `handSwitch: 'none'` instead of
+  // sharing keys via Caps Lock the way the much larger bandoneon must.
+  //   Q W E R T | Y U I O P   accidental row
+  //   A S D F G | H J K L ;   C row
+  //   Z X C V B | N M , . /   G row
+  var ANGLO_LEFT_ANCHORS = [
+    null, // number row unused — see rowOffset
+    { start: 0, length: 5 }, // q-t
+    { start: 0, length: 5 }, // a-g
+    { start: 0, length: 5 }  // z-b
+  ];
+  var ANGLO_RIGHT_ANCHORS = [
+    null,
+    { start: 5, length: 5 }, // y-p
+    { start: 5, length: 5 }, // h-;
+    { start: 5, length: 5 }  // n-/
+  ];
+
   var ANCHOR_SETS = {
     bandoneonTreble: { anchors: DEFAULT_ROW_ANCHORS, growRight: false },
-    bandoneonBass: { anchors: BASS_ROW_ANCHORS, growRight: true, functionKeys: BASS_FUNCTION_KEYS }
+    bandoneonBass: { anchors: BASS_ROW_ANCHORS, growRight: true, functionKeys: BASS_FUNCTION_KEYS },
+    angloLeft: { anchors: ANGLO_LEFT_ANCHORS, growRight: true, rowOffset: 1 },
+    angloRight: { anchors: ANGLO_RIGHT_ANCHORS, growRight: true, rowOffset: 1 }
   };
 
   // Both return [] for an unknown/absent set name rather than throwing, so
@@ -223,7 +255,7 @@
   function computeAssignmentsFor(sideButtons, setName) {
     var set = ANCHOR_SETS[setName];
     if (!set) return [];
-    return assignLowerRows(sideButtons, set.anchors, !!set.growRight);
+    return assignLowerRows(sideButtons, set.anchors, !!set.growRight, set.rowOffset);
   }
 
   function computeFunctionKeyAssignmentsFor(sideButtons, setName) {

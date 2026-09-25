@@ -133,7 +133,10 @@
            there is nothing for a bellows toggle to change. -->
       <button id="toggleOpenClose" class="bellows-only" data-i18n="bellowsButtonOpen">Bellows: Open</button>
       <label class="kbd bellows-only" data-i18n="spaceToggleHint">(Space to toggle)</label>
-      <label class="kbd" data-i18n="capsLockHint">(Caps Lock: left hand)</label>
+      <!-- .caps-hint: hidden on systems small enough for both hands to sit
+           on the keyboard at once (handSwitch: 'none'), where Caps Lock
+           has nothing to switch. -->
+      <label class="kbd caps-hint" data-i18n="capsLockHint">(Caps Lock: left hand)</label>
       <button id="enableMidi" data-i18n="enableMidi">Enable MIDI Keyboard</button>
 
       <!-- <label class="file">Upload mapping JSON: <input type="file" id="mappingFile" accept="application/json"></label> -->
@@ -237,6 +240,7 @@
   <script src="bandoneon-utils.js"></script>
   <script src="keyboard-mapping.js"></script>
   <script src="mappings.js"></script>
+  <script src="mappings-concertina.js"></script>
   <script src="instruments.js"></script>
   <script src="accordion-harmonics.js"></script>
   <script src="app.js"></script>
