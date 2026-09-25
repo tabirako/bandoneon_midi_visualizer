@@ -22,7 +22,7 @@ parsing; everything else is hand-written.
 | `mappings-concertina.js` | Concertina button data, merged into the same `window.defaultMappings` object as `mappings.js` (must load after it). Currently `anglo-30-cg` (Wheatstone) and `anglo-30-cg-jeffries`. Kept separate so each family's note tables stay readable; see "Data provenance". |
 | `instruments.js` | `window.instrumentSystems` (one small spec sheet per selectable system, keyed by the **same id** as `mappings.js`) and `window.instrumentFamilies` (optgroup display names). This is what `app.js` builds the layout dropdown from, so adding an instrument needs no HTML edit. See "Instrument systems" below. |
 | `accordion-harmonics.js` | `window.accordionHarmonics` — auto-generated (`accordion_analysis/generate_periodic_waves.py`) linear harmonic-amplitude tables (harmonics 1-10) measured from real accordion recordings, per reed rank (`low`/`mid`/`hi`) and 7 sampled MIDI keys. `app.js`'s `getReedPeriodicWave()` reads `low` and `mid` to build real-timbre `PeriodicWave`s for the reed synth — see "Reed synthesis" below. **`hi` is present in the data but currently unused by `app.js`** (only `low`/`mid` are read) — not a bug, just harmonic data that hasn't been wired to a third oscillator rank yet. |
-| `bandoneon-harmonics.js` | `window.bandoneonHarmonics` — auto-generated (`accordion_analysis/generate_bandoneon_waves.py`) harmonic-amplitude tables measured from a real bandoneon, keyed by bellows direction (`open`/`close`) / side (`left`/`right`) / note name, plus per-note `measured_f0_hz`/`beat_hz`/`beat_reliable`. **Not `<script>`-loaded by `index.html` and not read anywhere in `app.js`** — generated data waiting for a real bandoneon voice to be built; see "Open items" below. |
+| `bandoneon-harmonics.js` | `window.bandoneonHarmonics` — auto-generated (`accordion_analysis/generate_bandoneon_waves.py`) harmonic-amplitude tables measured from a real bandoneon, keyed by bellows direction (`open`/`close`) / side (`left`/`right`) / note name, plus per-note `measured_f0_hz`/`beat_hz`/`beat_reliable`. Loaded by `index.html` and read by `app.js`'s `getBandoneonPeriodicWave()` for the Bandoneon preset only, pooled by pitch (see "Bandoneon voice" in the Decision Log, #22). |
 | `color-ranges.js` | **Deleted.** Used to be dead code (see Decision Log #4 — nothing read `window.buttonColorRanges` even while it was loaded); has since been removed from the repo entirely, and its `<script>` tag in `index.html` was removed to match (it had gone stale, still pointing at the deleted file). No trace of it should remain in either file going forward. |
 | `add_row_order.js` | One-time migration script (already run) that added `row`/`order` fields to the Rheinische data. Kept for reference/history, not part of the runtime app. Not referenced by `index.html`. |
 | `test-helpers.js`, `bandoneon-utils.test.js`, `keyboard-mapping.test.js`, `instruments.test.js` | Plain Node test files, no framework/dependencies — run with e.g. `node bandoneon-utils.test.js`. See "Testing" below. |
@@ -174,8 +174,10 @@ added alongside this rewrite; see `index.html`'s `#instrumentSelect` and
 `i18n.js`'s `instrumentMusette` key across all 8 languages), each specifying
 `voiceMflat`/`voiceM`/`voiceMsharp`/`harmMix` (which reeds are on) plus
 starting `detune`/`breath`/`vibrato`/`filterFreq`/`filterQ` values. Concretely:
-Bandoneon is dry M only + `L` (real bandoneons don't beat/tremolo — hence
-`detune: 0`); Accordion is dry `M` + sharp `M+` + `L` (an asymmetric wet pair
+Bandoneon is `M` plus a quiet `M+` a fixed 0.84 Hz above it, with no `L`
+and no vibrato. It's the one preset built from recordings of the real
+instrument, including its timbre (see Decision Log #22, which replaced an
+earlier guess of "`M` + `L`, no beating"); Accordion is dry `M` + sharp `M+` + `L` (an asymmetric wet pair
 with a true dry reference reed, not the symmetric M-/M+ "Sax" register);
 Harmonica is the same dry-plus-sharp mid pair as Accordion but with no bass
 reed (`harmMix: 0`); Musette is the full wet trio (`M-`, `M`, `M+` all on)
@@ -1224,6 +1226,53 @@ knowing before "simplifying" something back to the naive version.
     assignments were re-diffed against the pre-Phase-2 logic and remain
     identical (33 and 36 bindings).
 
+22. **Bandoneon voice rebuilt from the bandoneon recordings, 2026-09.**
+    Until now the Bandoneon preset sounded from the *accordion* table, and
+    its other settings were guesses. The recordings contradicted three of
+    them. Every change is measured from the 25 notes in
+    `accordion_analysis/samples/bandoneon/`:
+
+    | | Before (guessed) | Now (measured) |
+    |---|---|---|
+    | Timbre | accordion `mid` table | `bandoneon-harmonics.js`, nearest recorded pitch |
+    | Octave-down `L` reed | on, `harmMix: 0.35` | off. None of the 25 notes has energy at half its fundamental (−42 to −74 dB) |
+    | Beating | none, `detune: 0` ("real bandoneons don't beat") | `M+` at a fixed **0.84 Hz** above `M`, the mean of 14 reliable notes, flat across pitch |
+    | Beat depth | — | `voiceMsharp: 0.12`, see below |
+    | Vibrato | 11 cents at 5.2 Hz | **0**. Measured pitch wobble has a median of ~1 cent (0.2–4), so there's nothing to model |
+    | Lowpass | 1500 Hz | 12 kHz, effectively out of the way |
+
+    - **The beat is modelled in Hz, not cents**, as the harmonic-tables
+      section predicted. `oscMsharp.frequency` is `freq + beatHz`. A new
+      optional preset field `beatHz` is read only by the bandoneon preset.
+      The Reed detune slider still adds cents on top and defaults to 0.
+    - **Beat depth is the least certain number.** Two reeds of gain 1 and
+      `r` make the fundamental's envelope swing between 1+r and 1−r. So a
+      sinusoid fitted at the measured beat rate gives `r` directly. Median
+      **0.12** (0.04–0.46) over the 10 notes that are both reliable and
+      well fitted (R² ≥ 0.5). The catch is that each recording holds only
+      about one beat cycle, so this can't separate beating from the
+      player's bellows swell. Longer held notes (5 s or more) would pin it
+      down. Rerun `accordion_analysis/analyze_bandoneon_beat_depth.py` if
+      the recordings get redone. It also prints the pitch-wobble figures.
+    - **The lowpass came off because the measured spectrum already has the
+      instrument's rolloff.** The 1500 Hz cutoff was there to tame a
+      sawtooth. It sat below the fundamental of the whole top octave
+      (A6 is 1760 Hz).
+    - **Direction and side are pooled, not looked up.** The data file is
+      keyed by bellows/side/note, but the harmonic-tables section already
+      explains why those splits aren't trustworthy. All 25 recordings
+      collapse to 20 pitches (C2–B6), and repeat takes are averaged.
+    - **Attack was checked and left alone.** The median is 99 ms against
+      the synth's 90 ms ramp.
+    - **Not verified by ear in this session.** Expect it to sound somewhat
+      louder and brighter than before: no lowpass, and a normalized
+      `PeriodicWave` now carries the whole spectrum. If it's too bright, the
+      next knob is `filterFreq`, not the table. This still doesn't settle
+      whether a bandoneon's two reeds are "L/M" plates at one pitch (see
+      Open items). The model only reproduces what was measured: a same-pitch
+      pair beating at 0.84 Hz.
+    - Accordion, Harmonica and Musette are unchanged.
+
 ## Testing
 
 `bandoneon-utils.test.js` and `keyboard-mapping.test.js` cover the project's
@@ -1400,9 +1449,9 @@ refactor.
   and exported by `generate_bandoneon_waves.py` into `bandoneon-harmonics.js`
   (same linear-harmonic-table format as `accordion-harmonics.js`, keyed by
   bellows/side/note instead of register/MIDI-key since a bandoneon button is
-  one fixed pitch, not a switchable stop) — **generated but not yet wired
-  into `app.js`**; that's the natural next step whenever a real bandoneon
-  voice is wanted. Findings (full detail in `bandoneon_results.json`):
+  one fixed pitch, not a switchable stop). **Wired into `app.js` since
+  Decision Log #22**, which also measured the beat's depth and the pitch
+  wobble from these same recordings. Findings (full detail in `bandoneon_results.json`):
   - **Tuning**: 24 of 25 notes measured 5-22 cents sharp of standard A440;
     one (`C2`) measured 11.4c flat. Reads like this instrument was built to
     a reference pitch other than 440Hz rather than being randomly out of

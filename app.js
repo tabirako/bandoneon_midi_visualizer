@@ -474,8 +474,26 @@ function setKeyCapMode(mode) {
 // (0.75x/1.5x/1.25x) rather than being re-guessed from nothing.
 // #reedVibrato's slider range was widened to match (was 0-15, which
 // couldn't even reach the low end of the originally measured range).
+//
+// bandoneon is the one preset built from recordings of the real instrument
+// (bandoneon-harmonics.js; numbers from accordion_analysis/ -- see
+// handoff.md's "Bandoneon voice" entry):
+// - timbre: 'bandoneon' -- the measured bandoneon spectra, not the
+//   accordion's (see getBandoneonPeriodicWave()).
+// - harmMix 0: no octave-down reed. Not one of the 25 recorded notes had
+//   energy at half its fundamental.
+// - Its M+ reed sits a fixed beatHz above M rather than some cents above
+//   it: the measured beat was ~0.84Hz at every pitch (a fixed cents offset
+//   would make the beat speed up with pitch). voiceMsharp 0.12 is the
+//   measured beat depth -- a quiet second reed, so the beating is a gentle
+//   shimmer, not a musette-style tremolo. Depth is the rougher of the two
+//   numbers (about one beat cycle per recording).
+// - vibrato 0: measured pitch wobble was ~1 cent, i.e. none.
+// - filterFreq raised well clear of the notes: the measured spectra already
+//   carry the instrument's own rolloff, and the old 1500Hz cutoff sat below
+//   the fundamental of the top octave.
 const REED_PRESETS = {
-  bandoneon: { voiceMflat: 0, voiceM: 1, voiceMsharp: 0, detune: 0, breath: 5,  vibrato: 11, filterFreq: 1500, filterQ: 0.8, harmMix: 0.35 },
+  bandoneon: { voiceMflat: 0, voiceM: 1, voiceMsharp: 0.12, beatHz: 0.84, timbre: 'bandoneon', detune: 0, breath: 5, vibrato: 0, filterFreq: 12000, filterQ: 0.7, harmMix: 0 },
   accordion: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 16, breath: 8,  vibrato: 15, filterFreq: 2200, filterQ: 1.2, harmMix: 0.5 },
   harmonica: { voiceMflat: 0, voiceM: 1, voiceMsharp: 1, detune: 3, breath: 18, vibrato: 23, filterFreq: 3200, filterQ: 3.5, harmMix: 0 },
   musette:   { voiceMflat: 1, voiceM: 1, voiceMsharp: 1, detune: 9, breath: 10, vibrato: 19, filterFreq: 2600, filterQ: 1.4, harmMix: 0 }
@@ -1051,9 +1069,8 @@ function nearestSampleNote(note, sampleNotes) {
 
 // Returns a cached PeriodicWave for `register` (see accordion-harmonics.js)
 // at the sampled key nearest `note`, or null if the data file didn't load --
-// callers fall back to a plain oscillator type in that case. NOTE: every
-// reed instrument, the "bandoneon" preset included, currently sounds from
-// this accordion table; bandoneon-harmonics.js exists but is still unwired.
+// callers fall back to a plain oscillator type in that case. Every reed
+// preset except bandoneon (see getBandoneonPeriodicWave()) sounds from it.
 function getReedPeriodicWave(ctx, register, note) {
   const table = window.accordionHarmonics;
   if (!table || !table[register] || !table.sampleNotes) return null;
@@ -1066,6 +1083,55 @@ function getReedPeriodicWave(ctx, register, note) {
   const real = new Float32Array(amps.length + 1);
   const imag = new Float32Array(amps.length + 1);
   amps.forEach((a, i) => { imag[i + 1] = a; });
+  const wave = ctx.createPeriodicWave(real, imag);
+  reedWaveCache.set(cacheKey, wave);
+  return wave;
+}
+
+// bandoneon-harmonics.js is keyed bellows/side/note name, but those splits
+// can't be trusted: only 4 notes were recorded in both directions (and the
+// difference flips sign between them), and left/right is fully confounded
+// with pitch. So all 25 recordings are pooled into one pitch-sorted list --
+// a note recorded more than once averages its takes -- and a played note
+// uses the nearest recorded pitch, like the accordion table's sampled keys.
+// Built once, lazily; null if the data file didn't load.
+let bandoneonSamples;
+
+function noteNameToMidi(name) {
+  const m = /^([A-G])([#b]?)(-?\d+)$/.exec(name);
+  if (!m) return null;
+  const pc = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]];
+  return 12 * (Number(m[3]) + 1) + pc + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0);
+}
+
+function getBandoneonSamples() {
+  if (bandoneonSamples !== undefined) return bandoneonSamples;
+  const data = window.bandoneonHarmonics;
+  const byMidi = new Map();
+  Object.values(data || {}).forEach((sides) => {
+    Object.values(sides).forEach((notes) => {
+      Object.entries(notes).forEach(([name, entry]) => {
+        const midi = noteNameToMidi(name);
+        if (midi === null || !entry.amps) return;
+        if (!byMidi.has(midi)) byMidi.set(midi, []);
+        byMidi.get(midi).push(entry.amps);
+      });
+    });
+  });
+  bandoneonSamples = byMidi.size ? byMidi : null;
+  return bandoneonSamples;
+}
+
+function getBandoneonPeriodicWave(ctx, note) {
+  const samples = getBandoneonSamples();
+  if (!samples) return null;
+  const sampleNote = nearestSampleNote(note, [...samples.keys()]);
+  const cacheKey = 'bandoneon:' + sampleNote;
+  if (reedWaveCache.has(cacheKey)) return reedWaveCache.get(cacheKey);
+  const takes = samples.get(sampleNote);
+  const real = new Float32Array(takes[0].length + 1);
+  const imag = new Float32Array(takes[0].length + 1);
+  takes.forEach((amps) => amps.forEach((a, i) => { imag[i + 1] += a / takes.length; }));
   const wave = ctx.createPeriodicWave(real, imag);
   reedWaveCache.set(cacheKey, wave);
   return wave;
@@ -1104,13 +1170,17 @@ function startReedVoice(note, velocity, instrument) {
   const oscMflat = ctx.createOscillator();
   const oscM = ctx.createOscillator();
   const oscMsharp = ctx.createOscillator();
-  const midWave = getReedPeriodicWave(ctx, 'mid', note);
+  // Falls back to the accordion table if bandoneon-harmonics.js didn't load.
+  const midWave = (preset.timbre === 'bandoneon' && getBandoneonPeriodicWave(ctx, note))
+    || getReedPeriodicWave(ctx, 'mid', note);
   [oscMflat, oscM, oscMsharp].forEach((o) => {
     if (midWave) o.setPeriodicWave(midWave); else o.type = 'sawtooth';
     o.frequency.value = freq;
   });
   oscMflat.detune.value = -detuneCents;
   oscMsharp.detune.value = detuneCents;
+  // A fixed beat in Hz, on top of the slider's cents (bandoneon only).
+  oscMsharp.frequency.value = freq + (preset.beatHz || 0);
 
   const gainMflat = ctx.createGain();
   const gainM = ctx.createGain();
