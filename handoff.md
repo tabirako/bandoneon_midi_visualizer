@@ -1560,6 +1560,87 @@ refactor.
     [concertina.info FAQ](https://www.concertina.info/tina.faq/images/finger3.htm)
     has C/G Anglo and 48-button English charts.
 
+- **Bellows *pressure* as an input (designed 2026-09, nothing built).**
+  Everything in the app today treats the bellows as a two-state switch
+  (`isOpen`) that picks which of a button's two notes sounds. It carries no
+  force, so the app can't do dynamics or phrasing — the thing that makes a
+  free-reed instrument expressive. This entry records a design discussion,
+  not a plan; the user parked it ("I'll deal with this later"). Read the
+  reframe first, because it changes which hardware is worth supporting.
+
+  - **Why a slider or knob feels wrong.** Bellows force is a *signed*
+    quantity: magnitude *and* direction, continuously, from one gesture.
+    That's a hard thing to ask of a control. Worse, a knob at rest holds
+    its value while a bellows at rest makes no sound — so the honest
+    mapping is to gesture *velocity*, not position. "Stop moving and it
+    dies" is the behavior hands already expect, and it's most of what
+    makes a cheap input feel right.
+
+  - **The pull-only reframe (the user's, and the important part).** Modern
+    Piazzolla-descended bandoneon playing largely abandons push notes: you
+    play on the pull and use the **air lever** (the right-hand valve that
+    opens a hole so air moves silently) to re-close the bellows. The
+    instrument sings and takes breaths, like a flute player phrasing
+    around lungfuls. That removes the *sign* from the problem. What's left
+    is one non-negative intensity plus a momentary "breathe now" button —
+    and nearly every cheap continuous input is unidirectional and rests at
+    zero, which under bidirectional bellows is a defect and here is
+    correct physics. **Whatever gets built should probably be designed for
+    this mode first.** It's both the easier problem and the style the user
+    actually plays.
+
+  - **What that does to the options**, best first:
+    - **Foot pedal** (expression pedal into a MIDI controller's jack,
+      ~$20-30, arrives as CC11). Rests at zero, and puts the bellows on a
+      limb that isn't playing notes.
+    - **Breath into the microphone** (`getUserMedia` + low-frequency RMS,
+      free, no hardware, works on a static site). Rejected earlier because
+      a mic can't tell blowing from drawing — pull-only means it never has
+      to, and the inhale *is* the air lever, so it needs no separate
+      control. Truest metaphor of the lot. Needs headphones or it feeds
+      back.
+    - **Channel aftertouch.** Worth knowing: a real bellows is *one*
+      pressure shared by every sounding reed, so per-note (poly)
+      aftertouch is the *wrong* model, not merely an expensive one. Cheap
+      controllers usually have channel AT, which is exactly right.
+    - **Gamepad triggers** (Gamepad API, no install). Natively
+      bidirectional and spring-loaded, so this is the one to reach for if
+      the *two-directional* version is ever wanted. Occupies a hand.
+    - **Pen pressure** — Pointer Events expose `event.pressure` for a
+      stylus (and some touchscreens). Free if a tablet is already around.
+    - **Mouse/trackpad drag velocity** — direction of travel sets
+      push/pull, speed sets pressure. The only option that costs a visitor
+      nothing, and the reason it was attractive is precisely the signed,
+      self-centering gesture that pull-only makes unnecessary. **It also
+      collides with the app's own input:** click-and-hold on a button is
+      already how a note sounds. That's survivable (lookup-by-clicking and
+      real playing never happen in the same second, so it's a *mode*
+      question, not a gesture collision), but the unfixable part is
+      physical — if the mouse is the bellows, the right hand can't play
+      treble. Only a foot or breath frees both hands.
+
+  - **The air lever isn't a note or a pressure, it's a mode**: held = air
+    flows freely, nothing sounds, reservoir refills. `Space` is currently
+    the bellows toggle, which in a pull-only mode has nothing left to
+    toggle — so it's free, and is arguably a better use of the key.
+
+  - **Model running out of air.** Pure bookkeeping, no hardware: track
+    bellows extension as a reservoir that drains with airflow and with how
+    many notes are held, and stop sounding when it's empty. Being *forced*
+    to reverse is most of what makes the instrument feel like an
+    instrument, and for a practice tool it's the part that teaches
+    something — phrase length stops being your choice and becomes the
+    instrument's, so you have to plan where to breathe.
+
+  - **Cheaper to build than it sounds:** the app already has a pull-only
+    code path. `applyBellowsAvailability()` pins `isOpen = true` and hides
+    the bellows control for unisonoric systems. A "Piazzolla mode" on a
+    bisonoric bandoneon is largely that same path applied deliberately
+    (force open, hide the direction control), plus the reservoir and the
+    air-lever key. Note it would be a *mode*, not an instrument property —
+    `bisonoric` describes the hardware and must stay `true` for a
+    bandoneon, so this can't just reuse the `bisonoric: false` flag.
+
 - **Bass F9: 0/0 or 4/4? (unconfirmed, user, 2026-09.)** F8 is fixed on
   bass row 1's 𝄌 (id4). Its F-key partner is 0/0 (id5, F9) for now,
   because that pairing fits the geometry better (~0.26 vs ~0.52 key-widths
